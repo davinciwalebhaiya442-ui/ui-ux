@@ -1102,13 +1102,15 @@ export function ProductList() {
     if (!ok) return;
 
     try {
-      const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      const target = encodeURIComponent(id);
+      const res = await fetch(`/api/products/${target}`, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to delete');
-      toast(`"${name}" deleted successfully`);
+      toast(`"${name}" deleted successfully`, 'success');
+      setProducts((prev) => prev.filter((p) => p.id !== id && p.dbId !== id && p.slug !== id));
       loadData();
     } catch (err) {
-      alert(err.message);
+      toast(err.message, 'error');
     }
   };
 
@@ -1322,7 +1324,7 @@ export function ProductList() {
                     <Pencil className="w-3.5 h-3.5" />
                   </Link>
                   <button
-                    onClick={() => handleDelete(p.id, p.name)}
+                    onClick={() => handleDelete(p.dbId || p.id, p.name)}
                     title="Delete permanently"
                     className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 transition-colors"
                   >
@@ -1393,7 +1395,7 @@ export function ProductList() {
                         <Pencil className="w-3.5 h-3.5" />
                       </Link>
                       <button
-                        onClick={() => handleDelete(p.id, p.name)}
+                        onClick={() => handleDelete(p.dbId || p.id, p.name)}
                         className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400"
                         title="Delete"
                       >
@@ -1413,6 +1415,7 @@ export function ProductList() {
 
 // CATEGORY LIST COMPONENT
 export function CategoryList() {
+  const { toast, confirm } = useAdmin();
   const [categories, setCategories] = useState([]);
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -1422,7 +1425,8 @@ export function CategoryList() {
   const load = () =>
     fetch('/api/categories')
       .then((r) => r.json())
-      .then((d) => setCategories(d.categories || []));
+      .then((d) => setCategories(d.categories || []))
+      .catch(() => {});
 
   useEffect(() => {
     load();
@@ -1430,27 +1434,48 @@ export function CategoryList() {
 
   const create = async (e) => {
     e.preventDefault();
-    const r = await fetch('/api/categories', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name, slug: slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'), description, published: true }),
-    });
-    const d = await r.json();
-    setMessage(d.error || 'Category created');
-    if (r.ok) {
-      setName('');
-      setSlug('');
-      setDescription('');
-      load();
+    try {
+      const r = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name, slug: slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'), description, published: true }),
+      });
+      const d = await r.json();
+      if (r.ok) {
+        toast(`Category "${name}" created successfully`, 'success');
+        setName('');
+        setSlug('');
+        setDescription('');
+        setMessage('');
+        load();
+      } else {
+        setMessage(d.error || 'Failed to create category');
+        toast(d.error || 'Failed to create category', 'error');
+      }
+    } catch (err) {
+      toast(err.message, 'error');
     }
   };
 
   const remove = async (id, catName) => {
-    if (!confirm(`Delete category "${catName}"?`)) return;
-    const r = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
-    const d = await r.json();
-    if (!r.ok) alert(d.error || 'Cannot delete category');
-    load();
+    const ok = await confirm({
+      title: 'Delete Category Permanently?',
+      message: `Are you sure you want to delete category "${catName}"? Any associated products will be safely moved to the General category so no data is lost.`,
+      confirmText: 'Delete Category',
+      destructive: true,
+    });
+    if (!ok) return;
+
+    try {
+      const r = await fetch(`/api/categories/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Cannot delete category');
+      toast(`Category "${catName}" deleted successfully`, 'success');
+      setCategories((prev) => prev.filter((c) => c.id !== id && c.slug !== id));
+      load();
+    } catch (err) {
+      toast(err.message, 'error');
+    }
   };
 
   return (
