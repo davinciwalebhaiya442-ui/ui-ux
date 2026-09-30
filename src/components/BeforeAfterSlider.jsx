@@ -101,7 +101,7 @@ export default function BeforeAfterSlider({
       aria-valuemin={0}
       aria-valuemax={100}
       onKeyDown={handleKeyDown}
-      className={`@container relative select-none overflow-hidden rounded-2xl border border-white/[0.08] bg-[#07090e] shadow-[0_20px_50px_rgba(0,0,0,0.8)] cursor-ew-resize group focus:outline-none focus:ring-1 focus:ring-blue-500/50 ${className}`}
+      className={`relative select-none overflow-hidden rounded-2xl border border-white/[0.08] bg-[#07090e] shadow-[0_20px_50px_rgba(0,0,0,0.8)] cursor-ew-resize group focus:outline-none focus:ring-1 focus:ring-blue-500/50 ${className}`}
       style={{ aspectRatio }}
       onMouseDown={() => setIsDragging(true)}
       onTouchStart={() => setIsDragging(true)}
@@ -113,12 +113,6 @@ export default function BeforeAfterSlider({
             src={afterSrc}
             alt={afterLabel}
             className="w-full h-full object-cover"
-          />
-        ) : hasRealBefore ? (
-          <img
-            src={beforeSrc}
-            alt={afterLabel}
-            className="w-full h-full object-cover contrast-125 saturate-150"
           />
         ) : (
           /* Procedural high-grade cinematic visual canvas fallback */
@@ -164,7 +158,7 @@ export default function BeforeAfterSlider({
       >
         <div
           className="h-full relative overflow-hidden"
-          style={{ width: containerWidth ? `${containerWidth}px` : '100cqw', maxWidth: 'none' }}
+          style={{ width: containerWidth ? `${containerWidth}px` : '100%', maxWidth: 'none' }}
         >
           {hasRealBefore ? (
             <img
@@ -228,3 +222,4 @@ export default function BeforeAfterSlider({
     </div>
   );
 }
+

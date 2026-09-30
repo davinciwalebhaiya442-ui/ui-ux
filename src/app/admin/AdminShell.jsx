@@ -57,6 +57,123 @@ const AdminContext = createContext({
 
 export const useAdmin = () => useContext(AdminContext);
 
+export function AdminProvider({ children }) {
+  const [collapsed, setCollapsed] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('dwb_admin_collapsed');
+      if (saved !== null) setCollapsed(saved === 'true');
+    } catch {}
+  }, []);
+
+  const handleSetCollapsed = (val) => {
+    setCollapsed(val);
+    try {
+      localStorage.setItem('dwb_admin_collapsed', String(val));
+    } catch {}
+  };
+
+  const showToast = (message, type = 'info') => {
+    setToastMessage({ message, type, id: Date.now() });
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const askConfirm = (arg1, arg2) => {
+    let title = 'Are you sure?';
+    let message = 'This action cannot be undone.';
+    let confirmText = 'Delete';
+    let destructive = true;
+
+    if (typeof arg1 === 'string') {
+      title = arg1;
+      if (arg2) message = arg2;
+    } else if (arg1 && typeof arg1 === 'object') {
+      title = arg1.title || title;
+      message = arg1.message || message;
+      confirmText = arg1.confirmText || confirmText;
+      destructive = arg1.destructive !== undefined ? arg1.destructive : destructive;
+    }
+
+    return new Promise((resolve) => {
+      setConfirmDialog({
+        title,
+        message,
+        confirmText,
+        destructive,
+        onConfirm: () => {
+          setConfirmDialog(null);
+          resolve(true);
+        },
+        onCancel: () => {
+          setConfirmDialog(null);
+          resolve(false);
+        },
+      });
+    });
+  };
+
+  return (
+    <AdminContext.Provider
+      value={{
+        toast: showToast,
+        confirm: askConfirm,
+        collapsed,
+        setCollapsed: handleSetCollapsed,
+      }}
+    >
+      {children}
+
+      {/* GLOBAL TOAST POPUP */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-2 rounded-xl border border-white/15 bg-[#0e1628] px-4 py-3 text-xs text-white shadow-2xl animate-in slide-in-from-bottom-5">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toastMessage.message}</span>
+        </div>
+      )}
+
+      {/* GLOBAL CONFIRMATION MODAL */}
+      {confirmDialog && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#090d16] p-6 shadow-2xl">
+            <div className="flex items-center gap-3">
+              <div className={`p-2.5 rounded-xl ${confirmDialog.destructive ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-blue-500/10 text-blue-400'}`}>
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-semibold text-white">{confirmDialog.title}</h3>
+            </div>
+            <p className="mt-3 text-xs text-white/60 leading-relaxed font-sans">
+              {confirmDialog.message}
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={confirmDialog.onCancel}
+                className="px-4 py-2 rounded-xl border border-white/10 text-xs text-white/70 hover:text-white hover:bg-white/[0.05] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDialog.onConfirm}
+                className={`px-4 py-2 rounded-xl text-xs font-medium transition-colors ${
+                  confirmDialog.destructive
+                    ? 'bg-red-500 hover:bg-red-600 text-white'
+                    : 'bg-white hover:bg-white/90 text-black'
+                }`}
+              >
+                {confirmDialog.confirmText}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </AdminContext.Provider>
+  );
+}
+
 const NAV_ITEMS = [
   { group: 'OVERVIEW', items: [
     { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
@@ -308,43 +425,12 @@ export function AdminLayout({ children, title = 'Dashboard' }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Collapsible sidebar state stored in localStorage
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsed, setCollapsed, toast: showToast, confirm: askConfirm } = useAdmin();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-
-  // Toast System
-  const [toastMessage, setToastMessage] = useState(null);
-
-  // Confirm Modal System
-  const [confirmDialog, setConfirmDialog] = useState(null);
-
-  const showToast = (message, type = 'info') => {
-    setToastMessage({ message, type, id: Date.now() });
-    setTimeout(() => setToastMessage(null), 3500);
-  };
-
-  const askConfirm = ({ title, message, confirmText = 'Confirm', destructive = false }) => {
-    return new Promise((resolve) => {
-      setConfirmDialog({
-        title,
-        message,
-        confirmText,
-        destructive,
-        onConfirm: () => {
-          setConfirmDialog(null);
-          resolve(true);
-        },
-        onCancel: () => {
-          setConfirmDialog(null);
-          resolve(false);
-        },
-      });
-    });
-  };
 
   // Keyboard shortcut CMD+K / CTRL+K
   useEffect(() => {
@@ -404,8 +490,7 @@ export function AdminLayout({ children, title = 'Dashboard' }) {
   });
 
   return (
-    <AdminContext.Provider value={{ toast: showToast, confirm: askConfirm, collapsed, setCollapsed }}>
-      <div className="min-h-screen bg-[#05070d] text-white flex flex-col font-sans selection:bg-blue-500/20 selection:text-white">
+    <div className="min-h-screen bg-[#05070d] text-white flex flex-col font-sans selection:bg-blue-500/20 selection:text-white">
         
         {/* MOBILE SLIDE-OVER OVERLAY */}
         {mobileOpen && (
@@ -646,52 +731,7 @@ export function AdminLayout({ children, title = 'Dashboard' }) {
 
         {/* GLOBAL COMMAND PALETTE MODAL */}
         <CommandPalette open={commandOpen} onClose={() => setCommandOpen(false)} />
-
-        {/* TOAST POPUP */}
-        {toastMessage && (
-          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl border border-white/15 bg-[#0e1628] px-4 py-3 text-xs text-white shadow-2xl animate-in slide-in-from-bottom-5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>{toastMessage.message}</span>
-          </div>
-        )}
-
-        {/* CONFIRMATION MODAL */}
-        {confirmDialog && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#090d16] p-6 shadow-2xl">
-              <div className="flex items-center gap-3">
-                <div className={`p-2.5 rounded-xl ${confirmDialog.destructive ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-blue-500/10 text-blue-400'}`}>
-                  <AlertTriangle className="w-5 h-5" />
-                </div>
-                <h3 className="text-base font-semibold text-white">{confirmDialog.title}</h3>
-              </div>
-              <p className="mt-3 text-xs text-white/60 leading-relaxed font-sans">
-                {confirmDialog.message}
-              </p>
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  onClick={confirmDialog.onCancel}
-                  className="px-4 py-2 rounded-xl border border-white/10 text-xs text-white/70 hover:text-white hover:bg-white/[0.05] transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmDialog.onConfirm}
-                  className={`px-4 py-2 rounded-xl text-xs font-medium transition-colors ${
-                    confirmDialog.destructive
-                      ? 'bg-red-500 hover:bg-red-600 text-white'
-                      : 'bg-white hover:bg-white/90 text-black'
-                  }`}
-                >
-                  {confirmDialog.confirmText}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
       </div>
-    </AdminContext.Provider>
   );
 }
 

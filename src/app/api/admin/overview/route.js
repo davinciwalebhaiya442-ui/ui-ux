@@ -50,33 +50,33 @@ export async function GET(request) {
       recentUsers,
       topProductsRaw,
     ] = await Promise.all([
-      prisma.product.count(),
-      prisma.product.count({ where: { published: true } }),
-      prisma.product.count({ where: { type: 'FREE' } }),
-      prisma.profile.count(),
-      prisma.download.count(),
-      prisma.download.count({ where: downloadWhere }),
-      prisma.order.count(),
-      prisma.order.count({ where: orderWhere }),
-      prisma.order.aggregate({ _sum: { total: true }, where: orderWhere }),
-      prisma.order.aggregate({ _sum: { total: true }, where: { status: 'PAID' } }),
-      prisma.studioRequest.count({ where: { status: 'NEW' } }),
-      prisma.product.findMany({ take: 6, orderBy: { createdAt: 'desc' }, include: { category: true } }),
-      prisma.order.findMany({ take: 6, orderBy: { createdAt: 'desc' }, include: { items: true, user: true } }),
-      prisma.download.findMany({ take: 6, orderBy: { createdAt: 'desc' }, include: { product: true, user: true, access: true } }),
-      prisma.studioRequest.findMany({ take: 5, orderBy: { createdAt: 'desc' } }),
-      prisma.profile.findMany({ take: 5, orderBy: { createdAt: 'desc' }, select: { userId: true, name: true, email: true, role: true, createdAt: true } }),
+      prisma.product.count().catch(() => 0),
+      prisma.product.count({ where: { published: true } }).catch(() => 0),
+      prisma.product.count({ where: { type: 'FREE' } }).catch(() => 0),
+      prisma.profile.count().catch(() => 0),
+      prisma.download.count().catch(() => 0),
+      prisma.download.count({ where: downloadWhere }).catch(() => 0),
+      prisma.order.count().catch(() => 0),
+      prisma.order.count({ where: orderWhere }).catch(() => 0),
+      prisma.order.aggregate({ _sum: { total: true }, where: orderWhere }).catch(() => ({ _sum: { total: 0 } })),
+      prisma.order.aggregate({ _sum: { total: true }, where: { status: 'PAID' } }).catch(() => ({ _sum: { total: 0 } })),
+      prisma.studioRequest.count({ where: { status: 'NEW' } }).catch(() => 0),
+      prisma.product.findMany({ take: 6, orderBy: { createdAt: 'desc' }, include: { category: true } }).catch(() => []),
+      prisma.order.findMany({ take: 6, orderBy: { createdAt: 'desc' }, include: { items: true, user: true } }).catch(() => []),
+      prisma.download.findMany({ take: 6, orderBy: { createdAt: 'desc' }, include: { product: true, user: true, access: true } }).catch(() => []),
+      prisma.studioRequest.findMany({ take: 5, orderBy: { createdAt: 'desc' } }).catch(() => []),
+      prisma.profile.findMany({ take: 5, orderBy: { createdAt: 'desc' }, select: { userId: true, name: true, email: true, role: true, createdAt: true } }).catch(() => []),
       prisma.product.findMany({
         take: 5,
-        orderBy: { access: { _count: 'desc' } },
+        orderBy: { createdAt: 'desc' },
         include: {
           category: true,
           _count: { select: { downloads: true, access: true } },
         },
-      }),
+      }).catch(() => []),
     ]);
 
-    // Format chart points (last 7 or 14 intervals)
+    // Format chart points
     const daysCount = period === 'today' ? 24 : period === '7d' ? 7 : 14;
     const chartLabels = [];
     const chartRevenue = [];
@@ -94,50 +94,47 @@ export async function GET(request) {
       chartOrders.push(0);
     }
 
-    // Populate chart points from recent orders
+    // Populate chart points from recent orders safely
     const paidOrders = await prisma.order.findMany({
       where: {
         status: 'PAID',
-        createdAt: { gte: new Date(now.getTime() - (daysCount + 1) * 24 * 60 * 60 * 1000) },
+        createdAt: { gte: new Date(now.getTime() - (period === 'today' ? 24 * 3600 * 1000 : daysCount * 24 * 3600 * 1000)) },
       },
       select: { total: true, createdAt: true },
-    });
+    }).catch(() => []);
 
     paidOrders.forEach((o) => {
-      const orderDate = new Date(o.createdAt);
-      const diffDays = Math.floor((now.getTime() - orderDate.getTime()) / (24 * 60 * 60 * 1000));
-      const idx = daysCount - 1 - diffDays;
-      if (idx >= 0 && idx < daysCount) {
-        chartRevenue[idx] += o.total;
-        chartOrders[idx] += 1;
+      const diffMs = now.getTime() - new Date(o.createdAt).getTime();
+      const idx = period === 'today'
+        ? Math.floor(diffMs / (60 * 60 * 1000))
+        : Math.floor(diffMs / (24 * 60 * 60 * 1000));
+      const targetIdx = daysCount - 1 - idx;
+      if (targetIdx >= 0 && targetIdx < daysCount) {
+        chartRevenue[targetIdx] += o.total || 0;
+        chartOrders[targetIdx] += 1;
       }
     });
 
     // Pending action items
-    const unpublishedDrafts = await prisma.product.count({ where: { published: false } });
+    const unpublishedDrafts = await prisma.product.count({ where: { published: false } }).catch(() => 0);
     const missingMediaCount = await prisma.product.count({
-      where: {
-        AND: [
-          { thumbnailKey: null },
-          { previewImages: { equals: [] } },
-        ],
-      },
-    });
+      where: { thumbnailKey: null },
+    }).catch(() => 0);
 
     return Response.json({
       period,
       stats: {
-        products: totalProducts,
-        publishedProducts,
-        freeProducts,
-        users: totalUsers,
-        downloads: periodDownloads,
-        totalDownloads,
-        orders: periodOrders,
-        totalOrders,
-        revenue: periodRevenueAggregate._sum.total || 0,
-        totalRevenue: totalRevenueAggregate._sum.total || 0,
-        pendingStudioRequests: pendingStudioCount,
+        products: totalProducts ?? 0,
+        publishedProducts: publishedProducts ?? 0,
+        freeProducts: freeProducts ?? 0,
+        users: totalUsers ?? 0,
+        downloads: periodDownloads ?? 0,
+        totalDownloads: totalDownloads ?? 0,
+        orders: periodOrders ?? 0,
+        totalOrders: totalOrders ?? 0,
+        revenue: periodRevenueAggregate?._sum?.total || 0,
+        totalRevenue: totalRevenueAggregate?._sum?.total || 0,
+        pendingStudioRequests: pendingStudioCount ?? 0,
       },
       chart: {
         labels: chartLabels,
@@ -145,18 +142,18 @@ export async function GET(request) {
         orders: chartOrders,
       },
       pendingActions: {
-        studioRequests: pendingStudioCount,
-        unpublishedDrafts,
-        missingMedia: missingMediaCount,
+        studioRequests: pendingStudioCount ?? 0,
+        unpublishedDrafts: unpublishedDrafts ?? 0,
+        missingMedia: missingMediaCount ?? 0,
       },
       recent: {
-        products: recentProducts,
-        orders: recentOrders,
-        downloads: recentDownloads,
-        studio: recentStudio,
-        users: recentUsers,
+        products: Array.isArray(recentProducts) ? recentProducts : [],
+        orders: Array.isArray(recentOrders) ? recentOrders : [],
+        downloads: Array.isArray(recentDownloads) ? recentDownloads : [],
+        studio: Array.isArray(recentStudio) ? recentStudio : [],
+        users: Array.isArray(recentUsers) ? recentUsers : [],
       },
-      topProducts: topProductsRaw.map((p) => ({
+      topProducts: Array.isArray(topProductsRaw) ? topProductsRaw.map((p) => ({
         id: p.id,
         name: p.name,
         slug: p.slug,
@@ -165,10 +162,10 @@ export async function GET(request) {
         category: p.category?.name || 'Asset',
         thumbnailKey: p.thumbnailKey,
         previewImages: p.previewImages,
-        downloadsCount: p._count.downloads,
-        salesCount: p._count.access,
-        revenue: p.type === 'PAID' ? p._count.access * p.price : 0,
-      })),
+        downloadsCount: p._count?.downloads || 0,
+        salesCount: p._count?.access || 0,
+        revenue: p.type === 'PAID' ? (p._count?.access || 0) * (p.price || 0) : 0,
+      })) : [],
     });
   } catch (error) {
     console.error('Admin overview API error:', error);
