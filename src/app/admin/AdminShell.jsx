@@ -1,43 +1,1480 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, FolderKanban, Download, ShoppingBag, Users, BarChart3, FileText, BriefcaseBusiness, CircleHelp, Wrench, Settings, Menu, X, Search, Plus, ExternalLink, Pencil, Trash2, Grid3X3, List, Image as ImageIcon } from 'lucide-react';
-import MediaManager from '@/components/admin/MediaManager';
+import { usePathname, useRouter } from 'next/navigation';
+import {
+  LayoutDashboard,
+  Package,
+  FolderKanban,
+  Download,
+  ShoppingBag,
+  Users,
+  BarChart3,
+  FileText,
+  BriefcaseBusiness,
+  CircleHelp,
+  Wrench,
+  Settings,
+  Menu,
+  X,
+  Search,
+  Plus,
+  ExternalLink,
+  Pencil,
+  Trash2,
+  Grid3X3,
+  List,
+  Image as ImageIcon,
+  ChevronRight,
+  Bell,
+  LogOut,
+  ChevronDown,
+  Copy,
+  CheckCircle2,
+  AlertTriangle,
+  ArrowUpRight,
+  TrendingUp,
+  Clock,
+  Filter,
+  Eye,
+  EyeOff,
+  ChevronLeft,
+  ChevronsLeft,
+  ChevronsRight,
+  Loader2,
+  Sparkles,
+  Command,
+} from 'lucide-react';
 
-const nav = [
-  { label: 'Dashboard', href: '/admin', icon: LayoutDashboard, group: 'MAIN' },
-  { label: 'Products', href: '/admin/products', icon: Package, group: 'STORE' },
-  { label: 'Categories', href: '/admin/categories', icon: FolderKanban, group: 'STORE' },
-  { label: 'Downloads', href: '/admin/downloads', icon: Download, group: 'STORE' },
-  { label: 'Orders', href: '/admin/orders', icon: ShoppingBag, group: 'BUSINESS' },
-  { label: 'Users', href: '/admin/users', icon: Users, group: 'BUSINESS' },
-  { label: 'Analytics', href: '/admin/analytics', icon: BarChart3, group: 'BUSINESS' },
-  { label: 'Content', href: '/admin/content', icon: FileText, group: 'CONTENT' },
-  { label: 'Studio', href: '/admin/studio', icon: BriefcaseBusiness, group: 'CONTENT' },
-  { label: 'FAQ', href: '/admin/faq', icon: CircleHelp, group: 'CONTENT' },
-  { label: 'Tools', href: '/admin/tools', icon: Wrench, group: 'CONTENT' },
-  { label: 'Settings', href: '/admin/settings', icon: Settings, group: 'SYSTEM' },
+// Context for Toasts & Confirmations
+const AdminContext = createContext({
+  toast: () => {},
+  confirm: () => Promise.resolve(false),
+  collapsed: false,
+  setCollapsed: () => {},
+});
+
+export const useAdmin = () => useContext(AdminContext);
+
+const NAV_ITEMS = [
+  { group: 'OVERVIEW', items: [
+    { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+  ]},
+  { group: 'CATALOGUE', items: [
+    { label: 'Products', href: '/admin/products', icon: Package },
+    { label: 'Categories', href: '/admin/categories', icon: FolderKanban },
+    { label: 'Downloads', href: '/admin/downloads', icon: Download },
+    { label: 'Tools', href: '/admin/tools', icon: Wrench },
+  ]},
+  { group: 'CONTENT', items: [
+    { label: 'Posts & Prompts', href: '/admin/content', icon: FileText },
+  ]},
+  { group: 'BUSINESS', items: [
+    { label: 'Orders', href: '/admin/orders', icon: ShoppingBag },
+    { label: 'Users', href: '/admin/users', icon: Users },
+    { label: 'Studio Requests', href: '/admin/studio', icon: BriefcaseBusiness, badgeKey: 'studio' },
+    { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+  ]},
+  { group: 'SITE', items: [
+    { label: 'FAQ', href: '/admin/faq', icon: CircleHelp },
+    { label: 'Settings', href: '/admin/settings', icon: Settings },
+  ]},
 ];
 
-export function useAdminKey() { const [key, setKey] = useState(''); useEffect(() => setKey(window.localStorage.getItem('davinci-admin-key') || ''), []); const save = (value) => { setKey(value); window.localStorage.setItem('davinci-admin-key', value); }; return [key, save]; }
+// Product Image Thumbnail supporting R2 Streaming
+export function ProductThumb({ product, className = '' }) {
+  const [failed, setFailed] = useState(false);
+  const raw =
+    product?.thumbnailKey ||
+    (Array.isArray(product?.previewImages) ? product.previewImages[0] : null) ||
+    product?.image;
 
-export function ProductThumb({ product, className = '' }) { const [failed, setFailed] = useState(false); const image = product?.previewImages?.[0]; return <div className={`relative overflow-hidden rounded-xl bg-gradient-to-br from-[#16213b] via-[#0d1324] to-[#05070d] ${className}`}>{image && !failed ? <img src={image} alt="" onError={() => setFailed(true)} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" /> : <div className="flex h-full min-h-[110px] flex-col items-center justify-center gap-2 text-white/35"><ImageIcon className="h-7 w-7" /><span className="px-3 text-center text-[10px] uppercase tracking-widest">{product?.category || 'Product preview'}</span></div>}</div>; }
+  const image = raw
+    ? String(raw).startsWith('http') || String(raw).startsWith('/')
+      ? raw
+      : `/api/media?key=${encodeURIComponent(raw)}`
+    : null;
 
-export function AdminLayout({ children, title = 'Dashboard' }) { const pathname = usePathname(); const [open, setOpen] = useState(false); const [key, save] = useAdminKey(); const groups = [...new Set(nav.map((item) => item.group))]; return <div className="min-h-screen bg-[#05070d] text-white"><aside className={`fixed inset-y-0 left-0 z-50 w-64 border-r border-white/[.08] bg-[#080c16] p-5 transition-transform duration-300 lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}><div className="flex items-center justify-between border-b border-white/[.08] pb-6"><Link href="/admin" className="flex items-center gap-3"><span className="h-2.5 w-2.5 rounded-full bg-blue-400 shadow-[0_0_16px_#60a5fa]" /><span className="text-sm font-semibold tracking-tight">DavinciWale<span className="text-white/40">Bhaiya</span></span></Link><button onClick={() => setOpen(false)} className="text-white/50 lg:hidden"><X className="h-5 w-5" /></button></div><div className="mt-6 space-y-6">{groups.map((group) => <div key={group}><p className="mb-2 px-3 font-mono text-[9px] tracking-[.24em] text-white/30">{group}</p><div className="space-y-1">{nav.filter((item) => item.group === group).map((item) => { const Icon = item.icon; const active = item.href === '/admin' ? pathname === item.href : pathname.startsWith(item.href); return <Link onClick={() => setOpen(false)} key={item.href} href={item.href} className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs transition ${active ? 'bg-blue-500/15 text-blue-200 shadow-[inset_2px_0_0_#60a5fa]' : 'text-white/50 hover:bg-white/[.04] hover:text-white'}`}><Icon className="h-4 w-4" />{item.label}</Link>; })}</div></div>)}</div></aside><div className="lg:pl-64"><header className="sticky top-0 z-40 flex h-20 items-center justify-between border-b border-white/[.08] bg-[#05070d]/85 px-5 backdrop-blur-xl sm:px-8"><div className="flex items-center gap-4"><button onClick={() => setOpen(true)} className="text-white/70 lg:hidden"><Menu className="h-5 w-5" /></button><div><p className="font-mono text-[9px] uppercase tracking-[.24em] text-white/30">Admin workspace</p><h1 className="mt-1 text-lg font-medium">{title}</h1></div></div><div className="flex items-center gap-3"><div className="hidden items-center gap-2 rounded-lg border border-white/10 bg-white/[.03] px-3 py-2 md:flex"><Search className="h-4 w-4 text-white/30" /><input placeholder="Search workspace" className="w-36 bg-transparent text-xs outline-none placeholder:text-white/30" /></div><input aria-label="Admin key" type="password" placeholder="Admin key" value={key} onChange={(e) => save(e.target.value)} className="w-24 rounded-lg border border-white/10 bg-white/[.03] px-2 py-2 text-[10px] outline-none focus:border-blue-400/50 sm:w-32" /><Link href="/" className="hidden rounded-lg border border-white/10 px-3 py-2 text-xs text-white/60 hover:text-white sm:flex">View site</Link></div></header><main className="mx-auto max-w-[1500px] p-5 sm:p-8">{children}</main></div></div>; }
+  useEffect(() => {
+    setFailed(false);
+  }, [image]);
 
-function Stat({ label, value, note, tone = 'blue' }) { return <div className="rounded-2xl border border-white/[.08] bg-[#0a0f1b] p-5 shadow-[0_12px_40px_rgba(0,0,0,.16)]"><p className="text-xs text-white/45">{label}</p><p className={`mt-3 text-3xl font-semibold ${tone === 'green' ? 'text-emerald-300' : tone === 'amber' ? 'text-amber-200' : 'text-white'}`}>{value}</p><p className="mt-2 text-[10px] text-white/30">{note}</p></div>; }
+  return (
+    <div
+      className={`relative overflow-hidden rounded-xl bg-gradient-to-br from-[#121929] via-[#090d16] to-[#04060b] border border-white/[0.08] ${className}`}
+    >
+      {image && !failed ? (
+        <img
+          src={image}
+          alt={product?.name || ''}
+          onError={() => setFailed(true)}
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+      ) : (
+        <div className="flex h-full min-h-[100px] flex-col items-center justify-center gap-1.5 text-white/30 p-2">
+          <ImageIcon className="h-6 w-6" />
+          <span className="text-center text-[9px] font-mono uppercase tracking-widest text-white/40 truncate max-w-full">
+            {product?.category || 'Preview'}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
 
-export function Dashboard() { const [key] = useAdminKey(); const [data, setData] = useState(null); const [error, setError] = useState(''); useEffect(() => { fetch('/api/admin/overview', { headers: { 'x-admin-key': key } }).then((r) => r.ok ? r.json() : Promise.reject()).then(setData).catch(() => setError('Add your admin key in the top bar to load workspace data.')); }, [key]); const s = data?.stats; return <AdminLayout title="Dashboard"><div className="mb-8 flex flex-wrap items-end justify-between gap-4"><div><p className="font-mono text-[10px] uppercase tracking-[.24em] text-blue-300/70">Good morning, Admin</p><h2 className="mt-2 text-3xl font-semibold tracking-tight">Manage DavinciWaleBhaiya</h2></div><Link href="/admin/products/new" className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-xs font-medium text-black"><Plus className="h-4 w-4" />Add product</Link></div>{error && <div className="mb-6 rounded-xl border border-amber-400/20 bg-amber-300/5 p-4 text-xs text-amber-200">{error}</div>}<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6"><Stat label="Products" value={s?.products ?? '—'} note={`${s?.publishedProducts ?? 0} published`} /><Stat label="Users" value={s?.users ?? '—'} note="Registered accounts" /><Stat label="Downloads" value={s?.downloads ?? '—'} note="All recorded downloads" /><Stat label="Orders" value={s?.orders ?? '—'} note="All order statuses" /><Stat label="Revenue" value={s ? `₹${s.revenue.toLocaleString()}` : '—'} note="Verified paid orders" tone="green" /><Stat label="Studio requests" value={s?.studioRequests ?? '—'} note="Awaiting review" tone="amber" /></div><div className="mt-8 grid gap-6 xl:grid-cols-[1.5fr_1fr]"><section className="rounded-2xl border border-white/[.08] bg-[#0a0f1b] p-5"><div className="mb-5 flex items-center justify-between"><div><p className="font-mono text-[10px] uppercase tracking-widest text-white/30">Store</p><h3 className="mt-1 text-lg">Recent products</h3></div><Link href="/admin/products" className="text-xs text-blue-300">View all</Link></div>{data?.recent.products?.length ? <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{data.recent.products.map((p) => <Link href={`/admin/products/${p.id}/edit`} key={p.id} className="group rounded-xl border border-white/[.07] bg-white/[.02] p-2 transition hover:border-blue-400/40"><ProductThumb product={{ ...p, category: p.category?.name }} className="h-28" /><div className="p-2"><p className="truncate text-sm">{p.name}</p><p className="mt-1 text-[10px] text-white/40">{p.type} · {p.published ? 'Published' : 'Draft'}</p></div></Link>)}</div> : <EmptyState title="No products yet" text="Start building your asset catalogue." action="Add product" href="/admin/products/new" />}</section><section className="rounded-2xl border border-white/[.08] bg-[#0a0f1b] p-5"><div className="mb-5 flex items-center justify-between"><div><p className="font-mono text-[10px] uppercase tracking-widest text-white/30">Activity</p><h3 className="mt-1 text-lg">Studio requests</h3></div><Link href="/admin/studio" className="text-xs text-blue-300">View all</Link></div>{data?.recent.studio?.length ? <div className="space-y-3">{data.recent.studio.map((item) => <Link href="/admin/studio" key={item.id} className="flex items-center justify-between rounded-xl border border-white/[.07] p-3 hover:border-blue-400/40"><div><p className="text-sm">{item.name}</p><p className="mt-1 text-[10px] text-white/40">{item.requestType}</p></div><span className="rounded-full bg-amber-300/10 px-2 py-1 text-[9px] text-amber-200">{item.status}</span></Link>)}</div> : <EmptyState title="No studio requests" text="New submissions will appear here." />}</section></div></AdminLayout>; }
+// Global Command Palette (CMD + K)
+function CommandPalette({ open, onClose }) {
+  const router = useRouter();
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState({ products: [], users: [], orders: [], content: [], studio: [] });
+  const [loading, setLoading] = useState(false);
+  const inputRef = useRef(null);
 
-function EmptyState({ title, text, action, href }) { return <div className="rounded-xl border border-dashed border-white/10 p-10 text-center"><p className="text-sm text-white/70">{title}</p><p className="mt-2 text-xs text-white/35">{text}</p>{action && <Link href={href} className="mt-5 inline-block rounded-lg bg-white px-3 py-2 text-xs text-black">{action}</Link>}</div>; }
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => inputRef.current?.focus(), 50);
+    } else {
+      setQuery('');
+      setResults({ products: [], users: [], orders: [], content: [], studio: [] });
+    }
+  }, [open]);
 
-export function ProductList() { const [key] = useAdminKey(); const [products, setProducts] = useState([]); const [view, setView] = useState('grid'); const [search, setSearch] = useState(''); const [type, setType] = useState(''); const [published, setPublished] = useState(''); const [sort, setSort] = useState('newest'); const load = () => fetch(`/api/products?limit=100${search ? `&search=${encodeURIComponent(search)}` : ''}${type ? `&type=${type}` : ''}`, { headers: { 'x-admin-key': key } }).then((r) => r.json()).then((d) => setProducts((d.products || []).filter((p) => published === '' || String(p.published) === published))); useEffect(() => { load(); }, [key, search, type, published]); const sorted = useMemo(() => [...products].sort((a, b) => sort === 'name' ? a.name.localeCompare(b.name) : sort === 'price-low' ? a.price - b.price : sort === 'price-high' ? b.price - a.price : new Date(b.createdAt) - new Date(a.createdAt)), [products, sort]); const remove = async (id) => { if (!confirm('Delete this product? This action cannot be undone.')) return; await fetch(`/api/products/${id}`, { method: 'DELETE', headers: { 'x-admin-key': key } }); load(); }; return <AdminLayout title="Products"><div className="mb-7 flex flex-wrap items-end justify-between gap-4"><div><p className="font-mono text-[10px] uppercase tracking-[.24em] text-blue-300/70">Store / Catalogue</p><h2 className="mt-2 text-3xl font-semibold">Products</h2><p className="mt-2 text-sm text-white/40">Visual control over everything published in the catalogue.</p></div><Link href="/admin/products/new" className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-xs font-medium text-black"><Plus className="h-4 w-4" />New product</Link></div><div className="mb-6 flex flex-wrap gap-2 rounded-2xl border border-white/[.08] bg-[#0a0f1b] p-3"><div className="flex min-w-[220px] flex-1 items-center gap-2 rounded-lg border border-white/10 px-3"><Search className="h-4 w-4 text-white/30" /><input className="w-full bg-transparent py-2 text-xs outline-none" placeholder="Search products…" value={search} onChange={(e) => setSearch(e.target.value)} /></div><select className="rounded-lg border border-white/10 bg-[#0b1020] px-3 py-2 text-xs" value={type} onChange={(e) => setType(e.target.value)}><option value="">All types</option><option value="FREE">Free</option><option value="PAID">Paid</option></select><select className="rounded-lg border border-white/10 bg-[#0b1020] px-3 py-2 text-xs" value={published} onChange={(e) => setPublished(e.target.value)}><option value="">All status</option><option value="true">Published</option><option value="false">Draft</option></select><select className="rounded-lg border border-white/10 bg-[#0b1020] px-3 py-2 text-xs" value={sort} onChange={(e) => setSort(e.target.value)}><option value="newest">Newest</option><option value="name">Name A-Z</option><option value="price-low">Price low-high</option><option value="price-high">Price high-low</option></select><div className="flex rounded-lg border border-white/10 p-1"><button onClick={() => setView('grid')} className={`rounded p-1.5 ${view === 'grid' ? 'bg-white/10 text-white' : 'text-white/35'}`}><Grid3X3 className="h-4 w-4" /></button><button onClick={() => setView('list')} className={`rounded p-1.5 ${view === 'list' ? 'bg-white/10 text-white' : 'text-white/35'}`}><List className="h-4 w-4" /></button></div></div>{!sorted.length ? <EmptyState title="No products found" text="Try changing your filters or add a new product." action="Add product" href="/admin/products/new" /> : view === 'grid' ? <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{sorted.map((p) => <article key={p.id} className="group rounded-2xl border border-white/[.08] bg-[#0a0f1b] p-3 transition hover:-translate-y-0.5 hover:border-blue-400/40"><ProductThumb product={p} className="h-48" /><div className="p-3"><div className="flex items-start justify-between gap-3"><div><p className="text-base font-medium">{p.name}</p><p className="mt-1 text-[10px] uppercase tracking-widest text-white/35">{p.category} · {p.type}</p></div><span className={`h-2 w-2 rounded-full ${p.published ? 'bg-emerald-400' : 'bg-white/20'}`} /></div><div className="mt-5 flex items-center justify-between"><span className="text-sm font-medium">{p.type === 'free' ? 'FREE' : `₹${p.price.toLocaleString()}`}</span><div className="flex gap-2"><Link title="Edit" href={`/admin/products/${p.id}/edit`} className="rounded-lg border border-white/10 p-2 text-white/55 hover:text-white"><Pencil className="h-3.5 w-3.5" /></Link><button title="Delete" onClick={() => remove(p.id)} className="rounded-lg border border-white/10 p-2 text-red-300/70 hover:text-red-200"><Trash2 className="h-3.5 w-3.5" /></button></div></div></div></article>)}</div> : <div className="overflow-x-auto rounded-2xl border border-white/[.08] bg-[#0a0f1b]"><table className="w-full min-w-[780px] text-left text-xs"><thead className="text-white/35"><tr>{['Preview', 'Product', 'Category', 'Type', 'Price', 'Status', 'Updated', 'Actions'].map((h) => <th key={h} className="px-4 py-4">{h}</th>)}</tr></thead><tbody>{sorted.map((p) => <tr key={p.id} className="border-t border-white/[.07]"><td className="w-20 px-4 py-3"><ProductThumb product={p} className="h-12 w-16" /></td><td className="px-4 py-3 font-medium">{p.name}</td><td className="px-4 py-3 text-white/50">{p.category}</td><td className="px-4 py-3">{p.type}</td><td className="px-4 py-3">{p.type === 'free' ? 'FREE' : `₹${p.price.toLocaleString()}`}</td><td className="px-4 py-3">{p.published ? 'Published' : 'Draft'}</td><td className="px-4 py-3 text-white/45">{new Date(p.updatedAt).toLocaleDateString()}</td><td className="px-4 py-3"><Link href={`/admin/products/${p.id}/edit`} className="mr-3 underline">Edit</Link><button onClick={() => remove(p.id)} className="text-red-300">Delete</button></td></tr>)}</tbody></table></div>}</AdminLayout>; }
+  useEffect(() => {
+    if (!query.trim() || query.length < 2) {
+      setResults({ products: [], users: [], orders: [], content: [], studio: [] });
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/admin/search?q=${encodeURIComponent(query)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setResults(data.results || { products: [], users: [], orders: [], content: [], studio: [] });
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [query]);
 
-const inputClass = 'w-full rounded-xl border border-white/10 bg-[#080d18] px-3 py-2.5 text-sm text-white outline-none focus:border-blue-400/50';
-function Field({ label, children, hint }) { return <label className="block space-y-1.5"><span className="text-xs text-white/55">{label}</span>{children}{hint && <small className="block text-[10px] text-white/25">{hint}</small>}</label>; }
+  if (!open) return null;
 
-export function ProductForm({ product }) { const [key] = useAdminKey(); const [categories, setCategories] = useState([]); const [message, setMessage] = useState(''); const [form, setForm] = useState(() => ({ name: '', slug: '', description: '', shortDescription: '', categoryId: '', type: 'FREE', price: 0, currency: 'INR', software: [], version: '', fileSize: '', previewImages: [], demoVideo: '', beforeImage: '', afterImage: '', installationGuide: [], featured: false, published: false, ...(product || {}) })); useEffect(() => { fetch('/api/categories').then((r) => r.json()).then((d) => setCategories(d.categories || [])); }, []); const set = (field, value) => setForm((current) => ({ ...current, [field]: value })); const asText = (field, split = ', ') => Array.isArray(form[field]) ? form[field].join(split) : (form[field] || ''); const save = async (event, publishOverride) => { event?.preventDefault(); const payload = { ...form, published: publishOverride ?? form.published, price: Number(form.price), software: String(form.software || '').split(',').map((x) => x.trim()).filter(Boolean), previewImages: String(form.previewImages || '').split('\n').map((x) => x.trim()).filter(Boolean), installationGuide: String(form.installationGuide || '').split('\n').map((x) => x.trim()).filter(Boolean), included: Array.isArray(form.included) ? form.included : [] }; const id = product?.id; const r = await fetch(id ? `/api/products/${id}` : '/api/products', { method: id ? 'PATCH' : 'POST', headers: { 'content-type': 'application/json', 'x-admin-key': key }, body: JSON.stringify(payload) }); const d = await r.json(); setMessage(d.error || (id ? 'Product updated successfully' : 'Product created successfully')); if (r.ok && !id) window.location.href = `/admin/products/${d.product.id}/edit`; }; return <AdminLayout title={product ? 'Edit product' : 'New product'}><div className="mb-7 flex flex-wrap items-end justify-between gap-4"><div><p className="font-mono text-[10px] uppercase tracking-[.24em] text-blue-300/70">Store / Product editor</p><h2 className="mt-2 text-3xl font-semibold">{product ? 'Edit product' : 'Create product'}</h2></div><div className="flex gap-2"><Link href="/admin/products" className="rounded-xl border border-white/10 px-4 py-3 text-xs text-white/60">Cancel</Link><button onClick={() => save(null, true)} className="rounded-xl bg-white px-4 py-3 text-xs font-medium text-black">Publish</button></div></div><form onSubmit={save} className="grid gap-6 xl:grid-cols-[1.35fr_.65fr]"><div className="space-y-6"><section className="rounded-2xl border border-white/[.08] bg-[#0a0f1b] p-5"><p className="mb-5 font-mono text-[10px] uppercase tracking-widest text-white/35">Product information</p><div className="grid gap-4 md:grid-cols-2"><Field label="Product name"><input required className={inputClass} value={form.name} onChange={(e) => set('name', e.target.value)} /></Field><Field label="Slug"><input required className={inputClass} value={form.slug} onChange={(e) => set('slug', e.target.value)} /></Field><Field label="Short description"><input className={inputClass} value={form.shortDescription || ''} onChange={(e) => set('shortDescription', e.target.value)} /></Field><Field label="Category"><select required className={inputClass} value={form.categoryId} onChange={(e) => set('categoryId', e.target.value)}><option value="">Select category</option>{categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></Field><Field label="Type"><select className={inputClass} value={form.type} onChange={(e) => set('type', e.target.value)}><option value="FREE">Free</option><option value="PAID">Paid</option></select></Field><Field label="Price"><input type="number" min="0" className={inputClass} value={form.price} onChange={(e) => set('price', e.target.value)} /></Field><Field label="Currency"><input className={inputClass} value={form.currency} onChange={(e) => set('currency', e.target.value.toUpperCase())} /></Field><Field label="Software" hint="Comma separated"><input className={inputClass} value={asText('software')} onChange={(e) => set('software', e.target.value)} /></Field><Field label="Version"><input className={inputClass} value={form.version || ''} onChange={(e) => set('version', e.target.value)} /></Field><Field label="File size"><input className={inputClass} value={form.fileSize || ''} onChange={(e) => set('fileSize', e.target.value)} /></Field><div className="md:col-span-2"><Field label="Description"><textarea required rows="7" className={inputClass} value={form.description} onChange={(e) => set('description', e.target.value)} /></Field></div></div></section><section className="rounded-2xl border border-white/[.08] bg-[#0a0f1b] p-5"><p className="mb-5 font-mono text-[10px] uppercase tracking-widest text-white/35">Media & delivery</p><div className="grid gap-4 md:grid-cols-2"><Field label="Gallery image URLs" hint="One URL per line"><textarea rows="4" className={inputClass} value={asText('previewImages', '\n')} onChange={(e) => set('previewImages', e.target.value)} /></Field><Field label="Installation guide" hint="One step per line"><textarea rows="4" className={inputClass} value={asText('installationGuide', '\n')} onChange={(e) => set('installationGuide', e.target.value)} /></Field><Field label="Demo video URL"><input className={inputClass} value={form.demoVideo || ''} onChange={(e) => set('demoVideo', e.target.value)} /></Field><Field label="Before image URL"><input className={inputClass} value={form.beforeImage || ''} onChange={(e) => set('beforeImage', e.target.value)} /></Field><Field label="After image URL"><input className={inputClass} value={form.afterImage || ''} onChange={(e) => set('afterImage', e.target.value)} /></Field></div>{product?.downloadFileName && <div className="mt-5 rounded-xl border border-emerald-400/20 bg-emerald-300/5 p-4 text-xs text-emerald-200">Attached asset: {product.downloadFileName} · {product.downloadFileSize ? `${Math.round(product.downloadFileSize / 1024 / 1024)} MB` : ''}</div>}</section><section className="rounded-2xl border border-white/[.08] bg-[#0a0f1b] p-5"><p className="mb-4 font-mono text-[10px] uppercase tracking-widest text-white/35">Publishing controls</p><div className="flex flex-wrap gap-6 text-sm"><label className="flex items-center gap-2"><input type="checkbox" checked={form.published} onChange={(e) => set('published', e.target.checked)} /> Published</label><label className="flex items-center gap-2"><input type="checkbox" checked={form.featured} onChange={(e) => set('featured', e.target.checked)} /> Featured</label></div><p className="mt-3 text-[10px] text-white/30">Published products appear on the public catalogue. Featured products appear in curated sections.</p></section></div><aside className="xl:sticky xl:top-28 xl:h-fit"><section className="overflow-hidden rounded-2xl border border-white/[.08] bg-[#0a0f1b]"><div className="border-b border-white/[.08] p-5"><p className="font-mono text-[10px] uppercase tracking-widest text-white/35">Live product preview</p></div><ProductThumb product={{ ...form, category: categories.find((c) => c.id === form.categoryId)?.name }} className="m-5 h-48" /><div className="px-5 pb-5"><p className="text-[10px] uppercase tracking-widest text-white/35">{categories.find((c) => c.id === form.categoryId)?.name || 'Category'} · v{form.version || '1.0'}</p><h3 className="mt-2 text-xl font-semibold">{form.name || 'Product name'}</h3><p className="mt-2 line-clamp-3 text-sm leading-6 text-white/50">{form.shortDescription || form.description || 'Your product description will appear here.'}</p><div className="mt-6 flex items-center justify-between border-t border-white/[.08] pt-4"><span className={form.type === 'FREE' ? 'text-emerald-300' : 'text-white'}>{form.type === 'FREE' ? 'FREE' : `₹${Number(form.price || 0).toLocaleString()}`}</span><span className="text-[10px] text-white/35">{form.published ? 'Published' : 'Draft'}</span></div></div></section><button type="submit" className="mt-4 w-full rounded-xl bg-blue-500 px-4 py-3 text-xs font-medium text-white hover:bg-blue-400">Save draft</button>{message && <p className="mt-3 text-center text-xs text-amber-200">{message}</p>}</aside></form></AdminLayout>; }
+  const navigateTo = (href) => {
+    onClose();
+    router.push(href);
+  };
 
-export function CategoryList() { const [key] = useAdminKey(); const [categories, setCategories] = useState([]); const [name, setName] = useState(''); const [slug, setSlug] = useState(''); const [message, setMessage] = useState(''); const load = () => fetch('/api/categories').then((r) => r.json()).then((d) => setCategories(d.categories || [])); useEffect(() => { load(); }, []); const create = async (event) => { event.preventDefault(); const r = await fetch('/api/categories', { method: 'POST', headers: { 'content-type': 'application/json', 'x-admin-key': key }, body: JSON.stringify({ name, slug, published: true }) }); const d = await r.json(); setMessage(d.error || 'Category created'); if (r.ok) { setName(''); setSlug(''); load(); } }; const remove = async (id) => { if (!confirm('Delete this category?')) return; const r = await fetch(`/api/categories/${id}`, { method: 'DELETE', headers: { 'x-admin-key': key } }); const d = await r.json(); setMessage(d.error || 'Category deleted'); if (r.ok) load(); }; return <AdminLayout title="Categories"><div className="mb-7 flex items-end justify-between"><div><p className="font-mono text-[10px] uppercase tracking-[.24em] text-blue-300/70">Store / Taxonomy</p><h2 className="mt-2 text-3xl font-semibold">Categories</h2></div></div><div className="grid gap-6 lg:grid-cols-[.7fr_1.3fr]"><form onSubmit={create} className="rounded-2xl border border-white/[.08] bg-[#0a0f1b] p-5"><p className="mb-5 font-mono text-[10px] uppercase tracking-widest text-white/35">Create category</p><div className="space-y-4"><Field label="Name"><input required className={inputClass} value={name} onChange={(e) => setName(e.target.value)} /></Field><Field label="Slug"><input required className={inputClass} value={slug} onChange={(e) => setSlug(e.target.value)} /></Field><button className="rounded-xl bg-white px-4 py-3 text-xs text-black">Create category</button>{message && <p className="text-xs text-amber-200">{message}</p>}</div></form><div className="grid gap-4 sm:grid-cols-2">{categories.map((category) => <article key={category.id} className="rounded-2xl border border-white/[.08] bg-[#0a0f1b] p-4"><ProductThumb product={{ category: category.name }} className="h-28" /><div className="mt-4 flex items-start justify-between"><div><h3 className="font-medium">{category.name}</h3><p className="mt-1 text-[10px] text-white/40">{category._count?.products || 0} products · {category.published ? 'Published' : 'Draft'}</p></div><button onClick={() => remove(category.id)} className="text-red-300/70"><Trash2 className="h-4 w-4" /></button></div></article>)}</div></div></AdminLayout>; }
+  const hasResults =
+    results.products.length > 0 ||
+    results.users.length > 0 ||
+    results.orders.length > 0 ||
+    results.content.length > 0 ||
+    results.studio.length > 0;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="fixed inset-0" onClick={onClose} />
+      <div className="relative w-full max-w-xl bg-[#090d16] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[75vh]">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.08] bg-black/40">
+          <Search className="w-4 h-4 text-white/40" />
+          <input
+            ref={inputRef}
+            type="text"
+            placeholder="Search products, orders, customers, studio requests... (ESC to close)"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="flex-1 bg-transparent text-sm text-white placeholder-white/40 outline-none"
+          />
+          {loading && <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />}
+          <kbd className="px-2 py-0.5 text-[10px] font-mono text-white/40 bg-white/[0.05] border border-white/10 rounded">
+            ESC
+          </kbd>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-3 space-y-4">
+          {!query && (
+            <div className="p-6 text-center text-xs text-white/40">
+              <Command className="w-6 h-6 mx-auto mb-2 text-white/20" />
+              Type 2 or more characters to search across products, orders, content, and users.
+            </div>
+          )}
+
+          {query && !loading && !hasResults && (
+            <div className="p-8 text-center text-xs text-white/40 font-mono">
+              No results found for &ldquo;{query}&rdquo;
+            </div>
+          )}
+
+          {/* Products */}
+          {results.products.length > 0 && (
+            <div>
+              <p className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-blue-400/80">Products</p>
+              <div className="space-y-1">
+                {results.products.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => navigateTo(`/admin/products/${p.slug || p.id}/edit`)}
+                    className="w-full text-left flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/[0.05] text-xs transition-colors"
+                  >
+                    <div>
+                      <span className="font-medium text-white">{p.name}</span>
+                      <span className="ml-2 text-white/40 text-[10px] uppercase">({p.type})</span>
+                    </div>
+                    <span className="text-[10px] text-white/40 font-mono">Edit ↗</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Orders */}
+          {results.orders.length > 0 && (
+            <div>
+              <p className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-emerald-400/80">Orders</p>
+              <div className="space-y-1">
+                {results.orders.map((o) => (
+                  <button
+                    key={o.id}
+                    onClick={() => navigateTo('/admin/orders')}
+                    className="w-full text-left flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/[0.05] text-xs transition-colors"
+                  >
+                    <div>
+                      <span className="font-medium text-white">{o.orderNumber}</span>
+                      <span className="ml-2 text-emerald-400 text-[10px]">₹{o.total.toLocaleString()}</span>
+                    </div>
+                    <span className="text-[10px] text-white/40 uppercase">{o.status}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Users */}
+          {results.users.length > 0 && (
+            <div>
+              <p className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-amber-400/80">Users</p>
+              <div className="space-y-1">
+                {results.users.map((u) => (
+                  <button
+                    key={u.userId}
+                    onClick={() => navigateTo('/admin/users')}
+                    className="w-full text-left flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/[0.05] text-xs transition-colors"
+                  >
+                    <div>
+                      <span className="font-medium text-white">{u.email || u.name || u.userId}</span>
+                      <span className="ml-2 text-white/40 text-[10px]">({u.role})</span>
+                    </div>
+                    <span className="text-[10px] text-white/40 font-mono">Inspect ↗</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Studio Requests */}
+          {results.studio.length > 0 && (
+            <div>
+              <p className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-purple-400/80">Studio Requests</p>
+              <div className="space-y-1">
+                {results.studio.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => navigateTo('/admin/studio')}
+                    className="w-full text-left flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/[0.05] text-xs transition-colors"
+                  >
+                    <div>
+                      <span className="font-medium text-white">{s.name}</span>
+                      <span className="ml-2 text-white/40 text-[10px]">{s.requestType}</span>
+                    </div>
+                    <span className="text-[10px] text-purple-300 font-mono">{s.status}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Master Admin Layout with Collapsible Sidebar, Header, Notifications & Global Search
+export function AdminLayout({ children, title = 'Dashboard' }) {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  // Collapsible sidebar state stored in localStorage
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Toast System
+  const [toastMessage, setToastMessage] = useState(null);
+
+  // Confirm Modal System
+  const [confirmDialog, setConfirmDialog] = useState(null);
+
+  const showToast = (message, type = 'info') => {
+    setToastMessage({ message, type, id: Date.now() });
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const askConfirm = ({ title, message, confirmText = 'Confirm', destructive = false }) => {
+    return new Promise((resolve) => {
+      setConfirmDialog({
+        title,
+        message,
+        confirmText,
+        destructive,
+        onConfirm: () => {
+          setConfirmDialog(null);
+          resolve(true);
+        },
+        onCancel: () => {
+          setConfirmDialog(null);
+          resolve(false);
+        },
+      });
+    });
+  };
+
+  // Keyboard shortcut CMD+K / CTRL+K
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setCommandOpen((prev) => !prev);
+      }
+      if (e.key === 'Escape') {
+        setCommandOpen(false);
+        setNotifOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Sync collapsed state with localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('dwb_admin_collapsed');
+      if (saved !== null) setCollapsed(saved === 'true');
+    } catch {}
+  }, []);
+
+  const toggleCollapsed = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    try {
+      localStorage.setItem('dwb_admin_collapsed', String(next));
+    } catch {}
+  };
+
+  // Load live notifications
+  useEffect(() => {
+    fetch('/api/admin/notifications')
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((data) => {
+        setNotifications(data.notifications || []);
+        setUnreadCount(data.unreadCount || 0);
+      })
+      .catch(() => {});
+  }, [pathname]);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch {}
+    window.location.href = '/login?next=/admin';
+  };
+
+  // Build Breadcrumbs
+  const pathParts = pathname.split('/').filter(Boolean);
+  const breadcrumbs = pathParts.map((part, index) => {
+    const href = '/' + pathParts.slice(0, index + 1).join('/');
+    return { label: part.charAt(0).toUpperCase() + part.slice(1), href };
+  });
+
+  return (
+    <AdminContext.Provider value={{ toast: showToast, confirm: askConfirm, collapsed, setCollapsed }}>
+      <div className="min-h-screen bg-[#05070d] text-white flex flex-col font-sans selection:bg-blue-500/20 selection:text-white">
+        
+        {/* MOBILE SLIDE-OVER OVERLAY */}
+        {mobileOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm lg:hidden transition-opacity"
+            onClick={() => setMobileOpen(false)}
+          />
+        )}
+
+        {/* SIDEBAR */}
+        <aside
+          className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-white/[0.08] bg-[#070a12] transition-all duration-300 ease-in-out
+            ${collapsed ? 'w-20' : 'w-64'}
+            ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          `}
+        >
+          {/* Top Brand Bar */}
+          <div className="flex h-16 items-center justify-between px-4 border-b border-white/[0.08]">
+            <Link href="/admin" className="flex items-center gap-3 overflow-hidden">
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-blue-400 shadow-[0_0_12px_#60a5fa]" />
+              {!collapsed && (
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold tracking-tight text-white whitespace-nowrap">
+                    DavinciWale<span className="text-white/40">Bhaiya</span>
+                  </span>
+                  <span className="text-[9px] font-mono text-blue-400/80 uppercase tracking-widest">
+                    Creator CMS
+                  </span>
+                </div>
+              )}
+            </Link>
+
+            {/* Collapse toggle (desktop) / close (mobile) */}
+            <div className="flex items-center">
+              <button
+                onClick={toggleCollapsed}
+                title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                className="hidden lg:flex p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/[0.05] transition-colors"
+              >
+                {collapsed ? <ChevronsRight className="w-4 h-4" /> : <ChevronsLeft className="w-4 h-4" />}
+              </button>
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="lg:hidden p-1.5 rounded-lg text-white/50 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Nav List */}
+          <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6 scrollbar-none">
+            {NAV_ITEMS.map((group) => (
+              <div key={group.group}>
+                {!collapsed && (
+                  <p className="px-3 mb-2 font-mono text-[9px] uppercase tracking-[0.24em] text-white/30">
+                    {group.group}
+                  </p>
+                )}
+                <div className="space-y-1">
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive =
+                      item.href === '/admin'
+                        ? pathname === '/admin'
+                        : pathname === item.href || pathname.startsWith(`${item.href}/`);
+                    const badge = item.badgeKey === 'studio' && unreadCount > 0 ? unreadCount : null;
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileOpen(false)}
+                        title={collapsed ? item.label : undefined}
+                        className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium transition-all ${
+                          isActive
+                            ? 'bg-blue-500/15 text-blue-200 border border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.15)]'
+                            : 'text-white/50 hover:bg-white/[0.04] hover:text-white border border-transparent'
+                        }`}
+                      >
+                        <Icon className={`w-4 h-4 shrink-0 transition-transform ${isActive ? 'text-blue-400' : 'group-hover:scale-110'}`} />
+                        {!collapsed && (
+                          <span className="truncate flex-1">{item.label}</span>
+                        )}
+                        {!collapsed && badge && (
+                          <span className="px-1.5 py-0.5 text-[9px] font-mono rounded-full bg-blue-500 text-white font-semibold">
+                            {badge}
+                          </span>
+                        )}
+                        {/* Collapsed Tooltip on Hover */}
+                        {collapsed && (
+                          <div className="absolute left-full ml-2 px-2.5 py-1 bg-[#0f172a] text-white text-xs rounded-md shadow-xl border border-white/10 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
+                            {item.label}
+                          </div>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom Profile / Quick Info */}
+          <div className="p-3 border-t border-white/[0.08] bg-black/20">
+            <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between'} gap-2`}>
+              <div className="flex items-center gap-2.5 overflow-hidden">
+                <div className="w-8 h-8 rounded-full bg-blue-600/30 border border-blue-400/40 flex items-center justify-center text-xs font-bold text-blue-200 shrink-0">
+                  DW
+                </div>
+                {!collapsed && (
+                  <div className="flex flex-col truncate">
+                    <span className="text-xs font-medium text-white truncate">Administrator</span>
+                    <span className="text-[10px] font-mono text-emerald-400">Verified Session</span>
+                  </div>
+                )}
+              </div>
+              {!collapsed && (
+                <button
+                  onClick={handleLogout}
+                  title="Sign out of admin"
+                  className="p-1.5 rounded-lg text-white/40 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        </aside>
+
+        {/* MAIN AREA */}
+        <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${collapsed ? 'lg:pl-20' : 'lg:pl-64'}`}>
+          
+          {/* TOP HEADER */}
+          <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-white/[0.08] bg-[#05070d]/85 px-4 sm:px-8 backdrop-blur-xl">
+            {/* Left: Mobile Toggle & Breadcrumbs */}
+            <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
+              <button
+                onClick={() => setMobileOpen(true)}
+                className="p-1.5 rounded-lg text-white/70 hover:bg-white/[0.05] lg:hidden"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+
+              <div className="flex items-center gap-2 text-xs truncate">
+                <Link href="/admin" className="text-white/40 hover:text-white transition-colors">
+                  Admin
+                </Link>
+                {breadcrumbs.slice(1).map((b, i) => (
+                  <div key={b.href} className="flex items-center gap-2">
+                    <ChevronRight className="w-3.5 h-3.5 text-white/20 shrink-0" />
+                    <span className={i === breadcrumbs.length - 2 ? 'text-white font-medium' : 'text-white/40'}>
+                      {b.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right Controls */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Global Search Trigger (CMD+K) */}
+              <button
+                onClick={() => setCommandOpen(true)}
+                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/20 px-3 py-1.5 text-xs text-white/50 transition-all"
+              >
+                <Search className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Search anything…</span>
+                <kbd className="hidden sm:inline px-1.5 py-0.5 text-[9px] font-mono bg-white/[0.06] border border-white/10 rounded text-white/60">
+                  ⌘K
+                </kbd>
+              </button>
+
+              {/* Notifications Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setNotifOpen((prev) => !prev)}
+                  className="relative p-2 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] text-white/60 hover:text-white transition-all"
+                  title="Notifications"
+                >
+                  <Bell className="w-4 h-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-500 text-[9px] font-mono font-bold text-white flex items-center justify-center">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {notifOpen && (
+                  <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl border border-white/10 bg-[#090d16] p-3 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="flex items-center justify-between border-b border-white/[0.08] pb-2 mb-2 px-1">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-white">Notifications</span>
+                      <span className="text-[10px] font-mono text-white/40">{notifications.length} events</span>
+                    </div>
+                    <div className="max-h-80 overflow-y-auto space-y-1.5">
+                      {notifications.length === 0 ? (
+                        <p className="p-4 text-center text-xs text-white/40">No new notifications</p>
+                      ) : (
+                        notifications.map((n) => (
+                          <Link
+                            key={n.id}
+                            href={n.href}
+                            onClick={() => setNotifOpen(false)}
+                            className="block p-2.5 rounded-xl hover:bg-white/[0.04] transition-colors border border-transparent hover:border-white/[0.06]"
+                          >
+                            <div className="flex items-center justify-between text-xs font-medium text-white">
+                              <span>{n.title}</span>
+                              <span className="text-[9px] font-mono text-white/40">
+                                {new Date(n.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-white/50 mt-0.5 line-clamp-1">{n.description}</p>
+                          </Link>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* View Public Site */}
+              <Link
+                href="/"
+                target="_blank"
+                className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:text-white px-3 py-1.5 text-xs text-white/60 transition-all"
+              >
+                <span>Store</span>
+                <ExternalLink className="w-3 h-3 text-white/40" />
+              </Link>
+            </div>
+          </header>
+
+          {/* PAGE CONTENT CONTAINER */}
+          <main className="flex-1 mx-auto w-full max-w-[1560px] p-4 sm:p-8">
+            {children}
+          </main>
+        </div>
+
+        {/* GLOBAL COMMAND PALETTE MODAL */}
+        <CommandPalette open={commandOpen} onClose={() => setCommandOpen(false)} />
+
+        {/* TOAST POPUP */}
+        {toastMessage && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl border border-white/15 bg-[#0e1628] px-4 py-3 text-xs text-white shadow-2xl animate-in slide-in-from-bottom-5">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>{toastMessage.message}</span>
+          </div>
+        )}
+
+        {/* CONFIRMATION MODAL */}
+        {confirmDialog && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#090d16] p-6 shadow-2xl">
+              <div className="flex items-center gap-3">
+                <div className={`p-2.5 rounded-xl ${confirmDialog.destructive ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-blue-500/10 text-blue-400'}`}>
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-semibold text-white">{confirmDialog.title}</h3>
+              </div>
+              <p className="mt-3 text-xs text-white/60 leading-relaxed font-sans">
+                {confirmDialog.message}
+              </p>
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  onClick={confirmDialog.onCancel}
+                  className="px-4 py-2 rounded-xl border border-white/10 text-xs text-white/70 hover:text-white hover:bg-white/[0.05] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDialog.onConfirm}
+                  className={`px-4 py-2 rounded-xl text-xs font-medium transition-colors ${
+                    confirmDialog.destructive
+                      ? 'bg-red-500 hover:bg-red-600 text-white'
+                      : 'bg-white hover:bg-white/90 text-black'
+                  }`}
+                >
+                  {confirmDialog.confirmText}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+    </AdminContext.Provider>
+  );
+}
+
+// DASHBOARD COMPONENT WITH REAL DATA & PERIOD TOGGLE
+export function Dashboard() {
+  const [period, setPeriod] = useState('30d');
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchDashboard = (p) => {
+    setLoading(true);
+    fetch(`/api/admin/overview?period=${p}`)
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then(setData)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchDashboard(period);
+  }, [period]);
+
+  const s = data?.stats;
+  const pActions = data?.pendingActions;
+
+  return (
+    <AdminLayout title="Overview">
+      {/* Top Welcome & Period Select */}
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-blue-400">
+            DavinciWaleBhaiya / Command Center
+          </p>
+          <h2 className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-white">
+            Ecosystem Overview
+          </h2>
+        </div>
+
+        {/* Period Selector Tabs */}
+        <div className="flex items-center gap-1 p-1 bg-white/[0.04] border border-white/10 rounded-xl text-xs">
+          {[
+            { label: 'Today', value: 'today' },
+            { label: '7D', value: '7d' },
+            { label: '30D', value: '30d' },
+            { label: '90D', value: '90d' },
+            { label: 'All', value: 'all' },
+          ].map((item) => (
+            <button
+              key={item.value}
+              onClick={() => setPeriod(item.value)}
+              className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                period === item.value
+                  ? 'bg-blue-600 text-white shadow-[0_0_12px_rgba(37,99,235,0.4)]'
+                  : 'text-white/50 hover:text-white hover:bg-white/[0.04]'
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* METRIC CARDS */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 mb-8">
+        <MetricCard
+          label="Total Revenue"
+          value={s ? `₹${s.revenue.toLocaleString()}` : '—'}
+          note={period === 'all' ? 'All verified checkouts' : `In selected ${period}`}
+          tone="green"
+        />
+        <MetricCard
+          label="Orders"
+          value={s?.orders ?? '—'}
+          note={`${s?.totalOrders ?? 0} all-time`}
+        />
+        <MetricCard
+          label="Products"
+          value={s?.products ?? '—'}
+          note={`${s?.publishedProducts ?? 0} active in catalogue`}
+        />
+        <MetricCard
+          label="Customers"
+          value={s?.users ?? '—'}
+          note="Registered accounts"
+        />
+        <MetricCard
+          label="Downloads"
+          value={s?.downloads ?? '—'}
+          note={`${s?.totalDownloads ?? 0} all-time`}
+        />
+        <MetricCard
+          label="Pending Studio"
+          value={s?.pendingStudioRequests ?? '—'}
+          note="Awaiting review"
+          tone={s?.pendingStudioRequests > 0 ? 'amber' : 'default'}
+        />
+      </div>
+
+      {/* REVENUE CHART & PENDING ACTIONS */}
+      <div className="grid gap-6 lg:grid-cols-12 mb-8">
+        {/* Revenue SVG Visualization (8 Cols) */}
+        <section className="lg:col-span-8 rounded-2xl border border-white/[0.08] bg-[#080c16] p-6 flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-white/40">Performance</p>
+              <h3 className="text-base font-semibold text-white mt-1">Revenue & Checkout Activity</h3>
+            </div>
+            <div className="flex items-center gap-4 text-xs font-mono">
+              <span className="flex items-center gap-1.5 text-blue-400">
+                <span className="w-2 h-2 rounded-full bg-blue-400" /> Revenue
+              </span>
+            </div>
+          </div>
+
+          {/* SVG Line / Bar Graph */}
+          {data?.chart?.revenue?.length ? (
+            <div className="h-56 w-full flex items-end gap-2 pt-6">
+              {data.chart.revenue.map((val, idx) => {
+                const maxVal = Math.max(...data.chart.revenue, 100);
+                const heightPct = Math.max(8, Math.round((val / maxVal) * 100));
+                return (
+                  <div key={idx} className="flex-1 flex flex-col items-center gap-2 group relative">
+                    <div className="w-full bg-white/[0.03] hover:bg-blue-500/20 rounded-md transition-colors relative flex items-end justify-center h-44">
+                      <div
+                        style={{ height: `${heightPct}%` }}
+                        className="w-full max-w-[28px] rounded-md bg-gradient-to-t from-blue-600 to-sky-400 opacity-80 group-hover:opacity-100 transition-all shadow-[0_0_12px_rgba(56,189,248,0.2)]"
+                      />
+                    </div>
+                    <span className="text-[9px] font-mono text-white/35 truncate max-w-[40px]">
+                      {data.chart.labels[idx]}
+                    </span>
+                    {/* Tooltip on hover */}
+                    <div className="absolute -top-8 px-2 py-1 bg-black border border-white/15 rounded text-[10px] font-mono text-white pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-10 whitespace-nowrap">
+                      ₹{val.toLocaleString()}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="h-56 flex items-center justify-center text-xs text-white/40 font-mono">
+              Awaiting checkout data to render trend.
+            </div>
+          )}
+        </section>
+
+        {/* Pending Actions & Alerts (4 Cols) */}
+        <section className="lg:col-span-4 rounded-2xl border border-white/[0.08] bg-[#080c16] p-6 flex flex-col justify-between">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-white/40">Action Items</p>
+            <h3 className="text-base font-semibold text-white mt-1">Pending Tasks</h3>
+            
+            <div className="space-y-3 mt-5">
+              <Link
+                href="/admin/studio"
+                className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] transition-colors"
+              >
+                <div>
+                  <p className="text-xs font-medium text-white">Studio Client Briefs</p>
+                  <p className="text-[10px] text-white/40 mt-0.5">Submissions needing colorist review</p>
+                </div>
+                <span className={`px-2.5 py-1 text-xs font-mono font-semibold rounded-lg ${pActions?.studioRequests > 0 ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30' : 'text-white/40 bg-white/5'}`}>
+                  {pActions?.studioRequests ?? 0}
+                </span>
+              </Link>
+
+              <Link
+                href="/admin/products"
+                className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] transition-colors"
+              >
+                <div>
+                  <p className="text-xs font-medium text-white">Unpublished Drafts</p>
+                  <p className="text-[10px] text-white/40 mt-0.5">Assets ready to be reviewed & published</p>
+                </div>
+                <span className="px-2.5 py-1 text-xs font-mono font-semibold rounded-lg text-white/60 bg-white/5">
+                  {pActions?.unpublishedDrafts ?? 0}
+                </span>
+              </Link>
+
+              <Link
+                href="/admin/products"
+                className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] transition-colors"
+              >
+                <div>
+                  <p className="text-xs font-medium text-white">Missing Product Media</p>
+                  <p className="text-[10px] text-white/40 mt-0.5">Upload screenshots or cover art</p>
+                </div>
+                <span className="px-2.5 py-1 text-xs font-mono font-semibold rounded-lg text-white/60 bg-white/5">
+                  {pActions?.missingMedia ?? 0}
+                </span>
+              </Link>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-white/[0.06]">
+            <Link
+              href="/admin/products/new"
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-xs font-medium text-black hover:bg-white/90 transition-colors"
+            >
+              <Plus className="w-4 h-4" /> Add New Asset
+            </Link>
+          </div>
+        </section>
+      </div>
+
+      {/* TOP ASSETS & RECENT ORDERS */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Top Assets */}
+        <section className="rounded-2xl border border-white/[0.08] bg-[#080c16] p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-semibold text-white">Top Performing Assets</h3>
+            <Link href="/admin/products" className="text-xs text-blue-400 hover:underline">
+              All products ↗
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {data?.topProducts?.length ? (
+              data.topProducts.map((p) => (
+                <div
+                  key={p.id}
+                  className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:border-blue-400/40 transition-colors"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <ProductThumb product={p} className="w-12 h-12 shrink-0 rounded-lg" />
+                    <div className="truncate">
+                      <p className="text-xs font-medium text-white truncate">{p.name}</p>
+                      <p className="text-[10px] text-white/40 font-mono mt-0.5">{p.category} · {p.type}</p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs font-mono font-semibold text-white">
+                      {p.type === 'FREE' ? 'FREE' : `₹${p.price.toLocaleString()}`}
+                    </p>
+                    <p className="text-[10px] font-mono text-white/40 mt-0.5">
+                      {p.downloadsCount} downloads
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="p-8 text-center text-xs text-white/40 font-mono">No product activity recorded.</p>
+            )}
+          </div>
+        </section>
+
+        {/* Recent Orders */}
+        <section className="rounded-2xl border border-white/[0.08] bg-[#080c16] p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-semibold text-white">Recent Orders</h3>
+            <Link href="/admin/orders" className="text-xs text-blue-400 hover:underline">
+              All orders ↗
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {data?.recent?.orders?.length ? (
+              data.recent.orders.map((o) => (
+                <div
+                  key={o.id}
+                  className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:border-white/20 transition-colors"
+                >
+                  <div className="truncate">
+                    <p className="text-xs font-mono font-medium text-white">{o.orderNumber}</p>
+                    <p className="text-[10px] text-white/40 truncate mt-0.5">
+                      {o.user?.email || 'Customer'} · {o.items?.length || 0} items
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs font-mono font-semibold text-emerald-400">
+                      ₹{o.total.toLocaleString()}
+                    </p>
+                    <span className="inline-block mt-0.5 text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300">
+                      {o.status}
+                    </span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="p-8 text-center text-xs text-white/40 font-mono">No orders placed yet.</p>
+            )}
+          </div>
+        </section>
+      </div>
+    </AdminLayout>
+  );
+}
+
+function MetricCard({ label, value, note, tone = 'default' }) {
+  return (
+    <div className="rounded-2xl border border-white/[0.08] bg-[#080c16] p-5 shadow-lg">
+      <p className="text-xs font-medium text-white/50">{label}</p>
+      <p className={`mt-2 text-2xl font-bold font-mono tracking-tight ${
+        tone === 'green' ? 'text-emerald-400' : tone === 'amber' ? 'text-amber-300' : 'text-white'
+      }`}>
+        {value}
+      </p>
+      <p className="mt-1 text-[10px] text-white/40 font-mono truncate">{note}</p>
+    </div>
+  );
+}
+
+// PRODUCTION-READY PRODUCT LIST COMPONENT
+export function ProductList() {
+  const { toast, confirm } = useAdmin();
+  const router = useRouter();
+
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Filters
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('');
+  const [type, setType] = useState('');
+  const [published, setPublished] = useState('');
+  const [sort, setSort] = useState('newest');
+  const [view, setView] = useState('grid');
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [prodsRes, catsRes] = await Promise.all([
+        fetch('/api/products?limit=100'),
+        fetch('/api/categories'),
+      ]);
+      const prodsData = await prodsRes.json();
+      const catsData = await catsRes.json();
+      setProducts(prodsData.products || []);
+      setCategories(catsData.categories || []);
+    } catch (err) {
+      console.error(err);
+      toast('Failed to load products', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  // Filtered & Sorted
+  const filtered = useMemo(() => {
+    return products.filter((p) => {
+      const matchSearch =
+        !search ||
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.slug.toLowerCase().includes(search.toLowerCase());
+      const matchCategory = !category || p.category === category;
+      const matchType = !type || p.type.toUpperCase() === type.toUpperCase();
+      const matchPublished = published === '' || String(p.published) === published;
+      return matchSearch && matchCategory && matchType && matchPublished;
+    }).sort((a, b) => {
+      if (sort === 'name') return a.name.localeCompare(b.name);
+      if (sort === 'price-low') return a.price - b.price;
+      if (sort === 'price-high') return b.price - a.price;
+      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+    });
+  }, [products, search, category, type, published, sort]);
+
+  // Actions
+  const handleDelete = async (id, name) => {
+    const ok = await confirm({
+      title: 'Delete Asset Permanently?',
+      message: `Are you sure you want to delete "${name}"? This action cannot be undone and will delete all associated download records.`,
+      confirmText: 'Delete Asset',
+      destructive: true,
+    });
+    if (!ok) return;
+
+    try {
+      const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete');
+      toast(`"${name}" deleted successfully`);
+      loadData();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleTogglePublish = async (id, currentPublished) => {
+    try {
+      const res = await fetch(`/api/products/${id}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ published: !currentPublished }),
+      });
+      if (!res.ok) throw new Error('Toggle failed');
+      toast(!currentPublished ? 'Asset published to store' : 'Asset moved to draft');
+      loadData();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleDuplicate = async (p) => {
+    const newSlug = `${p.slug}-copy-${Date.now().toString().slice(-4)}`;
+    try {
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          ...p,
+          name: `${p.name} (Copy)`,
+          slug: newSlug,
+          published: false,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Duplicate failed');
+      toast('Asset duplicated successfully');
+      router.push(`/admin/products/${data.product.slug || data.product.id}/edit`);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  return (
+    <AdminLayout title="Products">
+      {/* Top Banner */}
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-blue-400">
+            Store / Asset Repository
+          </p>
+          <h2 className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-white">
+            Digital Products & Tools
+          </h2>
+          <p className="mt-1 text-xs text-white/50">
+            Total {filtered.length} matching asset{filtered.length === 1 ? '' : 's'} in ecosystem
+          </p>
+        </div>
+        <Link
+          href="/admin/products/new"
+          className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-xs font-semibold text-black hover:bg-white/90 transition-all shadow-lg"
+        >
+          <Plus className="w-4 h-4" /> Create Product
+        </Link>
+      </div>
+
+      {/* Filter & Search Bar */}
+      <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-white/[0.08] bg-[#080c16] p-4">
+        {/* Search */}
+        <div className="flex min-w-[240px] flex-1 items-center gap-2 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs">
+          <Search className="w-4 h-4 text-white/30 shrink-0" />
+          <input
+            type="text"
+            placeholder="Search by product name or slug…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-transparent text-white placeholder-white/35 outline-none"
+          />
+        </div>
+
+        {/* Category Filter */}
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-white/80 outline-none"
+        >
+          <option value="">All Categories</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.name} className="bg-black text-white">
+              {c.name}
+            </option>
+          ))}
+        </select>
+
+        {/* Type Filter */}
+        <select
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+          className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-white/80 outline-none"
+        >
+          <option value="">All Types</option>
+          <option value="FREE" className="bg-black text-white">Free</option>
+          <option value="PAID" className="bg-black text-white">Paid</option>
+        </select>
+
+        {/* Status Filter */}
+        <select
+          value={published}
+          onChange={(e) => setPublished(e.target.value)}
+          className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-white/80 outline-none"
+        >
+          <option value="">All Status</option>
+          <option value="true" className="bg-black text-white">Published</option>
+          <option value="false" className="bg-black text-white">Draft</option>
+        </select>
+
+        {/* Sort */}
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value)}
+          className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-white/80 outline-none"
+        >
+          <option value="newest" className="bg-black text-white">Newest First</option>
+          <option value="name" className="bg-black text-white">Name A-Z</option>
+          <option value="price-low" className="bg-black text-white">Price Low-High</option>
+          <option value="price-high" className="bg-black text-white">Price High-Low</option>
+        </select>
+
+        {/* View Toggle */}
+        <div className="flex rounded-xl border border-white/10 bg-black/40 p-1">
+          <button
+            onClick={() => setView('grid')}
+            className={`p-1.5 rounded-lg transition-colors ${view === 'grid' ? 'bg-white/15 text-white' : 'text-white/40 hover:text-white'}`}
+            title="Grid view"
+          >
+            <Grid3X3 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setView('list')}
+            className={`p-1.5 rounded-lg transition-colors ${view === 'list' ? 'bg-white/15 text-white' : 'text-white/40 hover:text-white'}`}
+            title="Table view"
+          >
+            <List className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Grid or Table List */}
+      {loading ? (
+        <div className="p-16 text-center text-xs text-white/40 flex items-center justify-center gap-2">
+          <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+          <span>Loading assets…</span>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="p-16 text-center rounded-2xl border border-dashed border-white/10 bg-[#080c16]">
+          <p className="text-sm text-white/60">No assets match your search criteria.</p>
+          <button
+            onClick={() => { setSearch(''); setCategory(''); setType(''); setPublished(''); }}
+            className="mt-4 px-4 py-2 text-xs text-blue-400 hover:underline"
+          >
+            Clear all filters
+          </button>
+        </div>
+      ) : view === 'grid' ? (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filtered.map((p) => (
+            <article
+              key={p.id}
+              className="group rounded-2xl border border-white/[0.08] bg-[#080c16] hover:border-white/25 transition-all overflow-hidden flex flex-col justify-between"
+            >
+              <div className="p-3">
+                <ProductThumb product={p} className="h-44 w-full" />
+                <div className="p-3">
+                  <div className="flex items-center justify-between text-[10px] font-mono mb-2">
+                    <span className="uppercase text-blue-400 font-semibold">{p.category}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] ${p.published ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-white/40'}`}>
+                      {p.published ? 'Published' : 'Draft'}
+                    </span>
+                  </div>
+                  <h3 className="text-base font-bold text-white tracking-tight truncate group-hover:text-blue-300 transition-colors">
+                    {p.name}
+                  </h3>
+                  <p className="text-xs text-white/50 mt-1 line-clamp-2 leading-relaxed font-sans">
+                    {p.tagline || p.description}
+                  </p>
+                </div>
+              </div>
+
+              {/* Card Footer Actions */}
+              <div className="px-5 py-3.5 border-t border-white/[0.06] bg-black/30 flex items-center justify-between text-xs font-mono">
+                <span className="font-semibold text-white">
+                  {p.type === 'free' ? 'FREE' : `₹${p.price.toLocaleString()}`}
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handleTogglePublish(p.id, p.published)}
+                    title={p.published ? 'Unpublish' : 'Publish'}
+                    className="p-1.5 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+                  >
+                    {p.published ? <Eye className="w-3.5 h-3.5 text-emerald-400" /> : <EyeOff className="w-3.5 h-3.5 text-white/40" />}
+                  </button>
+                  <button
+                    onClick={() => handleDuplicate(p)}
+                    title="Duplicate asset"
+                    className="p-1.5 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                  <Link
+                    href={`/admin/products/${p.slug || p.id}/edit`}
+                    title="Edit asset"
+                    className="p-1.5 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Link>
+                  <button
+                    onClick={() => handleDelete(p.id, p.name)}
+                    title="Delete permanently"
+                    className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        /* TABLE VIEW */
+        <div className="overflow-x-auto rounded-2xl border border-white/[0.08] bg-[#080c16]">
+          <table className="w-full min-w-[880px] text-left text-xs">
+            <thead className="text-white/40 font-mono text-[10px] uppercase border-b border-white/[0.08] bg-black/40">
+              <tr>
+                <th className="px-5 py-4">Asset</th>
+                <th className="px-4 py-4">Category</th>
+                <th className="px-4 py-4">Type</th>
+                <th className="px-4 py-4">Price</th>
+                <th className="px-4 py-4">Status</th>
+                <th className="px-5 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/[0.06]">
+              {filtered.map((p) => (
+                <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-3">
+                      <ProductThumb product={p} className="w-12 h-12 shrink-0 rounded-lg" />
+                      <div>
+                        <p className="font-semibold text-white text-sm">{p.name}</p>
+                        <p className="text-[10px] font-mono text-white/40">{p.slug}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 font-mono text-white/60">{p.category}</td>
+                  <td className="px-4 py-3 font-mono uppercase text-white/60">{p.type}</td>
+                  <td className="px-4 py-3 font-mono font-semibold text-white">
+                    {p.type === 'free' ? 'FREE' : `₹${p.price.toLocaleString()}`}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-mono ${p.published ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-white/40'}`}>
+                      {p.published ? 'Published' : 'Draft'}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3 text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button
+                        onClick={() => handleTogglePublish(p.id, p.published)}
+                        className="p-1.5 rounded-lg hover:bg-white/10 text-white/60"
+                        title={p.published ? 'Unpublish' : 'Publish'}
+                      >
+                        {p.published ? <Eye className="w-3.5 h-3.5 text-emerald-400" /> : <EyeOff className="w-3.5 h-3.5" />}
+                      </button>
+                      <button
+                        onClick={() => handleDuplicate(p)}
+                        className="p-1.5 rounded-lg hover:bg-white/10 text-white/60"
+                        title="Duplicate"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                      <Link
+                        href={`/admin/products/${p.slug || p.id}/edit`}
+                        className="p-1.5 rounded-lg hover:bg-white/10 text-white/60 hover:text-white"
+                        title="Edit"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(p.id, p.name)}
+                        className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </AdminLayout>
+  );
+}
+
+// CATEGORY LIST COMPONENT
+export function CategoryList() {
+  const [categories, setCategories] = useState([]);
+  const [name, setName] = useState('');
+  const [slug, setSlug] = useState('');
+  const [description, setDescription] = useState('');
+  const [message, setMessage] = useState('');
+
+  const load = () =>
+    fetch('/api/categories')
+      .then((r) => r.json())
+      .then((d) => setCategories(d.categories || []));
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const create = async (e) => {
+    e.preventDefault();
+    const r = await fetch('/api/categories', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name, slug: slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'), description, published: true }),
+    });
+    const d = await r.json();
+    setMessage(d.error || 'Category created');
+    if (r.ok) {
+      setName('');
+      setSlug('');
+      setDescription('');
+      load();
+    }
+  };
+
+  const remove = async (id, catName) => {
+    if (!confirm(`Delete category "${catName}"?`)) return;
+    const r = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
+    const d = await r.json();
+    if (!r.ok) alert(d.error || 'Cannot delete category');
+    load();
+  };
+
+  return (
+    <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
+      {/* Create form */}
+      <form onSubmit={create} className="rounded-2xl border border-white/[0.08] bg-[#080c16] p-6 space-y-4">
+        <h3 className="text-base font-semibold text-white">Create New Category</h3>
+        <div>
+          <label className="block text-xs text-white/50 mb-1">Category Name</label>
+          <input
+            required
+            className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-400"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              if (!slug) setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+            }}
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-white/50 mb-1">Slug</label>
+          <input
+            required
+            className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-400 font-mono text-xs"
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-white/50 mb-1">Description</label>
+          <textarea
+            rows="3"
+            className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-400"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </div>
+        <button className="w-full rounded-xl bg-white px-4 py-3 text-xs font-semibold text-black hover:bg-white/90 transition-colors">
+          Add Category
+        </button>
+        {message && <p className="text-xs text-amber-300 text-center">{message}</p>}
+      </form>
+
+      {/* Categories grid */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {categories.map((c) => (
+          <div key={c.id} className="rounded-2xl border border-white/[0.08] bg-[#080c16] p-5 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-white text-base">{c.name}</h4>
+                <button onClick={() => remove(c.id, c.name)} className="text-white/30 hover:text-red-400 transition-colors">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-[10px] font-mono text-blue-400 mt-1">{c.slug}</p>
+              <p className="text-xs text-white/50 mt-2 line-clamp-2">{c.description || 'No description provided.'}</p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-mono text-white/40">
+              <span>{c._count?.products || 0} Products</span>
+              <span>Active</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

@@ -23,6 +23,9 @@ export const productSchema = z.object({
   afterImage: urlOrText,
   installationGuide: z.array(z.string()).default([]),
   included: z.array(z.string()).default([]),
+  downloadFileKey: urlOrText,
+  downloadFileName: urlOrText,
+  downloadFileSize: z.coerce.number().int().min(0).optional().nullable(),
   featured: z.boolean().default(false),
   published: z.boolean().default(false),
 });
@@ -30,7 +33,15 @@ export const productSchema = z.object({
 export function toFrontendProduct(product) {
   return {
     ...product,
+    dbId: product.id,
+    downloadFileKey: product.downloadFileKey || null,
+    downloadFileName: product.downloadFileName || null,
+    downloadFileSize: product.downloadFileSize || null,
     thumbnailKey: product.thumbnailKey || null,
+    beforeImage: product.beforeImage || null,
+    afterImage: product.afterImage || null,
+    demoVideo: product.demoVideo || null,
+    previewImages: Array.isArray(product.previewImages) ? product.previewImages : (typeof product.previewImages === "string" ? (()=>{try{return JSON.parse(product.previewImages)}catch{return []}})() : []),
     id: product.slug,
     tagline: product.shortDescription || product.description,
     category: product.category?.name || '',

@@ -10,7 +10,7 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  const unauthorized = requireAdmin(request);
+  const unauthorized = await requireAdmin(request);
   if (unauthorized) return unauthorized;
   try {
     const category = await prisma.category.create({ data: categorySchema.parse(await request.json()) });

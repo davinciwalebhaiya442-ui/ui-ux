@@ -31,7 +31,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const unauthorized = requireAdmin(request);
+  const unauthorized = await requireAdmin(request);
   if (unauthorized) return unauthorized;
   try {
     const data = parseBody(await request.json());

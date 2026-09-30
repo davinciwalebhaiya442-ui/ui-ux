@@ -1,0 +1,5 @@
+import { AdminLayout } from '../AdminShell';
+
+export default function SettingsPage() {
+  return <AdminLayout title="Settings"><div className="mb-7"><p className="font-mono text-[10px] uppercase tracking-[.24em] text-blue-300/70">System / Configuration</p><h2 className="mt-2 text-3xl font-semibold">Settings</h2><p className="mt-2 text-sm text-white/40">Runtime configuration is managed through secure server environment variables.</p></div><div className="grid gap-4 md:grid-cols-2"><section className="rounded-2xl border border-white/[.08] bg-[#0a0f1b] p-5"><p className="font-mono text-[10px] uppercase tracking-widest text-white/35">Authentication</p><p className="mt-3 text-sm">Supabase Auth + profile role authorization</p><p className="mt-2 text-xs text-emerald-300">Server-side admin protection active</p></section><section className="rounded-2xl border border-white/[.08] bg-[#0a0f1b] p-5"><p className="font-mono text-[10px] uppercase tracking-widest text-white/35">Storage</p><p className="mt-3 text-sm">Cloudflare R2 private object storage</p><p className="mt-2 text-xs text-emerald-300">Signed delivery URLs enabled</p></section></div></AdminLayout>;
+}

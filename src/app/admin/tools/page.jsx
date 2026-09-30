@@ -1,0 +1,12 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { AdminLayout } from '../AdminShell';
+
+export default function ToolsAdminPage() {
+  const [tools, setTools] = useState([]); const [form, setForm] = useState({ name: '', slug: '', description: '', url: '' });
+  const load = () => fetch('/api/admin/tools').then((response) => response.json()).then((data) => setTools(data.tools || []));
+  useEffect(() => { load(); }, []);
+  const create = async (event) => { event.preventDefault(); const response = await fetch('/api/admin/tools', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(form) }); if (response.ok) { setForm({ name: '', slug: '', description: '', url: '' }); load(); } };
+  return <AdminLayout title="Tools"><div className="mb-7"><p className="font-mono text-[10px] uppercase tracking-[.24em] text-blue-300/70">Content / Utilities</p><h2 className="mt-2 text-3xl font-semibold">Tools</h2></div><div className="grid gap-6 lg:grid-cols-[.7fr_1.3fr]"><form onSubmit={create} className="rounded-2xl border border-white/[.08] bg-[#0a0f1b] p-5 space-y-4"><p className="font-mono text-[10px] uppercase tracking-widest text-white/35">Add tool</p>{['name', 'slug', 'url'].map((field) => <input key={field} required={field !== 'url'} className="w-full rounded-xl border border-white/10 bg-[#080d18] px-3 py-2.5 text-sm" placeholder={field[0].toUpperCase() + field.slice(1)} value={form[field]} onChange={(e) => setForm({ ...form, [field]: e.target.value })} />)}<textarea required rows="5" className="w-full rounded-xl border border-white/10 bg-[#080d18] px-3 py-2.5 text-sm" placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /><button className="rounded-xl bg-white px-4 py-3 text-xs text-black">Add tool</button></form><div className="grid gap-3">{tools.map((tool) => <article key={tool.id} className="rounded-2xl border border-white/[.08] bg-[#0a0f1b] p-5"><div className="flex justify-between gap-4"><div><h3 className="font-medium">{tool.name}</h3><p className="mt-1 text-xs text-white/40">{tool.slug} · {tool.published ? 'Published' : 'Draft'}</p></div>{tool.url && <a href={tool.url} target="_blank" rel="noreferrer" className="text-xs text-blue-300">Open</a>}</div><p className="mt-3 text-sm text-white/50">{tool.description}</p></article>)}{!tools.length && <p className="rounded-xl border border-dashed border-white/10 p-10 text-center text-sm text-white/40">No tools yet.</p>}</div></div></AdminLayout>;
+}

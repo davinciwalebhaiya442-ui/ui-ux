@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { CATEGORIES, SOFTWARE_OPTIONS } from '@/data/assets';
 import { useProducts } from '@/data/useProducts';
 import { Search, ArrowUpRight, Monitor } from 'lucide-react';
+import ProductCardVisual from './ProductCardVisual';
 
 export default function AssetCatalogue({ onSelectAsset }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -137,10 +138,11 @@ export default function AssetCatalogue({ onSelectAsset }) {
             <div
               key={asset.id}
               onClick={() => onSelectAsset(asset)}
-              className="cursor-pointer group border border-white/[0.08] hover:border-white/25 transition-colors bg-[#080808] rounded-xl p-5 flex flex-col justify-between"
+              className="cursor-pointer group border border-white/[0.08] hover:border-white/25 transition-all duration-300 bg-[#080808] hover:bg-[#0b0f19] rounded-xl p-4 flex flex-col justify-between"
             >
               <div>
-                <div className="flex items-center justify-between text-[10px] font-mono text-white/40 mb-3">
+                <ProductCardVisual asset={asset} />
+                <div className="flex items-center justify-between text-[10px] font-mono text-white/40 mb-2">
                   <span className="uppercase tracking-widest">{asset.category}</span>
                   <span>v{asset.version}</span>
                 </div>
