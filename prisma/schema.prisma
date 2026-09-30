@@ -1,0 +1,249 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum ProductType {
+  FREE
+  PAID
+}
+
+enum AccessType {
+  FREE_DOWNLOAD
+  PURCHASE
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  CAPTURED
+  FAILED
+  REFUNDED
+}
+
+enum StudioStatus {
+  NEW
+  REVIEWING
+  CONTACTED
+  IN_PROGRESS
+  COMPLETED
+  REJECTED
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  image       String?
+  published   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+}
+
+model Product {
+  id                String      @id @default(cuid())
+  name              String
+  slug              String      @unique
+  description       String
+  shortDescription  String?
+  categoryId        String
+  category          Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  type              ProductType @default(FREE)
+  price             Int         @default(0)
+  priceUSD          Int         @default(0)
+  currency          String      @default("INR")
+  software          Json
+  os                String?
+  version           String?
+  fileSize          String?
+  previewImages     Json
+  thumbnailKey      String?
+  demoVideo         String?
+  beforeImage       String?
+  afterImage        String?
+  installationGuide Json
+  included          Json        @default("[]")
+  featured          Boolean     @default(false)
+  published         Boolean     @default(false)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  downloadFileKey   String?
+  downloadFileName  String?
+  downloadFileSize  Int?
+  access             ProductAccess[]
+  downloads         Download[]
+
+  @@index([categoryId])
+  @@index([published, featured])
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  email     String?
+  name      String?
+  avatarUrl String?
+  role      String   @default("customer")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  access    ProductAccess[]
+  downloads Download[]
+  orders    Order[]
+}
+
+model ProductAccess {
+  id         String      @id @default(cuid())
+  userId     String
+  productId  String
+  accessType AccessType
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  user       Profile     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  downloads  Download[]
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+model Download {
+  id        String        @id @default(cuid())
+  userId    String
+  productId String
+  accessId  String
+  createdAt DateTime      @default(now())
+  user      Profile       @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  product   Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  access    ProductAccess @relation(fields: [accessId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([productId, createdAt])
+}
+
+model Order {
+  id               String        @id @default(cuid())
+  orderNumber      String        @unique
+  userId           String
+  subtotal         Int
+  discount         Int           @default(0)
+  total            Int
+  currency         String        @default("INR")
+  status           OrderStatus   @default(PENDING)
+  paymentStatus    PaymentStatus @default(PENDING)
+  razorpayOrderId  String?       @unique
+  razorpayPaymentId String?      @unique
+  razorpaySignature String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  user             Profile       @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  items            OrderItem[]
+  @@index([userId, createdAt])
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  productId   String
+  productName String
+  price       Int
+  quantity    Int      @default(1)
+  createdAt   DateTime @default(now())
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  @@index([productId])
+}
+
+model ContentCategory {
+  id          String        @id @default(cuid())
+  name        String
+  slug        String        @unique
+  description String?
+  image       String?
+  published   Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  posts       ContentPost[]
+}
+
+model ContentPost {
+  id          String          @id @default(cuid())
+  title       String
+  slug        String          @unique
+  excerpt     String?
+  content     String
+  coverImage  String?
+  categoryId  String
+  authorId    String?
+  tags        Json
+  published   Boolean         @default(false)
+  featured    Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  category    ContentCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  @@index([categoryId, published])
+  @@index([published, featured])
+}
+
+model StudioRequest {
+  id            String       @id @default(cuid())
+  userId        String?
+  name          String
+  email         String
+  requestType   String
+  budget        String?
+  projectDetails String
+  portfolioUrl  String?
+  attachmentKey String?
+  status        StudioStatus @default(NEW)
+  internalNotes String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  @@index([status, createdAt])
+}
+
+model Faq {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  category  String?
+  sortOrder Int      @default(0)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Tool {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String
+  icon        String?
+  image       String?
+  url         String?
+  featured    Boolean  @default(false)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  name      String
+  path      String?
+  productId String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+  @@index([name, createdAt])
+}

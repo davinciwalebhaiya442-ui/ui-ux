@@ -1,0 +1,2 @@
+import { prisma } from '@/lib/prisma';
+export async function GET(_request, { params }) { const post = await prisma.contentPost.findUnique({ where: { slug: params.slug }, include: { category: true } }); if (!post || !post.published) return Response.json({ error: 'CONTENT_NOT_FOUND' }, { status: 404 }); const related = await prisma.contentPost.findMany({ where: { categoryId: post.categoryId, published: true, NOT: { id: post.id } }, take: 4, orderBy: { createdAt: 'desc' } }); return Response.json({ post, related }); }

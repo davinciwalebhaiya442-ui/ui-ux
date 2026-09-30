@@ -1,0 +1,5 @@
+'use client';
+import { useState } from 'react';
+import { getSupabaseBrowserClient } from '@/lib/supabase/browser';
+const input = 'w-full rounded-xl border border-white/10 bg-white/[.05] px-4 py-3 text-sm text-white outline-none';
+export default function ResetPasswordPage() { const [password, setPassword] = useState(''); const [message, setMessage] = useState(''); const submit = async (e) => { e.preventDefault(); const { error } = await getSupabaseBrowserClient().auth.updateUser({ password }); setMessage(error?.message || 'Password updated. You can now log in.'); }; return <main className="flex min-h-screen items-center justify-center bg-black px-4"><form onSubmit={submit} className="w-full max-w-md space-y-4 rounded-3xl border border-white/10 bg-[#080b12]/80 p-8"><h1 className="text-2xl font-semibold">Set new password</h1><input required minLength={8} type="password" className={input} placeholder="New password" value={password} onChange={(e) => setPassword(e.target.value)} /><button className="w-full rounded-xl bg-white px-4 py-3 text-sm text-black">Update password</button>{message && <p className="text-xs text-amber-300">{message}</p>}</form></main>; }
