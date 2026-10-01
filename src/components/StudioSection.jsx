@@ -63,14 +63,14 @@ export default function StudioSection() {
         </div>
 
         {/* Right Creative Brief Form */}
-        <div className="lg:col-span-7 border border-white/[0.08] rounded-xl p-6 sm:p-10 bg-[#080808]">
+        <div className="lg:col-span-7 border border-white/[0.12] rounded-2xl p-6 sm:p-10 bg-gradient-to-b from-[#0d1424]/95 via-[#090e1a]/95 to-[#060a12]/95 shadow-[0_12px_32px_rgba(0,0,0,0.45)]">
           {submitted ? (
             <div className="py-16 text-center space-y-3">
-              <div className="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center mx-auto">
-                <Check className="w-4 h-4" />
+              <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+                <Check className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold text-white">Project Inquiry Received</h3>
-              <p className="text-xs text-white/60 max-w-sm mx-auto leading-relaxed font-sans">
+              <h3 className="text-xl font-bold text-white">Project Inquiry Received</h3>
+              <p className="text-xs sm:text-sm text-white/70 max-w-sm mx-auto leading-relaxed font-sans">
                 Our lead colorist will review your brief and get back to you within 24 hours.
               </p>
             </div>
@@ -78,7 +78,7 @@ export default function StudioSection() {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-mono uppercase tracking-wider text-white/40 block mb-1.5">
+                  <label className="text-[10px] font-mono uppercase tracking-wider text-white/50 block mb-1.5 font-semibold">
                     Your Name
                   </label>
                   <input
@@ -87,12 +87,12 @@ export default function StudioSection() {
                     placeholder="Aditya Verma"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full bg-[#040404] border border-white/[0.08] rounded-lg px-3.5 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-white/30"
+                    className="w-full bg-[#070b15] border border-white/[0.12] rounded-xl px-4 py-3 text-xs text-white placeholder-white/40 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 transition-all shadow-inner"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-mono uppercase tracking-wider text-white/40 block mb-1.5">
+                  <label className="text-[10px] font-mono uppercase tracking-wider text-white/50 block mb-1.5 font-semibold">
                     Email Address
                   </label>
                   <input
@@ -101,20 +101,20 @@ export default function StudioSection() {
                     placeholder="aditya@studio.com"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full bg-[#040404] border border-white/[0.08] rounded-lg px-3.5 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-white/30"
+                    className="w-full bg-[#070b15] border border-white/[0.12] rounded-xl px-4 py-3 text-xs text-white placeholder-white/40 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 transition-all shadow-inner"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-mono uppercase tracking-wider text-white/40 block mb-1.5">
+                  <label className="text-[10px] font-mono uppercase tracking-wider text-white/50 block mb-1.5 font-semibold">
                     Service Scope
                   </label>
                   <select
                     value={formData.requestType}
                     onChange={(e) => setFormData({ ...formData, requestType: e.target.value })}
-                    className="w-full bg-[#040404] border border-white/[0.08] rounded-lg px-3.5 py-2.5 text-xs text-white/80 focus:outline-none focus:border-white/30"
+                    className="w-full bg-[#070b15] border border-white/[0.12] rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 transition-all shadow-inner"
                   >
                     <option value="Feature / Commercial Color Grading">Feature / Commercial Color Grading</option>
                     <option value="Custom DCTL & Look Development">Custom DCTL & Look Development</option>
@@ -124,13 +124,13 @@ export default function StudioSection() {
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-mono uppercase tracking-wider text-white/40 block mb-1.5">
+                  <label className="text-[10px] font-mono uppercase tracking-wider text-white/50 block mb-1.5 font-semibold">
                     Project Budget
                   </label>
                   <select
                     value={formData.budget}
                     onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                    className="w-full bg-[#040404] border border-white/[0.08] rounded-lg px-3.5 py-2.5 text-xs text-white/80 focus:outline-none focus:border-white/30"
+                    className="w-full bg-[#070b15] border border-white/[0.12] rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 transition-all shadow-inner"
                   >
                     <option value="Under $2,000">Under $2,000 / ₹1,50,000</option>
                     <option value="$3,000 – $7,500">$3,000 – $7,500 / ₹2,50,000 – ₹6,00,000</option>
@@ -141,7 +141,7 @@ export default function StudioSection() {
               </div>
 
               <div>
-                <label className="text-[10px] font-mono uppercase tracking-wider text-white/40 block mb-1.5">
+                <label className="text-[10px] font-mono uppercase tracking-wider text-white/50 block mb-1.5 font-semibold">
                   Portfolio / Cut Reference Link (Vimeo / Drive)
                 </label>
                 <input
@@ -149,12 +149,12 @@ export default function StudioSection() {
                   placeholder="https://vimeo.com/your_cut"
                   value={formData.portfolio}
                   onChange={(e) => setFormData({ ...formData, portfolio: e.target.value })}
-                  className="w-full bg-[#040404] border border-white/[0.08] rounded-lg px-3.5 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-white/30"
+                  className="w-full bg-[#070b15] border border-white/[0.12] rounded-xl px-4 py-3 text-xs text-white placeholder-white/40 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 transition-all shadow-inner"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-mono uppercase tracking-wider text-white/40 block mb-1.5">
+                <label className="text-[10px] font-mono uppercase tracking-wider text-white/50 block mb-1.5 font-semibold">
                   Project Details & Timeline
                 </label>
                 <textarea
@@ -163,16 +163,16 @@ export default function StudioSection() {
                   placeholder="Camera package used (Arri, RED, Sony), runtime, delivery format, and deadline..."
                   value={formData.details}
                   onChange={(e) => setFormData({ ...formData, details: e.target.value })}
-                  className="w-full bg-[#040404] border border-white/[0.08] rounded-lg px-3.5 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-white/30 resize-none"
+                  className="w-full bg-[#070b15] border border-white/[0.12] rounded-xl px-4 py-3 text-xs text-white placeholder-white/40 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 transition-all shadow-inner resize-none"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3 px-6 rounded-lg text-xs font-semibold text-black bg-white hover:bg-white/90 transition-colors flex items-center justify-center space-x-1.5"
+                className="w-full py-3.5 px-6 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all flex items-center justify-center space-x-2"
               >
-                <span>Start a Project</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <span>Initiate Studio Project</span>
+                <ArrowRight className="w-4 h-4" />
               </button>
             </form>
           )}

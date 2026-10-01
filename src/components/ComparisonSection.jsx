@@ -31,12 +31,15 @@ export default function ComparisonSection() {
           />
         </div>
 
-        <div className="lg:col-span-4 border border-white/[0.08] rounded-xl p-6 sm:p-8 bg-[#080808] space-y-6">
-          <div className="text-[11px] font-mono uppercase tracking-widest text-white/40">
-            SPECTRAL DENSITY NOTES
+        <div className="lg:col-span-4 border border-white/[0.12] rounded-2xl p-6 sm:p-8 bg-gradient-to-b from-[#0d1424]/95 via-[#090e1a]/95 to-[#060a12]/95 shadow-[0_12px_32px_rgba(0,0,0,0.45)] space-y-6">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-mono uppercase tracking-widest text-blue-400 font-semibold px-2.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">
+              Spectral Density Notes
+            </span>
+            <span className="text-[10px] font-mono text-white/50">35mm Print</span>
           </div>
 
-          <div className="space-y-4 text-xs font-sans text-white/70 leading-relaxed">
+          <div className="space-y-4 text-xs sm:text-sm font-sans text-white/75 leading-relaxed">
             <p>
               Standard digital grading clips RGB channels as saturation increases, leading to harsh neon skin tones and plastic highlights.
             </p>
@@ -45,11 +48,23 @@ export default function ComparisonSection() {
             </p>
           </div>
 
-          <div className="pt-4 border-t border-white/[0.06] space-y-2 text-[11px] font-mono text-white/50">
-            <div>&bull; Preserves 16-bit float highlight dynamic range</div>
-            <div>&bull; Smooth subtractive cyan-orange skin separation</div>
-            <div>&bull; Zero 3D LUT banding or contour artifacting</div>
-            <div>&bull; D55, D60, D65 & Tungsten white balances included</div>
+          <div className="pt-4 border-t border-white/[0.08] space-y-2.5 text-xs font-mono text-white/70">
+            <div className="flex items-center space-x-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+              <span>Preserves 16-bit float highlight dynamic range</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+              <span>Smooth subtractive cyan-orange skin separation</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+              <span>Zero 3D LUT banding or contour artifacting</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+              <span>D55, D60, D65 & Tungsten white balances included</span>
+            </div>
           </div>
         </div>
       </div>

@@ -4,7 +4,17 @@ const urlOrText = z.string().trim().optional().or(z.literal(''));
 
 export const productSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
-  slug: z.string().trim().min(1, 'Slug is required').regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must use lowercase letters, numbers and hyphens'),
+  slug: z
+    .string()
+    .trim()
+    .min(1, 'Slug is required')
+    .transform((s) =>
+      s
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_-]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+    ),
   description: z.string().trim().min(1, 'Description is required'),
   shortDescription: z.string().trim().optional().nullable(),
   categoryId: z.string().min(1, 'Category is required'),

@@ -65,26 +65,26 @@ export default function AssetCatalogue({ onSelectAsset, initialProducts = [] }) 
           
           {/* Search Field */}
           <div className="sm:col-span-6 relative">
-            <Search className="w-4 h-4 text-white/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-blue-400/70 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by keyword, DCTL, OFX, or effect name..."
-              className="w-full bg-[#080808] border border-white/[0.08] rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-white/30"
+              className="w-full bg-[#0a0f1d] border border-white/[0.12] rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-blue-400/60 focus:ring-1 focus:ring-blue-500/20 shadow-inner transition-all"
             />
           </div>
 
           {/* Pricing Toggle */}
-          <div className="sm:col-span-3 flex bg-[#080808] p-1 rounded-lg border border-white/[0.08] text-xs">
+          <div className="sm:col-span-3 flex bg-[#0a0f1d] p-1 rounded-xl border border-white/[0.12] text-xs">
             {['all', 'free', 'paid'].map((type) => (
               <button
                 key={type}
                 onClick={() => setPricingFilter(type)}
-                className={`flex-1 py-1.5 rounded text-center transition-colors capitalize ${
+                className={`flex-1 py-1.5 rounded-lg text-center transition-all capitalize font-mono text-[11px] ${
                   pricingFilter === type
-                    ? 'bg-white/10 text-white font-medium'
-                    : 'text-white/40 hover:text-white'
+                    ? 'bg-blue-600/30 text-blue-300 font-semibold border border-blue-500/40 shadow-sm'
+                    : 'text-white/50 hover:text-white'
                 }`}
               >
                 {type}
@@ -97,10 +97,10 @@ export default function AssetCatalogue({ onSelectAsset, initialProducts = [] }) 
             <select
               value={selectedSoftware}
               onChange={(e) => setSelectedSoftware(e.target.value)}
-              className="w-full bg-[#080808] border border-white/[0.08] rounded-lg px-3 py-2.5 text-xs text-white/80 focus:outline-none focus:border-white/30"
+              className="w-full bg-[#0a0f1d] border border-white/[0.12] rounded-xl px-3 py-2.5 text-xs text-white/90 focus:outline-none focus:border-blue-400/60 focus:ring-1 focus:ring-blue-500/20 font-mono shadow-inner"
             >
               {SOFTWARE_OPTIONS.map((sw) => (
-                <option key={sw} value={sw} className="bg-black text-white">
+                <option key={sw} value={sw} className="bg-[#0a0f1d] text-white">
                   {sw}
                 </option>
               ))}
@@ -129,7 +129,7 @@ export default function AssetCatalogue({ onSelectAsset, initialProducts = [] }) 
 
       {/* Product List Grid */}
       {filteredAssets.length === 0 ? (
-        <div className="py-20 text-center border border-white/[0.08] rounded-xl bg-[#080808]">
+        <div className="py-20 text-center border border-white/[0.1] rounded-2xl bg-[#080d1a]/60">
           <p className="text-xs font-mono text-white/50">No files found matching the selected filter criteria.</p>
         </div>
       ) : (
@@ -138,39 +138,50 @@ export default function AssetCatalogue({ onSelectAsset, initialProducts = [] }) 
             <div
               key={asset.id}
               onClick={() => onSelectAsset(asset)}
-              className="cursor-pointer group border border-white/[0.08] hover:border-white/25 transition-all duration-300 bg-[#080808] hover:bg-[#0b0f19] rounded-xl p-4 flex flex-col justify-between"
+              className="cursor-pointer group relative border border-white/[0.12] hover:border-blue-400/45 transition-all duration-300 bg-gradient-to-b from-[#0d1424]/95 via-[#090e1a]/95 to-[#060a12]/95 hover:from-[#111a30]/95 hover:to-[#080d18]/95 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_16px_45px_rgba(7,18,44,0.7),0_0_25px_rgba(37,99,235,0.15)] rounded-2xl p-4 sm:p-5 flex flex-col justify-between hover:-translate-y-1 overflow-hidden"
             >
+              {/* Subtle top edge glow on card hover */}
+              <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-blue-400/30 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
+
               <div>
                 <ProductCardVisual asset={asset} />
-                <div className="flex items-center justify-between text-[10px] font-mono text-white/40 mb-2">
-                  <span className="uppercase tracking-widest">{asset.category}</span>
-                  <span>v{asset.version}</span>
+                <div className="flex items-center justify-between text-[11px] font-mono text-white/50 mb-2">
+                  <span className="uppercase tracking-widest text-blue-300/80 font-semibold">{asset.category}</span>
+                  <span className="text-white/40">v{asset.version}</span>
                 </div>
 
-                <h3 className="text-lg font-bold text-white tracking-tight group-hover:text-blue-300 transition-colors">
+                <h3 className="text-lg font-bold text-white tracking-tight group-hover:text-blue-200 transition-colors leading-snug">
                   {asset.name}
                 </h3>
 
-                <p className="text-xs text-white/60 mt-1.5 line-clamp-2 leading-relaxed font-sans">
+                <p className="text-xs text-white/70 mt-2 line-clamp-2 leading-relaxed font-sans">
                   {asset.tagline}
                 </p>
               </div>
 
-              <div className="pt-5 mt-6 border-t border-white/[0.06] flex items-center justify-between text-xs font-mono">
+              <div className="pt-4 mt-6 border-t border-white/[0.08] flex items-center justify-between text-xs font-mono">
                 <div>
                   {asset.type === 'free' ? (
-                    <span className="text-emerald-400 font-semibold">FREE</span>
-                  ) : (
-                    <span className="text-white font-semibold">
-                      ₹{asset.price.toLocaleString()} <span className="text-white/40 font-normal">(${asset.priceUSD})</span>
+                    <span className="px-2.5 py-1 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold tracking-wide text-xs inline-block">
+                      FREE
                     </span>
+                  ) : (
+                    <div className="flex items-baseline space-x-1.5">
+                      <span className="text-white font-bold text-sm tracking-tight">
+                        ₹{asset.price.toLocaleString()}
+                      </span>
+                      <span className="text-white/45 text-[11px] font-normal">
+                        (${asset.priceUSD})
+                      </span>
+                    </div>
                   )}
                 </div>
 
-                <span className="text-white/40 group-hover:text-white flex items-center space-x-1">
-                  <span>Inspect</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </span>
+                {/* Explicit, high-affordance CTA pill */}
+                <div className="px-3 py-1.5 rounded-lg bg-white/[0.06] group-hover:bg-blue-600/90 border border-white/[0.1] group-hover:border-blue-400/50 text-white/80 group-hover:text-white flex items-center space-x-1.5 transition-all duration-200 shadow-sm">
+                  <span className="text-[11px] font-medium tracking-wide">View Details</span>
+                  <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </div>
               </div>
             </div>
           ))}

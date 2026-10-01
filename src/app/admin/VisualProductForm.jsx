@@ -8,6 +8,14 @@ import { AdminLayout, ProductThumb, useAdmin } from './AdminShell';
 import MediaManager from '@/components/admin/MediaManager';
 import { notifyProductsUpdated } from '@/lib/events';
 
+const slugify = (text) =>
+  String(text || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
 const input = 'w-full rounded-xl border border-white/10 bg-[#080d18] px-3 py-2.5 text-sm text-white outline-none focus:border-blue-400/50';
 function Field({ label, children, hint }) {
   return (
@@ -144,10 +152,12 @@ export default function VisualProductForm({ product }) {
     event?.preventDefault();
     setSaving(true);
     try {
+      const sanitizedSlug = slugify(form.slug || form.name);
       const payload = {
         ...form,
+        slug: sanitizedSlug,
         published: publish ?? form.published,
-        price: Number(form.price),
+        price: Number(form.price || 0),
         software: String(form.software || '')
           .split(',')
           .map((value) => value.trim())
@@ -166,7 +176,17 @@ export default function VisualProductForm({ product }) {
         body: JSON.stringify(payload),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to save product');
+      if (!response.ok) {
+        let errorMsg = data.error || 'Failed to save product';
+        if (data.details && Array.isArray(data.details)) {
+          const detailMsgs = data.details.map((issue) => {
+            const field = issue.path ? issue.path.join('.') : '';
+            return field ? `${field}: ${issue.message}` : issue.message;
+          });
+          errorMsg = detailMsgs.join(' | ');
+        }
+        throw new Error(errorMsg);
+      }
 
       const successMsg = id ? 'Product updated successfully' : 'Product created successfully';
       setMessage(successMsg);
@@ -265,10 +285,30 @@ export default function VisualProductForm({ product }) {
             <p className="mb-5 font-mono text-[10px] uppercase tracking-widest text-white/35">Product Information</p>
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Product name">
-                <input required className={input} value={form.name} onChange={(e) => set('name', e.target.value)} />
+                <input
+                  required
+                  className={input}
+                  value={form.name}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setForm((curr) => {
+                      const shouldUpdateSlug = !product && (!curr.slug || curr.slug === slugify(curr.name));
+                      return {
+                        ...curr,
+                        name: val,
+                        slug: shouldUpdateSlug ? slugify(val) : curr.slug,
+                      };
+                    });
+                  }}
+                />
               </Field>
-              <Field label="Slug">
-                <input required className={input} value={form.slug} onChange={(e) => set('slug', e.target.value)} />
+              <Field label="Slug" hint="Unique URL identifier (auto-formatted lowercase)">
+                <input
+                  required
+                  className={input}
+                  value={form.slug}
+                  onChange={(e) => set('slug', slugify(e.target.value))}
+                />
               </Field>
               <Field label="Short description">
                 <input
@@ -452,7 +492,6 @@ export default function VisualProductForm({ product }) {
                 </div>
               )}
             </div>
-
             <MediaManager
               slug={form.slug}
               thumbnail={form.thumbnailKey}
