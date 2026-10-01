@@ -64,7 +64,7 @@ export default function CheckoutPage() {
 
     const cleanEmail = email.trim().toLowerCase();
     if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
-      setMessage('Please enter a valid email address to receive your download link.');
+      setMessage('Please enter a valid email address where we will send your file.');
       setMessageType('error');
       return;
     }
@@ -208,19 +208,19 @@ export default function CheckoutPage() {
                 )}
               </div>
 
-              {/* Delivery Email Input */}
+              {/* Delivery Email Input (No Login Needed) */}
               <div className="space-y-3 rounded-2xl border border-blue-500/25 bg-blue-950/20 p-4 sm:p-5">
                 <div className="flex items-center gap-2 text-xs font-semibold text-blue-300">
                   <Mail className="w-4 h-4 text-blue-400" />
-                  <span>Digital Delivery Email</span>
+                  <span>Enter Your Email for File Delivery</span>
                 </div>
                 <p className="text-xs text-white/65 leading-relaxed">
-                  Enter your email address. Your digital package zip download link will be delivered here automatically as soon as payment is confirmed.
+                  Apna email address daalein. Payment hote hi download link aur file automatically aapke isi email pe bhej di jayegi.
                 </p>
                 <div className="space-y-3 pt-1">
                   <div>
-                    <label className="block text-[11px] font-mono text-white/60 uppercase tracking-wider mb-1.5">
-                      Email Address <span className="text-blue-400">*</span>
+                    <label className="block text-[11px] font-mono text-white/70 uppercase tracking-wider mb-1.5">
+                      Your Email Address <span className="text-blue-400">*</span>
                     </label>
                     <div className="relative">
                       <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
@@ -232,14 +232,14 @@ export default function CheckoutPage() {
                           setEmail(e.target.value);
                           if (messageType === 'error') setMessage('');
                         }}
-                        placeholder="yourname@gmail.com"
-                        className="w-full rounded-xl border border-white/15 bg-black/60 pl-10 pr-4 py-3 text-sm text-white placeholder-white/30 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
+                        placeholder="apnamail@gmail.com"
+                        className="w-full rounded-xl border border-white/20 bg-black/60 pl-10 pr-4 py-3 text-sm text-white placeholder-white/30 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
                       />
                     </div>
                   </div>
                   <div>
                     <label className="block text-[11px] font-mono text-white/50 uppercase tracking-wider mb-1.5">
-                      Full Name (Optional)
+                      Your Name (Optional)
                     </label>
                     <input
                       type="text"
@@ -250,9 +250,9 @@ export default function CheckoutPage() {
                     />
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-[11px] text-emerald-400/90 font-mono pt-1">
+                <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 font-mono pt-1">
                   <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                  <span>Automatic email delivery right after payment</span>
+                  <span>No account / login required &bull; Direct email delivery</span>
                 </div>
               </div>
 
@@ -285,7 +285,7 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              {/* Pay Button */}
+              {/* Pay Button - Direct Razorpay Payment without Login */}
               <button
                 type="button"
                 disabled={paying}
@@ -295,7 +295,7 @@ export default function CheckoutPage() {
                 {paying ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Processing Payment...</span>
+                    <span>Connecting to Razorpay...</span>
                   </>
                 ) : (
                   <>
