@@ -75,7 +75,7 @@ export default function ProductModal({ asset, onClose }) {
   const canShowTabs = (shouldDefaultToComparison || hasBeforeAfter) && (thumbSrc || videoSrc);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 lg:p-10 overflow-y-auto">
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-3 sm:p-6 lg:p-10 overflow-y-auto">
       {/* Dark backdrop */}
       <div
         className="fixed inset-0 bg-black/85 backdrop-blur-sm transition-opacity"
