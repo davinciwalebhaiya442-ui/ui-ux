@@ -112,9 +112,6 @@ export default function Footer() {
           <div>
             &copy; {new Date().getFullYear()} DavinciWaleBhaiya. All rights reserved.
           </div>
-          <div>
-            DaVinci Resolve is a trademark of Blackmagic Design Pty Ltd.
-          </div>
         </div>
 
       </div>

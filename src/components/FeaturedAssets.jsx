@@ -1,7 +1,7 @@
 'use client';
 
 import { useProducts } from '@/data/useProducts';
-import { ArrowUpRight, Check, Monitor, Terminal } from 'lucide-react';
+import { ArrowUpRight, Check, Download, Monitor, Terminal } from 'lucide-react';
 
 export default function FeaturedAssets({ onSelectAsset, initialProducts = [] }) {
   const assets = useProducts(initialProducts);
@@ -133,7 +133,8 @@ export default function FeaturedAssets({ onSelectAsset, initialProducts = [] }) 
 
                 {/* Primary High-Affordance Action Pill */}
                 <span className="inline-flex items-center space-x-2 text-xs font-mono font-semibold text-white px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all">
-                  <span>Buy Now ↗</span>
+                  <span>Inspect Details</span>
+                  <ArrowUpRight className="w-4 h-4" />
                 </span>
               </div>
 
@@ -198,7 +199,8 @@ export default function FeaturedAssets({ onSelectAsset, initialProducts = [] }) 
           <div className="pt-6 mt-6 border-t border-white/[0.08] flex items-center justify-between text-xs font-mono">
             <span className="text-white/50">{rippleEffect?.fileSize} download</span>
             <span className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg bg-sky-500/15 border border-sky-500/30 text-sky-300 group-hover:bg-sky-500 group-hover:text-black font-semibold transition-all">
-              <span>Buy Now ↗</span>
+              <span>View Specs</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
             </span>
           </div>
         </div>
@@ -249,7 +251,8 @@ export default function FeaturedAssets({ onSelectAsset, initialProducts = [] }) 
           <div className="pt-6 mt-6 border-t border-white/[0.08] flex items-center justify-between text-xs font-mono">
             <span className="text-white/50">{ytDownloader?.fileSize} &bull; macOS / Windows</span>
             <span className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 group-hover:bg-emerald-500 group-hover:text-black font-bold transition-all shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-              <span>Buy Now ↗</span>
+              <Download className="w-3.5 h-3.5" />
+              <span>Get Tool Free</span>
             </span>
           </div>
         </div>
@@ -280,7 +283,8 @@ export default function FeaturedAssets({ onSelectAsset, initialProducts = [] }) 
           <div className="pt-4 mt-6 border-t border-white/[0.08] flex justify-between items-center text-xs font-mono">
             <span className="text-white/50">DaVinci Resolve Fusion &bull; {metallicLiquid?.fileSize}</span>
             <span className="inline-flex items-center space-x-1 px-3 py-1 rounded-md bg-white/[0.08] text-white group-hover:bg-white group-hover:text-black font-semibold transition-all">
-              <span>Buy Now ↗</span>
+              <span>Inspect</span>
+              <ArrowUpRight className="w-3 h-3" />
             </span>
           </div>
         </div>
@@ -306,7 +310,8 @@ export default function FeaturedAssets({ onSelectAsset, initialProducts = [] }) 
           <div className="pt-4 mt-6 border-t border-white/[0.08] flex justify-between items-center text-xs font-mono">
             <span className="text-white/50">DaVinci + Premiere &bull; {gridTransition?.fileSize}</span>
             <span className="inline-flex items-center space-x-1 px-3 py-1 rounded-md bg-white/[0.08] text-white group-hover:bg-white group-hover:text-black font-semibold transition-all">
-              <span>Buy Now ↗</span>
+              <span>Inspect</span>
+              <ArrowUpRight className="w-3 h-3" />
             </span>
           </div>
         </div>
