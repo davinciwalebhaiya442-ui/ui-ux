@@ -739,20 +739,35 @@ export function AdminLayout({ children, title = 'Dashboard' }) {
 // DASHBOARD COMPONENT WITH REAL DATA & PERIOD TOGGLE
 export function Dashboard() {
   const [period, setPeriod] = useState('30d');
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('dwb_overview_cache');
+        if (stored) return JSON.parse(stored);
+      } catch {}
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(false);
 
-  const fetchDashboard = (p) => {
-    setLoading(true);
-    fetch(`/api/admin/overview?period=${p}`)
-      .then((r) => r.ok ? r.json() : Promise.reject())
-      .then(setData)
-      .catch(() => {})
+  const fetchDashboard = (p, isBackground = false) => {
+    if (!isBackground && !data) setLoading(true);
+    fetch(`/api/admin/overview?period=${p}&_t=${Date.now()}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((json) => {
+        setData(json);
+        try {
+          localStorage.setItem('dwb_overview_cache', JSON.stringify(json));
+        } catch {}
+      })
+      .catch((err) => {
+        console.error('Failed to load overview data:', err);
+      })
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
-    fetchDashboard(period);
+    fetchDashboard(period, Boolean(data));
   }, [period]);
 
   const s = data?.stats;
