@@ -22,7 +22,7 @@ export async function POST(request, { params }) {
     await ensureProfile(auth.user);
     const access = await prisma.productAccess.upsert({ where: { userId_productId: { userId: auth.user.id, productId: product.id } }, update: {}, create: { userId: auth.user.id, productId: product.id, accessType: 'FREE_DOWNLOAD' } });
     if (access.accessType !== 'FREE_DOWNLOAD' && product.type !== 'PAID') return Response.json({ error: 'ACCESS_DENIED' }, { status: 403 });
-    const url = await createSignedDownloadUrl(product.downloadFileKey, 600);
+    const url = await createSignedDownloadUrl(product.downloadFileKey, 600, product.downloadFileName);
     await prisma.download.create({ data: { userId: auth.user.id, productId: product.id, accessId: access.id } });
     return Response.json({ url, fileName: product.downloadFileName, expiresIn: 600 });
   } catch (error) {

@@ -1,11 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, Check, Download, ShoppingBag, SlidersHorizontal, Image as ImageIcon, Film } from 'lucide-react';
+import { X, Check, Download, ShoppingBag, SlidersHorizontal, Image as ImageIcon, Film, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import BeforeAfterSlider from './BeforeAfterSlider';
 
 export default function ProductModal({ asset, onClose }) {
+  const [isDownloading, setIsDownloading] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [downloadStatusText, setDownloadStatusText] = useState('');
+  const [directDownloadUrl, setDirectDownloadUrl] = useState('');
+  const [directDownloadName, setDirectDownloadName] = useState('');
   const [downloadError, setDownloadError] = useState('');
   const [purchaseStage, setPurchaseStage] = useState('idle');
 
@@ -52,20 +56,59 @@ export default function ProductModal({ asset, onClose }) {
   if (!asset) return null;
 
   const handleFreeDownload = async () => {
+    if (isDownloading) return;
     setDownloadError('');
-    const response = await fetch(`/api/products/${asset.slug || asset.id}/download`, { method: 'POST' });
-    const data = await response.json().catch(() => ({}));
-    if (response.status === 401) {
-      window.location.href = `/login?next=/`;
-      return;
+    setIsDownloading(true);
+    setDownloadSuccess(false);
+    setDownloadStatusText('Connecting to cloud storage...');
+
+    try {
+      setDownloadStatusText('Requesting secure download package...');
+      const response = await fetch(`/api/products/${asset.slug || asset.id}/download`, { method: 'POST' });
+      const data = await response.json().catch(() => ({}));
+
+      if (response.status === 401) {
+        setDownloadStatusText('Login required to access this file. Redirecting...');
+        window.location.href = `/login?next=${encodeURIComponent(typeof window !== 'undefined' ? window.location.pathname : '/')}`;
+        return;
+      }
+
+      if (!response.ok) {
+        setIsDownloading(false);
+        setDownloadError(
+          data.error === 'R2 is not configured'
+            ? 'Download storage is not configured yet.'
+            : (data.error || 'Download unavailable.')
+        );
+        return;
+      }
+
+      const fileName = data.fileName || `${asset.slug || 'asset'}.zip`;
+      setDirectDownloadUrl(data.url);
+      setDirectDownloadName(fileName);
+      setDownloadStatusText('Download package ready! Initiating transfer...');
+      setDownloadSuccess(true);
+      setIsDownloading(false);
+
+      // Trigger automatic browser download via link click
+      const link = document.createElement('a');
+      link.href = data.url;
+      link.setAttribute('download', fileName);
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener noreferrer');
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        if (document.body.contains(link)) {
+          document.body.removeChild(link);
+        }
+      }, 500);
+
+    } catch (err) {
+      console.error('Download error:', err);
+      setIsDownloading(false);
+      setDownloadError('Network issue while initiating download. Please try again.');
     }
-    if (!response.ok) {
-      setDownloadError(data.error === 'R2 is not configured' ? 'Download storage is not configured yet.' : (data.error || 'Download unavailable.'));
-      return;
-    }
-    setDownloadSuccess(true);
-    window.location.href = data.url;
-    setTimeout(() => setDownloadSuccess(false), 4000);
   };
 
   const handlePurchase = () => {
@@ -229,16 +272,28 @@ export default function ProductModal({ asset, onClose }) {
             )}
 
             {/* Action Bar */}
-            <div className="pt-2">
+            <div className="pt-2 space-y-3">
               {asset.type === 'free' ? (
                 <button
                   onClick={handleFreeDownload}
-                  className="w-full sm:w-auto px-8 py-3.5 rounded-lg text-xs font-semibold text-black bg-white hover:bg-white/90 transition-colors flex items-center justify-center space-x-2"
+                  disabled={isDownloading}
+                  className={`w-full sm:w-auto px-8 py-3.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center space-x-2.5 ${
+                    isDownloading
+                      ? 'bg-blue-600 text-white cursor-wait opacity-95 shadow-[0_0_20px_rgba(37,99,235,0.4)]'
+                      : downloadSuccess
+                      ? 'bg-emerald-500 text-black hover:bg-emerald-400 font-bold shadow-[0_0_20px_rgba(16,185,129,0.3)]'
+                      : 'text-black bg-white hover:bg-white/90 active:scale-[0.98]'
+                  }`}
                 >
-                  {downloadSuccess ? (
+                  {isDownloading ? (
                     <>
-                      <Check className="w-4 h-4 text-emerald-600" />
-                      <span>Download Archive Triggered (.ZIP)</span>
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <span>Preparing Download Package...</span>
+                    </>
+                  ) : downloadSuccess ? (
+                    <>
+                      <Check className="w-4 h-4 text-black stroke-[3]" />
+                      <span>Download Started! Check Browser Downloads</span>
                     </>
                   ) : (
                     <>
@@ -264,7 +319,47 @@ export default function ProductModal({ asset, onClose }) {
                   )}
                 </button>
               )}
-              {downloadError && <p className="mt-3 text-xs text-amber-300">{downloadError}</p>}
+
+              {/* Instant Visual Progress & Status Box */}
+              {isDownloading && (
+                <div className="p-3.5 rounded-xl bg-blue-950/40 border border-blue-500/30 flex items-center space-x-3 text-xs text-blue-200 animate-pulse">
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-400 shrink-0" />
+                  <div className="space-y-0.5">
+                    <p className="font-semibold text-white">Preparing secure download link...</p>
+                    <p className="text-[11px] text-blue-300/80">{downloadStatusText || 'Connecting to DavinciWaleBhaiya cloud storage...'}</p>
+                  </div>
+                </div>
+              )}
+
+              {downloadSuccess && (
+                <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 space-y-1.5 text-xs">
+                  <div className="flex items-center space-x-2 text-emerald-300 font-semibold">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Download file sent to browser! Look at your browser downloads icon (top-right or bottom-bar).</span>
+                  </div>
+                  {directDownloadUrl && (
+                    <div className="text-[11px] text-white/70 pl-6">
+                      Did not start automatically?{' '}
+                      <a
+                        href={directDownloadUrl}
+                        download={directDownloadName || 'archive.zip'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-emerald-400 underline hover:text-emerald-300 font-semibold ml-1"
+                      >
+                        Click here to download directly ({directDownloadName || 'Asset File'})
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {downloadError && (
+                <div className="p-3.5 rounded-xl bg-amber-950/40 border border-amber-500/30 flex items-center space-x-2.5 text-xs text-amber-300">
+                  <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>{downloadError}</span>
+                </div>
+              )}
             </div>
           </div>
 

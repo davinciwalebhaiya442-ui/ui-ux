@@ -19,9 +19,19 @@ const client = configured
     })
   : null;
 
-export async function createSignedDownloadUrl(key, expiresIn = 600) {
+export async function createSignedDownloadUrl(key, expiresIn = 600, fileName = null) {
   if (!client) throw new Error('R2 is not configured');
-  return getSignedUrl(client, new GetObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: key }), { expiresIn });
+  const commandInput = {
+    Bucket: process.env.R2_BUCKET_NAME,
+    Key: key,
+  };
+  if (fileName) {
+    const cleanFileName = String(fileName).replace(/["\r\n]/g, '_');
+    commandInput.ResponseContentDisposition = `attachment; filename="${cleanFileName}"`;
+  } else {
+    commandInput.ResponseContentDisposition = 'attachment';
+  }
+  return getSignedUrl(client, new GetObjectCommand(commandInput), { expiresIn });
 }
 
 export async function getAssetObject(key) {
