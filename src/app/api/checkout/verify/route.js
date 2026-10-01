@@ -1,17 +1,45 @@
 import { prisma } from '@/lib/prisma';
-import { verifyPaymentSignature } from '@/lib/payments/razorpay';
+import { verifyPaymentSignature, getRazorpay } from '@/lib/payments/razorpay';
 import { sendOrderDeliveryEmail } from '@/lib/email';
 
 export async function POST(request) {
   try {
-    const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = await request.json();
+    const body = await request.json();
+    const razorpayOrderId = body.razorpay_order_id || body.razorpayOrderId;
+    const razorpayPaymentId = body.razorpay_payment_id || body.razorpayPaymentId;
+    const razorpaySignature = body.razorpay_signature || body.razorpaySignature;
 
-    if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
+    if (!razorpayOrderId || !razorpayPaymentId) {
+      console.error('Missing Razorpay verification keys:', body);
       return Response.json({ error: 'MISSING_PAYMENT_DETAILS' }, { status: 400 });
     }
 
     // Verify cryptographic payment signature from Razorpay
-    const isValid = verifyPaymentSignature(razorpayOrderId, razorpayPaymentId, razorpaySignature);
+    let isValid = false;
+    if (razorpaySignature) {
+      try {
+        isValid = verifyPaymentSignature(razorpayOrderId, razorpayPaymentId, razorpaySignature);
+      } catch (sigErr) {
+        console.warn('Signature verification exception:', sigErr);
+      }
+    }
+
+    // Direct fallback verification with Razorpay API
+    if (!isValid) {
+      try {
+        const payment = await getRazorpay().payments.fetch(razorpayPaymentId);
+        if (
+          payment &&
+          payment.order_id === razorpayOrderId &&
+          (payment.status === 'captured' || payment.status === 'authorized')
+        ) {
+          isValid = true;
+        }
+      } catch (rzpErr) {
+        console.error('Razorpay direct payment fetch check failed:', rzpErr);
+      }
+    }
+
     if (!isValid) {
       return Response.json({ error: 'PAYMENT_VERIFICATION_FAILED' }, { status: 400 });
     }
@@ -36,7 +64,7 @@ export async function POST(request) {
           status: 'PAID',
           paymentStatus: 'CAPTURED',
           razorpayPaymentId,
-          razorpaySignature,
+          razorpaySignature: razorpaySignature || 'VERIFIED_VIA_RAZORPAY_API',
         },
       });
 

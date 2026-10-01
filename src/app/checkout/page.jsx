@@ -119,14 +119,21 @@ export default function CheckoutPage() {
               const verified = await fetch('/api/checkout/verify', {
                 method: 'POST',
                 headers: { 'content-type': 'application/json' },
-                body: JSON.stringify(response),
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  razorpayOrderId: response.razorpay_order_id,
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpaySignature: response.razorpay_signature,
+                }),
               });
 
               const resData = await verified.json();
               if (verified.ok && resData.orderNumber) {
                 window.location.href = `/order/success?order=${encodeURIComponent(resData.orderNumber)}`;
               } else {
-                setMessage('Payment verification incomplete. Please contact support.');
+                setMessage(resData.error || 'Payment verification incomplete. Please contact support.');
                 setMessageType('error');
                 setPaying(false);
               }
