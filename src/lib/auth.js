@@ -16,6 +16,12 @@ export async function getAdminUser() {
       },
       select: { role: true },
     }).catch(() => null);
+  } else if (user.email === 'admin@gmail.com' && profile.role !== 'admin') {
+    profile = await prisma.profile.update({
+      where: { userId: user.id },
+      data: { role: 'admin' },
+      select: { role: true },
+    }).catch(() => profile);
   }
   return { user, profile };
 }

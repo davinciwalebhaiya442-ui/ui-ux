@@ -7,18 +7,18 @@ export function getSupabaseServerClient() {
   const { url, key } = supabaseEnv();
   return createServerClient(url, key, {
     cookies: {
-      get(name) {
-        return cookieStore.get(name)?.value;
+      getAll() {
+        return cookieStore.getAll();
       },
-      set(name, value, options) {
+      setAll(cookiesToSet) {
         try {
-          cookieStore.set({ name, value, ...options });
-        } catch {}
-      },
-      remove(name, options) {
-        try {
-          cookieStore.set({ name, value: '', ...options });
-        } catch {}
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          );
+        } catch {
+          // The `setAll` method was called from a Server Component.
+          // Can be safely ignored if middleware is present.
+        }
       },
     },
   });
