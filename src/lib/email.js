@@ -7,7 +7,10 @@ export async function sendEmail({ to, subject, html }) {
     console.warn('sendEmail skipped: RESEND_API_KEY is not configured');
     return null;
   }
-  const from = process.env.RESEND_FROM_EMAIL?.trim() || 'Davinci Wale Bhaiya <onboarding@resend.dev>';
+  let from = process.env.RESEND_FROM_EMAIL?.trim() || 'Davinci Wale Bhaiya <onboarding@resend.dev>';
+  if (from && !from.includes('<')) {
+    from = `Davinci Wale Bhaiya <${from}>`;
+  }
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const result = await resend.emails.send({
@@ -16,6 +19,20 @@ export async function sendEmail({ to, subject, html }) {
       subject,
       html,
     });
+    if (result.error) {
+      console.warn('Resend primary dispatch error:', result.error);
+      // If error indicates unverified domain, fallback to onboarding@resend.dev
+      if (from !== 'Davinci Wale Bhaiya <onboarding@resend.dev>') {
+        console.log('Retrying email dispatch with default sender onboarding@resend.dev...');
+        const retryResult = await resend.emails.send({
+          from: 'Davinci Wale Bhaiya <onboarding@resend.dev>',
+          to,
+          subject,
+          html,
+        });
+        return retryResult;
+      }
+    }
     return result;
   } catch (error) {
     console.error('Failed to send email via Resend:', error);
@@ -95,7 +112,7 @@ export async function sendOrderDeliveryEmail(orderId) {
       return null;
     }
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://creative-404-main.vercel.app';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://davinciwalebhaiya.com';
     const productIds = order.items.map((i) => i.productId);
     const products = await prisma.product.findMany({
       where: { id: { in: productIds } },

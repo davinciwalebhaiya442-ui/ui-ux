@@ -7,11 +7,19 @@ export function getRazorpay() {
 }
 
 export function verifyPaymentSignature(orderId, paymentId, signature) {
+  if (!orderId || !paymentId || !signature || !process.env.RAZORPAY_KEY_SECRET) return false;
   const digest = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET).update(`${orderId}|${paymentId}`).digest('hex');
-  return crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(signature || ''));
+  const digestBuf = Buffer.from(digest);
+  const sigBuf = Buffer.from(signature);
+  if (digestBuf.length !== sigBuf.length) return false;
+  return crypto.timingSafeEqual(digestBuf, sigBuf);
 }
 
 export function verifyWebhookSignature(payload, signature) {
-  const digest = crypto.createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET || '').update(payload).digest('hex');
-  return crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(signature || ''));
+  if (!payload || !signature || !process.env.RAZORPAY_WEBHOOK_SECRET) return false;
+  const digest = crypto.createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET).update(payload).digest('hex');
+  const digestBuf = Buffer.from(digest);
+  const sigBuf = Buffer.from(signature);
+  if (digestBuf.length !== sigBuf.length) return false;
+  return crypto.timingSafeEqual(digestBuf, sigBuf);
 }

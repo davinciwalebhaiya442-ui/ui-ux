@@ -21,19 +21,8 @@ export default function Preloader({ onLoaded }) {
   const pathRef = useRef(null);
   const [isRendered, setIsRendered] = useState(true);
 
-  // Keep a stable ref to onLoaded callback so parent re-renders don't restart the preloader
-  const onLoadedRef = useRef(onLoaded);
-  useEffect(() => {
-    onLoadedRef.current = onLoaded;
-  }, [onLoaded]);
-
-  // Ensure preloader animation runs strictly once
-  const hasStartedRef = useRef(false);
-
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (hasStartedRef.current) return;
-    hasStartedRef.current = true;
 
     let isMounted = true;
     let index = 0;
@@ -62,16 +51,16 @@ export default function Preloader({ onLoaded }) {
     if (wordRef.current) {
       gsap.to(wordRef.current, {
         opacity: 0.85,
-        duration: 0.6,
-        delay: 0.15,
+        duration: 0.8,
+        delay: 0.2,
       });
     }
 
-    // Word cycling - runs once cleanly
+    // Word cycling
     function cycleWords() {
       if (!isMounted || index >= words.length - 1) return;
 
-      const delay = index === 0 ? 0.7 : 0.12;
+      const delay = index === 0 ? 0.9 : 0.15;
 
       gsap.delayedCall(delay, () => {
         if (!isMounted) return;
@@ -85,7 +74,7 @@ export default function Preloader({ onLoaded }) {
 
     cycleWords();
 
-    const totalDelay = words.length * 0.12 + 1.1;
+    const totalDelay = words.length * 0.15 + 1.4;
 
     const exitCall = gsap.delayedCall(totalDelay, () => {
       if (!isMounted || !preloaderRef.current || !pathRef.current) return;
@@ -100,7 +89,7 @@ export default function Preloader({ onLoaded }) {
             preloaderRef.current.style.display = 'none';
           }
           setIsRendered(false);
-          if (onLoadedRef.current) onLoadedRef.current();
+          if (onLoaded) onLoaded();
         },
       });
 
@@ -109,7 +98,7 @@ export default function Preloader({ onLoaded }) {
           wordRef.current,
           {
             opacity: 0,
-            duration: 0.25,
+            duration: 0.3,
           },
           0
         );
@@ -119,8 +108,8 @@ export default function Preloader({ onLoaded }) {
         preloaderRef.current,
         {
           y: '-100vh',
-          duration: 0.8,
-          delay: 0.1,
+          duration: 0.85,
+          delay: 0.15,
           ease: 'power4.inOut',
         },
         0
@@ -133,8 +122,8 @@ export default function Preloader({ onLoaded }) {
         },
         {
           attr: { d: targetPath },
-          duration: 0.7,
-          delay: 0.2,
+          duration: 0.75,
+          delay: 0.25,
           ease: 'power4.inOut',
         },
         0
@@ -156,9 +145,9 @@ export default function Preloader({ onLoaded }) {
       isMounted = false;
       window.removeEventListener('resize', handleResize);
       exitCall.kill();
-      if (wordRef.current) gsap.killTweensOf(wordRef.current);
+      gsap.killTweensOf(wordRef.current);
     };
-  }, []); // Run strictly ONCE on mount
+  }, [onLoaded]);
 
   if (!isRendered) return null;
 

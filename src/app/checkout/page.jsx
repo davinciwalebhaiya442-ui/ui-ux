@@ -10,14 +10,13 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  ShoppingBag,
   DownloadCloud,
 } from 'lucide-react';
 
 export default function CheckoutPage() {
   const [product, setProduct] = useState(null);
-  const [user, setUser] = useState(null);
-  const [authChecked, setAuthChecked] = useState(false);
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [message, setMessage] = useState('');
@@ -29,14 +28,20 @@ export default function CheckoutPage() {
       : null;
 
   useEffect(() => {
-    // 1. Check user authentication
+    // 1. Try to prefill user details if logged in
     fetch('/api/auth/me')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data?.user) setUser(data.user);
+        if (data?.user) {
+          if (data.user.email) setEmail(data.user.email);
+          const fullName =
+            data.user.user_metadata?.full_name ||
+            data.user.user_metadata?.name ||
+            '';
+          if (fullName) setName(fullName);
+        }
       })
-      .catch(() => {})
-      .finally(() => setAuthChecked(true));
+      .catch(() => {});
 
     // 2. Fetch product details
     if (slug) {
@@ -57,11 +62,10 @@ export default function CheckoutPage() {
   const pay = async () => {
     if (!product) return;
 
-    if (!user) {
-      setMessage('Please login first so we can deliver the zip file to your email.');
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
+      setMessage('Please enter a valid email address to receive your download link.');
       setMessageType('error');
-      const nextUrl = `/checkout?product=${encodeURIComponent(product.slug || product.id)}`;
-      window.location.href = `/login?next=${encodeURIComponent(nextUrl)}`;
       return;
     }
 
@@ -73,7 +77,11 @@ export default function CheckoutPage() {
       const result = await fetch('/api/checkout/create', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ productIds: [product.id] }),
+        body: JSON.stringify({
+          productIds: [product.id],
+          email: cleanEmail,
+          name: name.trim(),
+        }),
       });
 
       const data = await result.json();
@@ -97,14 +105,14 @@ export default function CheckoutPage() {
           description: product.name,
           order_id: data.order.razorpayOrderId,
           prefill: {
-            email: user?.email || '',
-            name: user?.name || '',
+            email: cleanEmail,
+            name: name.trim() || '',
           },
           theme: {
             color: '#2563eb',
           },
           handler: async (response) => {
-            setMessage('Verifying payment and generating secure zip download links...');
+            setMessage('Verifying payment and sending file to your email...');
             setMessageType('info');
 
             try {
@@ -200,30 +208,52 @@ export default function CheckoutPage() {
                 )}
               </div>
 
-              {/* Delivery Notice */}
-              <div className="rounded-2xl border border-blue-500/20 bg-blue-950/20 p-4 space-y-2">
+              {/* Delivery Email Input */}
+              <div className="space-y-3 rounded-2xl border border-blue-500/25 bg-blue-950/20 p-4 sm:p-5">
                 <div className="flex items-center gap-2 text-xs font-semibold text-blue-300">
                   <Mail className="w-4 h-4 text-blue-400" />
-                  <span>Instant Email Zip Delivery</span>
+                  <span>Digital Delivery Email</span>
                 </div>
-                {user ? (
-                  <p className="text-xs text-white/70">
-                    Product zip package download link will be delivered directly to:{' '}
-                    <strong className="text-white underline">{user.email}</strong> immediately upon payment confirmation.
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    <p className="text-xs text-white/70">
-                      Please log in or create an account with your email to receive your product zip package upon payment.
-                    </p>
-                    <Link
-                      href={`/login?next=${encodeURIComponent(typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/')}`}
-                      className="inline-block text-xs font-semibold text-blue-400 hover:text-blue-300 underline"
-                    >
-                      Login / Create Account &rarr;
-                    </Link>
+                <p className="text-xs text-white/65 leading-relaxed">
+                  Enter your email address. Your digital package zip download link will be delivered here automatically as soon as payment is confirmed.
+                </p>
+                <div className="space-y-3 pt-1">
+                  <div>
+                    <label className="block text-[11px] font-mono text-white/60 uppercase tracking-wider mb-1.5">
+                      Email Address <span className="text-blue-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                      <input
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          if (messageType === 'error') setMessage('');
+                        }}
+                        placeholder="yourname@gmail.com"
+                        className="w-full rounded-xl border border-white/15 bg-black/60 pl-10 pr-4 py-3 text-sm text-white placeholder-white/30 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
+                      />
+                    </div>
                   </div>
-                )}
+                  <div>
+                    <label className="block text-[11px] font-mono text-white/50 uppercase tracking-wider mb-1.5">
+                      Full Name (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Your Name"
+                      className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-sm text-white placeholder-white/30 focus:border-blue-500 focus:outline-none transition-colors"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 text-[11px] text-emerald-400/90 font-mono pt-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                  <span>Automatic email delivery right after payment</span>
+                </div>
               </div>
 
               {/* Order Total */}
@@ -256,33 +286,24 @@ export default function CheckoutPage() {
               )}
 
               {/* Pay Button */}
-              {user ? (
-                <button
-                  type="button"
-                  disabled={paying}
-                  onClick={pay}
-                  className="w-full rounded-2xl bg-blue-600 hover:bg-blue-500 active:scale-[0.99] py-4 text-sm font-bold text-white shadow-[0_0_30px_rgba(37,99,235,0.4)] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {paying ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Processing Payment...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="w-4 h-4" />
-                      <span>Pay ₹{product.price?.toLocaleString()} via Razorpay</span>
-                    </>
-                  )}
-                </button>
-              ) : (
-                <Link
-                  href={`/login?next=${encodeURIComponent(typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/')}`}
-                  className="w-full rounded-2xl bg-white hover:bg-white/90 py-4 text-sm font-bold text-black transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.2)]"
-                >
-                  <span>Login to Proceed with Purchase</span>
-                </Link>
-              )}
+              <button
+                type="button"
+                disabled={paying}
+                onClick={pay}
+                className="w-full rounded-2xl bg-blue-600 hover:bg-blue-500 active:scale-[0.99] py-4 text-sm font-bold text-white shadow-[0_0_30px_rgba(37,99,235,0.4)] transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+              >
+                {paying ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Processing Payment...</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-4 h-4" />
+                    <span>Pay ₹{product.price?.toLocaleString()} via Razorpay</span>
+                  </>
+                )}
+              </button>
 
               {/* Guarantee Footer & Compliance */}
               <div className="space-y-2 pt-2">
@@ -294,7 +315,7 @@ export default function CheckoutPage() {
                   <span>&bull;</span>
                   <span className="flex items-center gap-1">
                     <DownloadCloud className="w-3 h-3 text-blue-400" />
-                    Instant Zip Access
+                    Instant Zip Delivery
                   </span>
                 </div>
                 <p className="text-center text-[10px] text-white/40 font-mono">
