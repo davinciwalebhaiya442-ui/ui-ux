@@ -113,6 +113,23 @@ export default function Navbar({ onOpenSearch }) {
                 {link.name}
               </a>
             ))}
+            <div className="pt-2 mt-2 border-t border-white/[0.08] flex flex-col space-y-1">
+              <a
+                href="#catalogue"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-4 py-2.5 text-sm font-medium text-emerald-400 hover:bg-white/[0.06] rounded-xl transition-colors flex items-center justify-between"
+              >
+                <span>Free Assets</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              </a>
+              <a
+                href={account ? '/account' : '/login'}
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-4 py-2.5 text-sm font-medium text-white/70 hover:text-white hover:bg-white/[0.06] rounded-xl transition-colors"
+              >
+                {account ? 'Account & Orders' : 'Login / Signup'}
+              </a>
+            </div>
           </nav>
         </div>
       )}

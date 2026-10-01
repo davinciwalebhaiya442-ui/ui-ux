@@ -16,14 +16,12 @@ import {
   Link2,
   AlertCircle,
   RotateCcw,
-  Trash2,
 } from 'lucide-react';
 import { AdminLayout, useAdmin } from '../AdminShell';
 import { notifyProductsUpdated } from '@/lib/events';
 
 const FONT_OPTIONS = [
   { id: 'sans', name: 'Inter / Modern Sans (Default)', family: 'var(--font-sans, inherit)' },
-  { id: 'uploaded', name: '✨ Custom Uploaded Font (.ttf, .otf, .woff2)', family: "'CustomUploadedHeroFont', sans-serif" },
   { id: 'Syne', name: 'Syne (Heavy Editorial)', family: "'Syne', sans-serif" },
   { id: 'Clash Display', name: 'Clash Display (Bold Commercial)', family: "'Clash Display', sans-serif" },
   { id: 'Bebas Neue', name: 'Bebas Neue (Impact Cinematic Tall)', family: "'Bebas Neue', cursive, sans-serif" },
@@ -48,7 +46,6 @@ const DEFAULT_HERO = {
   badge: 'ECOSYSTEM',
   heroImage: '/hero/2.jpg',
   fontFamily: 'sans',
-  customFontUrl: '',
   textColor: '#ffffff',
   primaryButtonText: 'Work With Us',
   primaryButtonLink: '#catalogue',
@@ -122,43 +119,14 @@ async function optimizeHeroImageFile(file) {
 export default function AdminHeroPage() {
   const { toast } = useAdmin();
   const fileInputRef = useRef(null);
-  const fontInputRef = useRef(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [uploadingFont, setUploadingFont] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   const [form, setForm] = useState(DEFAULT_HERO);
   const [customFont, setCustomFont] = useState('');
-
-  // Dynamically inject custom uploaded font into admin preview DOM
-  useEffect(() => {
-    if (!form.customFontUrl) return;
-
-    let style = document.getElementById('admin-custom-hero-font');
-    if (!style) {
-      style = document.createElement('style');
-      style.id = 'admin-custom-hero-font';
-      document.head.appendChild(style);
-    }
-
-    const cleanUrl = form.customFontUrl.split('?')[0];
-    const ext = cleanUrl.split('.').pop()?.toLowerCase();
-    let format = 'woff2';
-    if (ext === 'woff') format = 'woff';
-    if (ext === 'ttf') format = 'truetype';
-    if (ext === 'otf') format = 'opentype';
-
-    style.textContent = `
-      @font-face {
-        font-family: 'CustomUploadedHeroFont';
-        src: url('${form.customFontUrl}') format('${format}');
-        font-display: swap;
-      }
-    `;
-  }, [form.customFontUrl]);
 
   useEffect(() => {
     // Dynamically inject Google Fonts for real-time editorial preview
@@ -280,61 +248,6 @@ export default function AdminHeroPage() {
     }
   };
 
-  const handleFontFileSelected = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const ext = file.name.split('.').pop()?.toLowerCase();
-    const ALLOWED_EXTS = ['ttf', 'otf', 'woff', 'woff2'];
-    if (!ALLOWED_EXTS.includes(ext)) {
-      toast('Please upload a .ttf, .otf, .woff, or .woff2 font file.', 'error');
-      return;
-    }
-
-    if (file.size > 25 * 1024 * 1024) {
-      toast('Font file exceeds maximum limit of 25MB.', 'error');
-      return;
-    }
-
-    setUploadingFont(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('uploadKind', 'font');
-
-      const res = await fetch('/api/admin/hero/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to upload font file');
-
-      setForm((prev) => ({
-        ...prev,
-        fontFamily: 'uploaded',
-        customFontUrl: data.url,
-      }));
-
-      toast(`Custom font "${file.name}" uploaded and applied!`, 'success');
-    } catch (err) {
-      console.error(err);
-      toast(err.message || 'Font upload failed', 'error');
-    } finally {
-      setUploadingFont(false);
-      if (fontInputRef.current) fontInputRef.current.value = '';
-    }
-  };
-
-  const handleRemoveCustomFont = () => {
-    setForm((prev) => ({
-      ...prev,
-      customFontUrl: '',
-      fontFamily: 'sans',
-    }));
-    toast('Custom font removed. Reverted to standard font.', 'info');
-  };
-
   const handleSave = async (e) => {
     e?.preventDefault();
     if (!form.heading?.trim()) {
@@ -380,11 +293,9 @@ export default function AdminHeroPage() {
   };
 
   const activeFontFamily =
-    form.customFontUrl || form.fontFamily === 'uploaded'
-      ? "'CustomUploadedHeroFont', sans-serif"
-      : (form.fontFamily === 'custom'
-          ? customFont || 'inherit'
-          : (FONT_OPTIONS.find((f) => f.id === form.fontFamily)?.family || 'inherit'));
+    form.fontFamily === 'custom'
+      ? customFont || 'inherit'
+      : (FONT_OPTIONS.find((f) => f.id === form.fontFamily)?.family || 'inherit');
 
   return (
     <AdminLayout title="Hero Section Settings">
@@ -600,100 +511,13 @@ export default function AdminHeroPage() {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                {/* Custom Font File Uploader */}
-                <div className="sm:col-span-2 rounded-xl border border-white/[0.08] bg-[#070b14] p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-white/90 flex items-center gap-2">
-                      <Type className="w-4 h-4 text-purple-400" />
-                      <span>Custom Font File (.ttf, .otf, .woff, .woff2)</span>
-                    </span>
-                    {form.customFontUrl && (
-                      <span className="text-[10px] font-mono text-purple-300 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-full">
-                        ACTIVE
-                      </span>
-                    )}
-                  </div>
-
-                  <input
-                    type="file"
-                    ref={fontInputRef}
-                    onChange={handleFontFileSelected}
-                    accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2,application/font-woff,application/font-woff2"
-                    className="hidden"
-                  />
-
-                  {form.customFontUrl ? (
-                    <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg border border-purple-500/20 bg-purple-950/20">
-                      <div className="min-w-0">
-                        <p className="text-xs text-purple-200 font-medium truncate">
-                          Custom font loaded and applied to Hero
-                        </p>
-                        <p className="text-[10px] font-mono text-white/40 truncate max-w-sm">
-                          {form.customFontUrl}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          disabled={uploadingFont}
-                          onClick={() => fontInputRef.current?.click()}
-                          className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/70 hover:text-white hover:bg-white/[0.05] transition-colors"
-                        >
-                          Change Font
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleRemoveCustomFont}
-                          className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-xs text-red-300 hover:bg-red-500/20 transition-colors flex items-center gap-1.5"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          <span>Remove</span>
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap items-center gap-3">
-                      <button
-                        type="button"
-                        disabled={uploadingFont}
-                        onClick={() => fontInputRef.current?.click()}
-                        className="flex items-center gap-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white px-4 py-2.5 text-xs font-semibold shadow-[0_0_20px_rgba(168,85,247,0.2)] transition-all disabled:opacity-50"
-                      >
-                        {uploadingFont ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin text-white" />
-                            <span>Uploading Font File...</span>
-                          </>
-                        ) : (
-                          <>
-                            <UploadCloud className="w-4 h-4" />
-                            <span>Upload Custom Font (.ttf, .otf, .woff, .woff2)</span>
-                          </>
-                        )}
-                      </button>
-                      <span className="text-[11px] text-white/40">
-                        Upload your brand font file and the Hero Title will instantly render with it.
-                      </span>
-                    </div>
-                  )}
-                </div>
-
                 <div>
                   <label className="block text-[11px] font-mono uppercase tracking-wider text-white/50 mb-1.5">
-                    Or Select Preset Font Family
+                    Font Family
                   </label>
                   <select
                     value={form.fontFamily || 'sans'}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val !== 'uploaded' && form.customFontUrl) {
-                        // User chose a preset font, deactivate custom font url
-                        setForm((prev) => ({ ...prev, fontFamily: val, customFontUrl: '' }));
-                      } else {
-                        handleChange('fontFamily', val);
-                      }
-                    }}
+                    onChange={(e) => handleChange('fontFamily', e.target.value)}
                     className={inputClass}
                   >
                     {FONT_OPTIONS.map((f) => (
