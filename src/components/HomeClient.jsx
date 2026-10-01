@@ -47,6 +47,10 @@ export default function HomeClient({ initialProducts = [], initialHero = null })
   const heroInnerRef = useRef(null);
   const mainContentRef = useRef(null);
 
+  const handleLoaded = useCallback(() => {
+    setIsLoaded(true);
+  }, []);
+
   const fetchHeroSettings = useCallback(async () => {
     try {
       const res = await fetch('/api/hero?_t=' + Date.now(), { cache: 'no-store' });
@@ -142,7 +146,7 @@ export default function HomeClient({ initialProducts = [], initialHero = null })
   return (
     <main className="relative min-h-screen w-full bg-black text-white selection:bg-white/20 selection:text-white">
       {/* 00: AWESOME PRELOADER (PRESERVED) */}
-      <Preloader onLoaded={() => setIsLoaded(true)} />
+      <Preloader onLoaded={handleLoaded} />
 
       {/* FLOATING LIQUID GLASS NAVBAR (Completely unmounted until preloader finishes) */}
       {isLoaded && (
