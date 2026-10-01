@@ -33,6 +33,18 @@ export async function createSignedDownloadUrl(key, expiresIn = 600, fileName = n
   }
   return getSignedUrl(client, new GetObjectCommand(commandInput), { expiresIn });
 }
+ 
+export async function createSignedUploadUrl(key, contentType, expiresIn = 900) {
+  if (!client) throw new Error('R2 is not configured');
+  const commandInput = {
+    Bucket: process.env.R2_BUCKET_NAME,
+    Key: key,
+  };
+  if (contentType) {
+    commandInput.ContentType = contentType;
+  }
+  return getSignedUrl(client, new PutObjectCommand(commandInput), { expiresIn });
+}
 
 export async function getAssetObject(key) {
   if (!client) throw new Error('R2 is not configured');

@@ -53,6 +53,69 @@ const DEFAULT_HERO = {
 
 const inputClass = 'w-full rounded-xl border border-white/10 bg-[#080d18] px-3.5 py-2.5 text-sm text-white placeholder-white/30 outline-none focus:border-blue-400/50 transition-colors';
 
+async function optimizeHeroImageFile(file) {
+  if (!file.type.startsWith('image/')) return file;
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const MAX_DIMENSION = 2560; // 2K standard for crisp Retina & WebGL shaders
+      let { width, height } = img;
+
+      if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+        if (width > height) {
+          height = Math.round((height * MAX_DIMENSION) / width);
+          width = MAX_DIMENSION;
+        } else {
+          width = Math.round((width * MAX_DIMENSION) / height);
+          height = MAX_DIMENSION;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(file);
+        return;
+      }
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Convert to WebP format for high compression ratio & crisp detail
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            resolve(file);
+            return;
+          }
+          const cleanName = file.name.replace(/\.[^.]+$/, '') + '.webp';
+          const optimized = new File([blob], cleanName, {
+            type: 'image/webp',
+            lastModified: Date.now(),
+          });
+          resolve(optimized);
+        },
+        'image/webp',
+        0.90
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(file);
+    };
+
+    img.src = objectUrl;
+  });
+}
+
 export default function AdminHeroPage() {
   const { toast } = useAdmin();
   const fileInputRef = useRef(null);
@@ -102,33 +165,79 @@ export default function AdminHeroPage() {
   };
 
   const handleImageFileSelected = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const originalFile = e.target.files?.[0];
+    if (!originalFile) return;
 
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(originalFile.type)) {
       toast('Please upload a JPG, PNG, or WebP image.', 'error');
       return;
     }
 
-    if (file.size > 20 * 1024 * 1024) {
-      toast('Image exceeds maximum limit of 20MB.', 'error');
+    if (originalFile.size > 25 * 1024 * 1024) {
+      toast('Image exceeds maximum limit of 25MB.', 'error');
       return;
     }
 
     setUploadingImage(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      // 1. Optimize image client-side to prevent Vercel 4.5MB payload limit & GPU shader lag
+      let fileToUpload = originalFile;
+      try {
+        fileToUpload = await optimizeHeroImageFile(originalFile);
+      } catch (optErr) {
+        console.warn('Image optimization skipped, using original:', optErr);
+      }
 
-      const res = await fetch('/api/admin/hero/upload', {
-        method: 'POST',
-        body: formData,
-      });
+      let uploadedUrl = null;
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to upload hero image');
+      // 2. Try direct R2 presigned upload first (0 byte Vercel serverless load)
+      try {
+        const presignRes = await fetch('/api/admin/hero/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'presign',
+            fileName: fileToUpload.name,
+            fileType: fileToUpload.type || 'image/webp',
+          }),
+        });
 
-      handleChange('heroImage', data.url);
+        if (presignRes.ok) {
+          const presignData = await presignRes.json();
+          if (presignData.uploadUrl) {
+            const putRes = await fetch(presignData.uploadUrl, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': fileToUpload.type || 'image/webp',
+              },
+              body: fileToUpload,
+            });
+
+            if (putRes.ok) {
+              uploadedUrl = presignData.url;
+            }
+          }
+        }
+      } catch (presignErr) {
+        console.warn('Presigned direct upload unavailable, using server endpoint:', presignErr);
+      }
+
+      // 3. Fallback: multipart server endpoint (file is now optimized < 2MB, never triggers 413)
+      if (!uploadedUrl) {
+        const formData = new FormData();
+        formData.append('file', fileToUpload);
+
+        const res = await fetch('/api/admin/hero/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to upload hero image');
+        uploadedUrl = data.url;
+      }
+
+      handleChange('heroImage', uploadedUrl);
       toast('Hero artwork uploaded to secure cloud storage!', 'success');
     } catch (err) {
       console.error(err);
