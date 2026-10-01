@@ -104,8 +104,8 @@ export default function Scene({ title = "DAVINCI WALE BHAIYA" }) {
 
     // Load main artwork image
     const textureLoader = new THREE.TextureLoader();
-    let imageAspect = 576 / 1024; // 16:9 ratio
-    const texture = textureLoader.load('/hero/hero-custom.png', (tex) => {
+    let imageAspect = 1.0 / 1.5; // default 4672 / 7008
+    const texture = textureLoader.load('/hero/2.jpg', (tex) => {
       if (tex.image && tex.image.naturalWidth && tex.image.naturalHeight) {
         imageAspect = tex.image.naturalHeight / tex.image.naturalWidth;
         updateResolution();
@@ -276,18 +276,15 @@ export default function Scene({ title = "DAVINCI WALE BHAIYA" }) {
         style={{ touchAction: 'none' }}
       />
 
-      {/* Centered Editorial Title (Exact Demo 2 Gradient Styling) */}
+      {/* Centered Editorial Title */}
       <div className="relative z-10 w-full h-full min-h-screen flex items-center justify-center pointer-events-none px-4">
         <h1
-          className="text-center font-bold tracking-tight uppercase"
+          className="text-center font-bold tracking-tight uppercase text-white drop-shadow-[0_4px_30px_rgba(0,0,0,0.8)]"
           style={{
             fontSize: 'clamp(2.5rem, 8vw, 7.5rem)',
             lineHeight: 0.9,
             maxWidth: '85vw',
-            background: 'linear-gradient(90deg, #e9a680 0%, #992d46 50%, #064cb5 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
+            color: '#ffffff',
           }}
         >
           {title}
