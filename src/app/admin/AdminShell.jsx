@@ -195,6 +195,7 @@ const NAV_ITEMS = [
     { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
   ]},
   { group: 'SITE', items: [
+    { label: 'Hero Settings', href: '/admin/hero', icon: Sparkles },
     { label: 'FAQ', href: '/admin/faq', icon: CircleHelp },
     { label: 'Settings', href: '/admin/settings', icon: Settings },
   ]},

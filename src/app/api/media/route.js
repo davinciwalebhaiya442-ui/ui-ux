@@ -14,7 +14,7 @@ export async function GET(request) {
       });
     }
 
-    if (!key.startsWith('products/')) {
+    if (!key.startsWith('products/') && !key.startsWith('hero/')) {
       return new Response(JSON.stringify({ error: 'Forbidden media path' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -26,12 +26,64 @@ const Scene = dynamic(() => import('@/components/Scene'), {
   ssr: false,
 });
 
-export default function HomeClient({ initialProducts = [] }) {
+const DEFAULT_HERO = {
+  heading: 'DAVINCI WALE BHAIYA',
+  description: '',
+  badge: '',
+  heroImage: '/hero/2.jpg',
+  fontFamily: 'sans',
+  textColor: '#ffffff',
+  primaryButtonText: '',
+  primaryButtonLink: '',
+};
+
+export default function HomeClient({ initialProducts = [], initialHero = null }) {
   const [selectedAsset, setSelectedAsset] = useState(null);
+  const [heroSettings, setHeroSettings] = useState(() => initialHero || DEFAULT_HERO);
 
   const heroSectionRef = useRef(null);
   const heroInnerRef = useRef(null);
   const mainContentRef = useRef(null);
+
+  const fetchHeroSettings = useCallback(async () => {
+    try {
+      const res = await fetch('/api/hero?_t=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.hero) {
+        setHeroSettings(data.hero);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    fetchHeroSettings();
+
+    // Instant cross-tab sync when admin updates hero settings
+    let bc = null;
+    try {
+      if ('BroadcastChannel' in window) {
+        bc = new BroadcastChannel('dwb_products_channel');
+        bc.onmessage = (event) => {
+          fetchHeroSettings();
+        };
+      }
+    } catch {}
+
+    const handleStorage = (e) => {
+      if (e.key === 'dwb_products_updated' || e.key === 'dwb_hero_updated') {
+        fetchHeroSettings();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('focus', fetchHeroSettings);
+
+    return () => {
+      if (bc) bc.close();
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('focus', fetchHeroSettings);
+    };
+  }, [fetchHeroSettings]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -95,7 +147,16 @@ export default function HomeClient({ initialProducts = [] }) {
       >
         <div ref={heroInnerRef} className="w-full h-full will-change-transform origin-center">
           <section className="relative h-screen w-full overflow-hidden bg-black">
-            <Scene />
+            <Scene
+              title={heroSettings.heading || 'DAVINCI WALE BHAIYA'}
+              heroImage={heroSettings.heroImage || '/hero/2.jpg'}
+              fontFamily={heroSettings.fontFamily || 'sans'}
+              textColor={heroSettings.textColor || '#ffffff'}
+              badge={heroSettings.badge}
+              description={heroSettings.description}
+              ctaText={heroSettings.primaryButtonText}
+              ctaLink={heroSettings.primaryButtonLink}
+            />
 
             {/* Subtle, non-intrusive scroll indicator */}
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center pointer-events-none opacity-40 hover:opacity-80 transition-opacity">

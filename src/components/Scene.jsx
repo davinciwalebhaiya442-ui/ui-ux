@@ -31,12 +31,41 @@ void main() {
 }
 `;
 
-function clamp(number, min, max) {
-  return Math.max(min, Math.min(number, max));
-}
+const getFontFamilyStyle = (font) => {
+  if (!font || font === 'sans') return 'var(--font-sans, inherit)';
+  if (font === 'serif') return 'serif';
+  if (font === 'mono') return 'monospace';
+  if (font === 'Syne') return "'Syne', sans-serif";
+  if (font === 'Clash Display') return "'Clash Display', sans-serif";
+  if (font === 'Bebas Neue') return "'Bebas Neue', cursive, sans-serif";
+  if (font === 'Oswald') return "'Oswald', sans-serif";
+  if (font === 'Cinzel') return "'Cinzel', serif";
+  if (font === 'Space Grotesk') return "'Space Grotesk', sans-serif";
+  return font;
+};
 
-export default function Scene({ title = "DAVINCI WALE BHAIYA" }) {
+export default function Scene({
+  title = "DAVINCI WALE BHAIYA",
+  heroImage = "/hero/2.jpg",
+  fontFamily = "sans",
+  textColor = "#ffffff",
+  badge = "",
+  description = "",
+  ctaText = "",
+  ctaLink = "",
+}) {
   const containerRef = useRef(null);
+
+  useEffect(() => {
+    // Inject web fonts if not already loaded
+    if (!document.getElementById('dwb-google-fonts')) {
+      const link = document.createElement('link');
+      link.id = 'dwb-google-fonts';
+      link.rel = 'stylesheet';
+      link.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@600;700;800&family=Oswald:wght@600;700&family=Space+Grotesk:wght@600;700&family=Syne:wght@700;800&display=swap';
+      document.head.appendChild(link);
+    }
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -105,7 +134,8 @@ export default function Scene({ title = "DAVINCI WALE BHAIYA" }) {
     // Load main artwork image
     const textureLoader = new THREE.TextureLoader();
     let imageAspect = 576 / 1024; // 16:9 ratio
-    const texture = textureLoader.load('/hero/2.jpg', (tex) => {
+    const activeHeroImage = heroImage || '/hero/2.jpg';
+    const texture = textureLoader.load(activeHeroImage, (tex) => {
       if (tex.image && tex.image.naturalWidth && tex.image.naturalHeight) {
         imageAspect = tex.image.naturalHeight / tex.image.naturalWidth;
         updateResolution();
@@ -265,7 +295,7 @@ export default function Scene({ title = "DAVINCI WALE BHAIYA" }) {
       texture.dispose();
       dataTexture.dispose();
     };
-  }, []);
+  }, [heroImage]);
 
   return (
     <div className="relative w-full h-full min-h-screen select-none overflow-hidden bg-black">
@@ -277,18 +307,42 @@ export default function Scene({ title = "DAVINCI WALE BHAIYA" }) {
       />
 
       {/* Centered Editorial Title */}
-      <div className="relative z-10 w-full h-full min-h-screen flex items-center justify-center pointer-events-none px-4">
+      <div className="relative z-10 w-full h-full min-h-screen flex flex-col items-center justify-center pointer-events-none px-4 text-center">
+        {badge && (
+          <div className="mb-3 px-3 py-1 rounded-full border border-white/20 bg-black/40 backdrop-blur-md text-[10px] font-mono tracking-[0.25em] uppercase text-white/80">
+            {badge}
+          </div>
+        )}
+
         <h1
-          className="text-center font-bold tracking-tight uppercase text-white drop-shadow-[0_4px_30px_rgba(0,0,0,0.8)]"
+          className="text-center font-bold tracking-tight uppercase drop-shadow-[0_4px_30px_rgba(0,0,0,0.8)] transition-all duration-300"
           style={{
             fontSize: 'clamp(2.5rem, 8vw, 7.5rem)',
             lineHeight: 0.9,
             maxWidth: '85vw',
-            color: '#ffffff',
+            color: textColor || '#ffffff',
+            fontFamily: getFontFamilyStyle(fontFamily),
           }}
         >
           {title}
         </h1>
+
+        {description && (
+          <p className="mt-4 max-w-xl text-xs sm:text-sm text-white/70 font-sans tracking-wide">
+            {description}
+          </p>
+        )}
+
+        {ctaText && (
+          <div className="mt-6 pointer-events-auto">
+            <a
+              href={ctaLink || '#catalogue'}
+              className="inline-flex items-center px-7 py-3 rounded-full bg-white text-black font-semibold text-xs hover:bg-white/90 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+            >
+              {ctaText}
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );
