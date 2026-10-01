@@ -21,13 +21,13 @@ export default function Navbar({ onOpenSearch }) {
   }, []);
 
   const navLinks = [
-    { name: 'Featured', href: '#featured' },
-    { name: 'Catalogue', href: '#catalogue' },
-    { name: 'Before/After', href: '#comparison' },
-    { name: 'Tools', href: '#tools' },
-    { name: 'Content', href: '#content' },
-    { name: 'Studio', href: '#studio' },
-    { name: 'FAQ', href: '#faq' },
+    { name: 'Featured', href: '/#featured' },
+    { name: 'Catalogue', href: '/#catalogue' },
+    { name: 'Before/After', href: '/#comparison' },
+    { name: 'Tools', href: '/#tools' },
+    { name: 'Content', href: '/#content' },
+    { name: 'Studio', href: '/studio' },
+    { name: 'FAQ', href: '/faq' },
   ];
 
   return (
@@ -40,7 +40,7 @@ export default function Navbar({ onOpenSearch }) {
         } flex items-center justify-between`}
       >
         {/* Brand */}
-        <a href="#" className="flex items-center space-x-2.5 group">
+        <a href="/" className="flex items-center space-x-2.5 group">
           <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_12px_#3b82f6] group-hover:scale-125 transition-transform" />
           <span className="font-semibold text-sm sm:text-base tracking-tight text-white flex items-center">
             DavinciWale<span className="text-white/40 font-normal ml-0.5">Bhaiya</span>
@@ -66,7 +66,7 @@ export default function Navbar({ onOpenSearch }) {
         {/* Right Actions */}
         <div className="flex items-center space-x-2 sm:space-x-3">
           <a
-            href="#catalogue"
+            href="/#catalogue"
             className="hidden sm:inline-flex items-center space-x-1.5 text-xs text-white/80 hover:text-white bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] px-3.5 py-1.5 rounded-full transition-all"
           >
             <span>Free Assets</span>
@@ -81,7 +81,7 @@ export default function Navbar({ onOpenSearch }) {
           </a>
 
           <a
-            href="#studio"
+            href="/studio"
             className="inline-flex items-center space-x-1 text-xs font-medium text-black bg-white hover:bg-white/90 px-4 py-1.5 rounded-full transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_25px_rgba(255,255,255,0.3)]"
           >
             <span>Work With Us</span>
@@ -115,7 +115,7 @@ export default function Navbar({ onOpenSearch }) {
             ))}
             <div className="pt-2 mt-2 border-t border-white/[0.08] flex flex-col space-y-1">
               <a
-                href="#catalogue"
+                href="/#catalogue"
                 onClick={() => setMobileMenuOpen(false)}
                 className="px-4 py-2.5 text-sm font-medium text-emerald-400 hover:bg-white/[0.06] rounded-xl transition-colors flex items-center justify-between"
               >

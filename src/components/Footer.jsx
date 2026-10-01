@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Check } from 'lucide-react';
 
 export default function Footer() {
@@ -24,10 +25,10 @@ export default function Footer() {
         {/* Top: Brand Statement & Direct Newsletter */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
           <div className="space-y-3 max-w-xl">
-            <div className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center space-x-2">
-              <span className="w-2 h-2 rounded-full bg-blue-500" />
+            <Link href="/" className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center space-x-2 w-fit">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_10px_#3b82f6]" />
               <span>DavinciWaleBhaiya</span>
-            </div>
+            </Link>
             <p className="text-xs sm:text-sm text-white/50 leading-relaxed font-sans">
               Precision color science, optical DCTLs, and timeline utilities for professional colorists and video editors.
             </p>
@@ -63,43 +64,53 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Minimal Directory Navigation */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 pt-12 border-t border-white/[0.06] text-xs font-sans">
+        {/* Structured Directory Navigation: Products, Company, Legal, Connect */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-8 pt-12 border-t border-white/[0.06] text-xs font-sans">
           
+          {/* Column 1: Products */}
           <div className="space-y-3">
-            <div className="font-mono text-[10px] uppercase tracking-widest text-white/40">Ecosystem</div>
+            <div className="font-mono text-[10px] uppercase tracking-widest text-white/40 font-semibold">Products</div>
             <ul className="space-y-2 text-white/60">
-              <li><a href="#" className="hover:text-white transition-colors">Overview</a></li>
-              <li><a href="#featured" className="hover:text-white transition-colors">Curated Releases</a></li>
-              <li><a href="#catalogue" className="hover:text-white transition-colors">Asset Catalogue</a></li>
-              <li><a href="#comparison" className="hover:text-white transition-colors">Before / After Engine</a></li>
-              <li><a href="#tools" className="hover:text-white transition-colors">Editorial Tools</a></li>
+              <li><Link href="/#catalogue" className="hover:text-white transition-colors">Asset Catalogue</Link></li>
+              <li><Link href="/#tools" className="hover:text-white transition-colors">Tools</Link></li>
+              <li><Link href="/#catalogue" className="hover:text-white transition-colors">Free Assets</Link></li>
+              <li><Link href="/#featured" className="hover:text-white transition-colors">Curated Releases</Link></li>
+              <li><Link href="/#comparison" className="hover:text-white transition-colors">Before / After Engine</Link></li>
             </ul>
           </div>
 
+          {/* Column 2: Company */}
           <div className="space-y-3">
-            <div className="font-mono text-[10px] uppercase tracking-widest text-white/40">Editorial Vault</div>
+            <div className="font-mono text-[10px] uppercase tracking-widest text-white/40 font-semibold">Company</div>
             <ul className="space-y-2 text-white/60">
-              <li><a href="#content" className="hover:text-white transition-colors">Cinematic Prompts</a></li>
-              <li><a href="#content" className="hover:text-white transition-colors">Gear & Reference Displays</a></li>
-              <li><a href="#content" className="hover:text-white transition-colors">Color Science Tutorials</a></li>
-              <li><a href="#content" className="hover:text-white transition-colors">Node Tree Breakdowns</a></li>
+              <li><Link href="/about" className="hover:text-white transition-colors">About Us</Link></li>
+              <li><Link href="/studio" className="hover:text-white transition-colors">Studio</Link></li>
+              <li><Link href="/contact" className="hover:text-white transition-colors">Contact Us</Link></li>
+              <li><Link href="/faq" className="hover:text-white transition-colors">FAQ</Link></li>
             </ul>
           </div>
 
+          {/* Column 3: Legal */}
           <div className="space-y-3">
-            <div className="font-mono text-[10px] uppercase tracking-widest text-white/40">Studio & Studio</div>
+            <div className="font-mono text-[10px] uppercase tracking-widest text-white/40 font-semibold">Legal</div>
             <ul className="space-y-2 text-white/60">
-              <li><a href="#studio" className="hover:text-white transition-colors">Work With Us</a></li>
-              <li><a href="#about" className="hover:text-white transition-colors">Studio Notes & Philosophy</a></li>
-              <li><a href="#faq" className="hover:text-white transition-colors">Frequently Answered</a></li>
+              <li><Link href="/terms" className="hover:text-white transition-colors">Terms & Conditions</Link></li>
+              <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/refund-policy" className="hover:text-white transition-colors">Refund & Cancellation</Link></li>
+              <li><Link href="/shipping-policy" className="hover:text-white transition-colors">Shipping & Delivery</Link></li>
             </ul>
           </div>
 
+          {/* Column 4: Connect */}
           <div className="space-y-3">
-            <div className="font-mono text-[10px] uppercase tracking-widest text-white/40">Connect</div>
+            <div className="font-mono text-[10px] uppercase tracking-widest text-white/40 font-semibold">Connect</div>
             <ul className="space-y-2 text-white/60">
-              <li><a href="mailto:support@davinciwalebhaiya.com" className="hover:text-white transition-colors">support@davinciwalebhaiya.com</a></li>
+              <li>
+                <a href="mailto:support@davinciwalebhaiya.com" className="hover:text-white transition-colors text-blue-400">
+                  support@davinciwalebhaiya.com
+                </a>
+              </li>
+              <li><Link href="/account" className="hover:text-white transition-colors">Account & Downloads</Link></li>
               <li><a href="https://youtube.com" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">YouTube Channel</a></li>
               <li><a href="https://instagram.com" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">Instagram</a></li>
             </ul>
@@ -107,10 +118,19 @@ export default function Footer() {
 
         </div>
 
-        {/* Closing Line */}
+        {/* Closing Line — Clean copyright with no pvt. ltd / trademark line */}
         <div className="pt-8 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between text-[11px] font-mono text-white/40 gap-4">
           <div>
             &copy; {new Date().getFullYear()} DavinciWaleBhaiya. All rights reserved.
+          </div>
+          <div className="flex items-center space-x-4 text-[10px]">
+            <Link href="/terms" className="hover:text-white/70 transition-colors">Terms</Link>
+            <span>&bull;</span>
+            <Link href="/privacy" className="hover:text-white/70 transition-colors">Privacy</Link>
+            <span>&bull;</span>
+            <Link href="/refund-policy" className="hover:text-white/70 transition-colors">Refunds</Link>
+            <span>&bull;</span>
+            <Link href="/shipping-policy" className="hover:text-white/70 transition-colors">Shipping</Link>
           </div>
         </div>
 

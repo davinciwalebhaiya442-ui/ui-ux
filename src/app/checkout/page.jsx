@@ -284,17 +284,25 @@ export default function CheckoutPage() {
                 </Link>
               )}
 
-              {/* Guarantee Footer */}
-              <div className="flex items-center justify-center gap-4 text-[10px] font-mono text-white/40 pt-2">
-                <span className="flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                  UPI / Cards / NetBanking
-                </span>
-                <span>&bull;</span>
-                <span className="flex items-center gap-1">
-                  <DownloadCloud className="w-3 h-3 text-blue-400" />
-                  Instant Zip Access
-                </span>
+              {/* Guarantee Footer & Compliance */}
+              <div className="space-y-2 pt-2">
+                <div className="flex items-center justify-center gap-4 text-[10px] font-mono text-white/40">
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                    UPI / Cards / NetBanking
+                  </span>
+                  <span>&bull;</span>
+                  <span className="flex items-center gap-1">
+                    <DownloadCloud className="w-3 h-3 text-blue-400" />
+                    Instant Zip Access
+                  </span>
+                </div>
+                <p className="text-center text-[10px] text-white/40 font-mono">
+                  By purchasing you agree to our{' '}
+                  <Link href="/terms" target="_blank" className="underline hover:text-white">Terms</Link>,{' '}
+                  <Link href="/privacy" target="_blank" className="underline hover:text-white">Privacy</Link> &{' '}
+                  <Link href="/refund-policy" target="_blank" className="underline hover:text-white">Refund Policy</Link>.
+                </p>
               </div>
             </>
           ) : (
