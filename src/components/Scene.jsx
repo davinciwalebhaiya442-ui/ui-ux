@@ -104,8 +104,8 @@ export default function Scene({ title = "DAVINCI WALE BHAIYA" }) {
 
     // Load main artwork image
     const textureLoader = new THREE.TextureLoader();
-    let imageAspect = 1.0 / 1.5; // default 4672 / 7008
-    const texture = textureLoader.load('/hero/2.jpg', (tex) => {
+    let imageAspect = 576 / 1024; // 16:9 ratio
+    const texture = textureLoader.load('/hero/hero-custom.png', (tex) => {
       if (tex.image && tex.image.naturalWidth && tex.image.naturalHeight) {
         imageAspect = tex.image.naturalHeight / tex.image.naturalWidth;
         updateResolution();

@@ -44,10 +44,10 @@ export default function ContentSection() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`pb-3 border-b-2 transition-all -mb-px ${
+            className={`pb-3 border-b-2 transition-colors -mb-px ${
               activeTab === tab.id
-                ? 'border-blue-400 text-blue-300 font-semibold'
-                : 'border-transparent text-white/50 hover:text-white'
+                ? 'border-white text-white font-semibold'
+                : 'border-transparent text-white/40 hover:text-white'
             }`}
           >
             {tab.label}
@@ -61,47 +61,47 @@ export default function ContentSection() {
           {PROMPTS.map((prompt) => (
             <div
               key={prompt.id}
-              className="border border-white/[0.12] rounded-2xl p-6 sm:p-7 bg-gradient-to-b from-[#0d1424]/95 via-[#090e1a]/95 to-[#060a12]/95 shadow-[0_12px_32px_rgba(0,0,0,0.45)] flex flex-col justify-between space-y-5"
+              className="border border-white/[0.08] rounded-xl p-6 bg-[#080808] flex flex-col justify-between space-y-5"
             >
               <div className="space-y-3">
-                <div className="flex justify-between items-center text-[10px] font-mono">
-                  <span className="uppercase tracking-widest text-blue-400 font-semibold px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">{prompt.category}</span>
-                  <span className="text-white/60">{prompt.engine}</span>
+                <div className="flex justify-between items-center text-[10px] font-mono text-white/40">
+                  <span className="uppercase tracking-widest text-blue-400">{prompt.category}</span>
+                  <span>{prompt.engine}</span>
                 </div>
 
                 <h3 className="text-lg font-bold text-white tracking-tight">
                   {prompt.title}
                 </h3>
 
-                <p className="text-xs sm:text-sm text-white/70 leading-relaxed font-sans">
+                <p className="text-xs text-white/60 leading-relaxed font-sans">
                   {prompt.description}
                 </p>
 
                 {/* Direct Prompt Box */}
-                <div className="p-4 rounded-xl bg-[#070b15] border border-white/[0.1] font-mono text-xs text-white/90 leading-relaxed relative group shadow-inner">
-                  <p className="pr-16 text-white/80 select-all">
+                <div className="p-4 rounded-lg bg-[#040404] border border-white/[0.06] font-mono text-xs text-white/80 leading-relaxed relative group">
+                  <p className="pr-16 text-white/70 select-all">
                     {prompt.promptText}
                   </p>
 
-                  <div className="mt-3 pt-3 border-t border-white/[0.08] flex items-center justify-between">
-                    <span className="text-[10px] text-white/50">{prompt.notes}</span>
+                  <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center justify-between">
+                    <span className="text-[10px] text-white/40">{prompt.notes}</span>
                     <button
                       onClick={() => copyPromptText(prompt.id, prompt.promptText)}
-                      className={`px-3.5 py-1.5 rounded-lg text-[10px] font-mono uppercase tracking-wider flex items-center space-x-1.5 transition-all ${
+                      className={`px-3 py-1 rounded text-[10px] font-mono uppercase tracking-wider flex items-center space-x-1.5 transition-colors ${
                         copiedId === prompt.id
-                          ? 'bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 font-bold'
-                          : 'bg-blue-600/30 hover:bg-blue-600 border border-blue-500/40 text-white font-semibold shadow-sm'
+                          ? 'bg-emerald-500/20 text-emerald-300'
+                          : 'bg-white/10 hover:bg-white/20 text-white'
                       }`}
                     >
                       {copiedId === prompt.id ? (
                         <>
-                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <Check className="w-3 h-3 text-emerald-400" />
                           <span>Copied</span>
                         </>
                       ) : (
                         <>
-                          <Copy className="w-3.5 h-3.5 text-blue-300" />
-                          <span>Copy Prompt</span>
+                          <Copy className="w-3 h-3" />
+                          <span>Copy</span>
                         </>
                       )}
                     </button>
@@ -119,20 +119,20 @@ export default function ContentSection() {
           {GEAR_PICKS.map((gear) => (
             <div
               key={gear.id}
-              className="border border-white/[0.12] rounded-2xl p-6 bg-gradient-to-b from-[#0d1424]/95 via-[#090e1a]/95 to-[#060a12]/95 shadow-[0_12px_32px_rgba(0,0,0,0.45)] flex flex-col justify-between"
+              className="border border-white/[0.08] rounded-xl p-6 bg-[#080808] flex flex-col justify-between"
             >
               <div className="space-y-3">
-                <div className="flex justify-between items-center text-[10px] font-mono text-white/50">
-                  <span className="uppercase tracking-widest text-blue-400 font-semibold">{gear.category}</span>
-                  <span className="text-white/80 font-bold">{gear.price}</span>
+                <div className="flex justify-between items-center text-[10px] font-mono text-white/40">
+                  <span className="uppercase tracking-widest">{gear.category}</span>
+                  <span className="text-white/60 font-semibold">{gear.price}</span>
                 </div>
 
                 <h3 className="text-base font-bold text-white tracking-tight">
                   {gear.name}
                 </h3>
-                <div className="text-[11px] font-mono text-blue-300">{gear.role}</div>
+                <div className="text-[11px] font-mono text-blue-400">{gear.role}</div>
 
-                <p className="text-xs text-white/70 leading-relaxed font-sans">
+                <p className="text-xs text-white/60 leading-relaxed font-sans">
                   {gear.notes}
                 </p>
               </div>
@@ -147,11 +147,11 @@ export default function ContentSection() {
           {TUTORIALS.map((tut) => (
             <div
               key={tut.id}
-              className="border border-white/[0.12] rounded-2xl p-6 bg-gradient-to-b from-[#0d1424]/95 via-[#090e1a]/95 to-[#060a12]/95 shadow-[0_12px_32px_rgba(0,0,0,0.45)] flex flex-col justify-between"
+              className="border border-white/[0.08] rounded-xl p-6 bg-[#080808] flex flex-col justify-between"
             >
               <div className="space-y-4">
-                <div className="flex justify-between items-center text-[10px] font-mono text-white/50">
-                  <span className="text-blue-400 font-semibold">{tut.software}</span>
+                <div className="flex justify-between items-center text-[10px] font-mono text-white/40">
+                  <span>{tut.software}</span>
                   <span>{tut.duration}</span>
                 </div>
 
@@ -159,14 +159,14 @@ export default function ContentSection() {
                   {tut.title}
                 </h3>
 
-                <p className="text-xs text-white/70 leading-relaxed font-sans">
+                <p className="text-xs text-white/60 leading-relaxed font-sans">
                   {tut.summary}
                 </p>
 
-                <div className="space-y-1.5 pt-3 border-t border-white/[0.08] text-[11px] font-mono text-white/60">
+                <div className="space-y-1.5 pt-3 border-t border-white/[0.06] text-[11px] font-mono text-white/50">
                   {tut.breakdown.map((item, i) => (
                     <div key={i} className="flex items-start space-x-1.5">
-                      <span className="text-blue-400 font-bold">&bull;</span>
+                      <span className="text-white/30">&bull;</span>
                       <span>{item}</span>
                     </div>
                   ))}

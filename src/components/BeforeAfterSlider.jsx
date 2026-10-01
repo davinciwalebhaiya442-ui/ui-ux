@@ -212,15 +212,11 @@ export default function BeforeAfterSlider({
 
       {/* LIQUID GLASS DIVIDER LINE & TACTILE DRAG HANDLE */}
       <div
-        className="absolute top-0 bottom-0 z-20 w-[2px] bg-gradient-to-b from-blue-400 via-white to-blue-400 shadow-[0_0_16px_rgba(59,130,246,0.9)] pointer-events-none"
+        className="absolute top-0 bottom-0 z-20 w-0.5 bg-gradient-to-b from-blue-400 via-white to-blue-400 shadow-[0_0_12px_rgba(59,130,246,0.8)] pointer-events-none"
         style={{ left: `${sliderPosition}%` }}
       >
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-[#0d1628]/95 backdrop-blur-xl border-2 border-blue-400 shadow-[0_0_25px_rgba(37,99,235,0.7),inset_0_1px_2px_rgba(255,255,255,0.5)] flex items-center justify-center text-white group-hover:scale-110 active:scale-95 transition-transform pointer-events-auto cursor-grab active:cursor-grabbing">
-          <div className="flex items-center space-x-1 text-blue-200">
-            <span className="text-[10px] font-bold select-none">&lsaquo;</span>
-            <SlidersHorizontal className="w-3.5 h-3.5 text-white" />
-            <span className="text-[10px] font-bold select-none">&rsaquo;</span>
-          </div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-[#0a0d14]/95 backdrop-blur-xl border border-white/30 shadow-[0_0_20px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.4)] flex items-center justify-center text-white/90 group-hover:scale-110 active:scale-95 transition-transform pointer-events-auto">
+          <SlidersHorizontal className="w-4 h-4 text-white" />
         </div>
       </div>
     </div>

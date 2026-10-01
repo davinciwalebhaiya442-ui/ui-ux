@@ -111,64 +111,34 @@ export default function HomeClient({ initialProducts = [] }) {
       {/* 🚀 THE ENTIRE WEBSITE AS ONE SINGLE CINEMATIC STACKED LAYER 🚀 */}
       <div
         ref={mainContentRef}
-        className="relative w-full z-20 bg-[#04060c] border-t border-white/[0.1] shadow-[0_-30px_70px_rgba(0,0,0,0.95)] overflow-hidden"
+        className="relative w-full z-20 bg-[#030305] border-t border-white/[0.08] shadow-[0_-30px_70px_rgba(0,0,0,0.95)] before:absolute before:top-0 before:left-0 before:right-0 before:h-[1px] before:bg-gradient-to-r before:from-transparent before:via-blue-500/25 before:to-transparent before:pointer-events-none"
       >
-        {/* Layer 1: Atmospheric Deep Blue & Navy Radial Lighting at Key Content Altitudes */}
-        <div 
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage: `
-              radial-gradient(ellipse 95% 35% at 50% 6%, rgba(14, 42, 90, 0.26) 0%, transparent 70%),
-              radial-gradient(ellipse 85% 32% at 50% 22%, rgba(10, 32, 72, 0.22) 0%, transparent 65%),
-              radial-gradient(ellipse 90% 32% at 50% 42%, rgba(12, 38, 80, 0.20) 0%, transparent 65%),
-              radial-gradient(ellipse 85% 30% at 50% 64%, rgba(10, 30, 68, 0.22) 0%, transparent 65%),
-              radial-gradient(ellipse 90% 35% at 50% 86%, rgba(14, 38, 82, 0.24) 0%, transparent 70%)
-            `,
-          }}
-        />
+        {/* 01: CURATED RELEASES */}
+        <FeaturedAssets onSelectAsset={setSelectedAsset} initialProducts={initialProducts} />
 
-        {/* Layer 2: Subtle Ambient Navy Radial Dispersion */}
-        <div 
-          className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,rgba(8,20,44,0.45)_0%,rgba(4,6,12,0.85)_60%,rgba(2,3,6,1)_100%)] opacity-90"
-        />
+        {/* 02: ASSET REPOSITORY & CATALOGUE */}
+        <AssetCatalogue onSelectAsset={setSelectedAsset} initialProducts={initialProducts} />
 
-        {/* Layer 3: Cinematic Edge Vignette to keep borders darker and draw eyes into products */}
-        <div 
-          className="absolute inset-0 pointer-events-none shadow-[inset_0_0_120px_rgba(0,0,0,0.8)]"
-        />
+        {/* 03: BEFORE / AFTER COLOR SCIENCE ENGINE */}
+        <ComparisonSection onSelectAsset={setSelectedAsset} />
 
-        {/* Top Crisp Light Catch */}
-        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-blue-400/35 to-transparent pointer-events-none z-30" />
+        {/* 04: TECHNICAL WORKSPACE & TOOLS */}
+        <ToolsSection />
 
-        {/* Content Layers (Relative z-10 for perfect contrast) */}
-        <div className="relative z-10">
-          {/* 01: CURATED RELEASES */}
-          <FeaturedAssets onSelectAsset={setSelectedAsset} initialProducts={initialProducts} />
+        {/* 05: EDITORIAL VAULT */}
+        <ContentSection />
 
-          {/* 02: ASSET REPOSITORY & CATALOGUE */}
-          <AssetCatalogue onSelectAsset={setSelectedAsset} initialProducts={initialProducts} />
+        {/* 06: STUDIO LAB */}
+        <StudioSection />
 
-          {/* 03: BEFORE / AFTER COLOR SCIENCE ENGINE */}
-          <ComparisonSection onSelectAsset={setSelectedAsset} />
+        {/* 07: STUDIO NOTES & PHILOSOPHY */}
+        <AboutSection />
 
-          {/* 04: TECHNICAL WORKSPACE & TOOLS */}
-          <ToolsSection />
+        {/* 08: FREQUENTLY ANSWERED QUESTIONS */}
+        <FAQSection />
 
-          {/* 05: EDITORIAL VAULT */}
-          <ContentSection />
-
-          {/* 06: STUDIO LAB */}
-          <StudioSection />
-
-          {/* 07: STUDIO NOTES & PHILOSOPHY */}
-          <AboutSection />
-
-          {/* 08: FREQUENTLY ANSWERED QUESTIONS */}
-          <FAQSection />
-
-          {/* 09: FOOTER CLOSING FRAME */}
-          <Footer />
-        </div>
+        {/* 09: FOOTER CLOSING FRAME */}
+        <Footer />
       </div>
 
       {/* PRODUCT DETAIL MODAL */}

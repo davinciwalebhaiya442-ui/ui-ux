@@ -75,10 +75,10 @@ export default function ToolsSection() {
           <button
             key={tool.id}
             onClick={() => setActiveTool(tool.id)}
-            className={`pb-3 border-b-2 transition-all -mb-px ${
+            className={`pb-3 border-b-2 transition-colors -mb-px ${
               activeTool === tool.id
-                ? 'border-blue-400 text-blue-300 font-semibold'
-                : 'border-transparent text-white/50 hover:text-white'
+                ? 'border-white text-white font-semibold'
+                : 'border-transparent text-white/40 hover:text-white'
             }`}
           >
             {tool.label}
@@ -88,19 +88,13 @@ export default function ToolsSection() {
 
       {/* TOOL 1: YOUTUBE REFERENCE EXTRACTOR */}
       {activeTool === 'downloader' && (
-        <div className="border border-white/[0.12] rounded-2xl p-6 sm:p-10 bg-gradient-to-b from-[#0d1424]/95 via-[#090e1a]/95 to-[#060a12]/95 shadow-[0_12px_32px_rgba(0,0,0,0.45)] max-w-4xl">
+        <div className="border border-white/[0.08] rounded-xl p-6 sm:p-10 bg-[#080808] max-w-4xl">
           <div className="space-y-6">
             <div>
-              <div className="flex items-center space-x-2 mb-2">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-blue-400 font-semibold px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">
-                  Utility 01
-                </span>
-                <span className="text-xs font-mono text-emerald-400 font-bold px-2 py-0.5 rounded bg-emerald-500/10">100% Free</span>
-              </div>
-              <h3 className="text-xl font-bold text-white tracking-tight">
+              <h3 className="text-lg font-bold text-white tracking-tight">
                 Lossless Reference & Stem Extractor
               </h3>
-              <p className="text-xs sm:text-sm text-white/70 mt-1 leading-relaxed font-sans">
+              <p className="text-xs text-white/60 mt-1 leading-relaxed font-sans">
                 Extracts uncompressed 4K video frames, 24-bit 48kHz WAV audio, or 4 isolated stems (Vocals, Music, Drums, Bass) directly for your edit timeline.
               </p>
             </div>
@@ -112,19 +106,19 @@ export default function ToolsSection() {
                 value={ytUrl}
                 onChange={(e) => setYtUrl(e.target.value)}
                 placeholder="Paste YouTube video or audio link..."
-                className="flex-1 bg-[#070b15] border border-white/[0.12] rounded-xl px-4 py-3 text-xs text-white placeholder-white/40 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 transition-all shadow-inner"
+                className="flex-1 bg-[#040404] border border-white/[0.08] rounded-lg px-4 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-white/30"
               />
               <button
                 onClick={startExtraction}
                 disabled={isProcessing}
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-xl shadow-[0_0_20px_rgba(37,99,235,0.4)] disabled:opacity-50 transition-all flex items-center justify-center space-x-2"
+                className="px-5 py-2.5 bg-white text-black font-semibold text-xs rounded-lg hover:bg-white/90 disabled:opacity-50 transition-colors flex items-center justify-center space-x-1.5"
               >
                 {isProcessing ? (
                   <span>Extracting ({downloadProgress}%)...</span>
                 ) : (
                   <>
-                    <Download className="w-4 h-4" />
-                    <span>Extract Media</span>
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Extract</span>
                   </>
                 )}
               </button>
@@ -140,17 +134,14 @@ export default function ToolsSection() {
                 <div
                   key={fmt.id}
                   onClick={() => setSelectedFormat(fmt.id)}
-                  className={`p-4 rounded-xl cursor-pointer border transition-all ${
+                  className={`p-4 rounded-lg cursor-pointer border transition-colors ${
                     selectedFormat === fmt.id
-                      ? 'border-blue-400/60 bg-[#0e192f] shadow-[0_0_20px_rgba(37,99,235,0.2)]'
-                      : 'border-white/[0.08] bg-[#070b15]/80 hover:border-white/20'
+                      ? 'border-white/40 bg-[#0e0e0e]'
+                      : 'border-white/[0.06] bg-[#040404] hover:border-white/20'
                   }`}
                 >
-                  <div className="text-xs font-semibold text-white mb-1 flex items-center justify-between">
-                    <span>{fmt.title}</span>
-                    {selectedFormat === fmt.id && <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_6px_#60a5fa]" />}
-                  </div>
-                  <div className="text-[11px] text-white/60 leading-normal">{fmt.desc}</div>
+                  <div className="text-xs font-semibold text-white mb-0.5">{fmt.title}</div>
+                  <div className="text-[11px] text-white/50">{fmt.desc}</div>
                 </div>
               ))}
             </div>
@@ -158,19 +149,19 @@ export default function ToolsSection() {
             {/* Simulated Progress */}
             {isProcessing && (
               <div className="space-y-1.5 pt-2">
-                <div className="flex justify-between text-[11px] font-mono text-white/60">
+                <div className="flex justify-between text-[11px] font-mono text-white/50">
                   <span>Processing local audio and video streams...</span>
-                  <span className="text-blue-400 font-bold">{downloadProgress}%</span>
+                  <span>{downloadProgress}%</span>
                 </div>
-                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500 shadow-[0_0_10px_#3b82f6] transition-all duration-200" style={{ width: `${downloadProgress}%` }} />
+                <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                  <div className="h-full bg-white transition-all duration-200" style={{ width: `${downloadProgress}%` }} />
                 </div>
               </div>
             )}
 
             {downloadComplete && (
-              <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-xs font-mono text-emerald-300 flex items-center space-x-2 shadow-lg">
-                <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+              <div className="p-3.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-xs font-mono text-emerald-400 flex items-center space-x-2">
+                <Check className="w-4 h-4" />
                 <span>Extracted successfully. Ready to import into DaVinci Media Pool.</span>
               </div>
             )}
@@ -180,18 +171,13 @@ export default function ToolsSection() {
 
       {/* TOOL 2: ASPECT RATIO CALCULATOR */}
       {activeTool === 'aspect' && (
-        <div className="border border-white/[0.12] rounded-2xl p-6 sm:p-10 bg-gradient-to-b from-[#0d1424]/95 via-[#090e1a]/95 to-[#060a12]/95 shadow-[0_12px_32px_rgba(0,0,0,0.45)] max-w-4xl">
+        <div className="border border-white/[0.08] rounded-xl p-6 sm:p-10 bg-[#080808] max-w-4xl">
           <div className="space-y-6">
             <div>
-              <div className="flex items-center space-x-2 mb-2">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-blue-400 font-semibold px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">
-                  Utility 02
-                </span>
-              </div>
-              <h3 className="text-xl font-bold text-white tracking-tight">
+              <h3 className="text-lg font-bold text-white tracking-tight">
                 Cinematic Aspect Ratio & Blanking
               </h3>
-              <p className="text-xs sm:text-sm text-white/70 mt-1 leading-relaxed font-sans">
+              <p className="text-xs text-white/60 mt-1 leading-relaxed font-sans">
                 Calculate pixel heights, output blanking mattes, and letterboxing for theatrical DCI and web deliverables.
               </p>
             </div>
@@ -199,25 +185,25 @@ export default function ToolsSection() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
               <div className="space-y-4">
                 <div>
-                  <label className="text-[10px] font-mono uppercase tracking-wider text-white/50 block mb-1.5 font-semibold">
+                  <label className="text-[10px] font-mono uppercase tracking-wider text-white/40 block mb-1.5">
                     Timeline Base Width (Pixels)
                   </label>
                   <input
                     type="number"
                     value={baseWidth}
                     onChange={(e) => setBaseWidth(Number(e.target.value))}
-                    className="w-full bg-[#070b15] border border-white/[0.12] rounded-xl px-4 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 transition-all shadow-inner"
+                    className="w-full bg-[#040404] border border-white/[0.08] rounded-lg px-3.5 py-2 text-xs font-mono text-white focus:outline-none focus:border-white/30"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-mono uppercase tracking-wider text-white/50 block mb-1.5 font-semibold">
+                  <label className="text-[10px] font-mono uppercase tracking-wider text-white/40 block mb-1.5">
                     Aspect Ratio Preset
                   </label>
                   <select
                     value={aspectPreset}
                     onChange={(e) => setAspectPreset(e.target.value)}
-                    className="w-full bg-[#070b15] border border-white/[0.12] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 transition-all shadow-inner"
+                    className="w-full bg-[#040404] border border-white/[0.08] rounded-lg px-3.5 py-2 text-xs text-white focus:outline-none focus:border-white/30"
                   >
                     <option value="2.39">2.39:1 — Theatrical CinemaScope</option>
                     <option value="1.85">1.85:1 — DCI Flat Standard</option>
@@ -229,19 +215,19 @@ export default function ToolsSection() {
               </div>
 
               {/* Output Display */}
-              <div className="p-6 rounded-xl bg-[#070b15] border border-white/[0.1] flex flex-col justify-between shadow-inner">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-blue-400 font-semibold">
+              <div className="p-5 rounded-lg bg-[#040404] border border-white/[0.06] flex flex-col justify-between">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-white/40">
                   Calculated Output Matte
                 </span>
                 <div className="my-4">
                   <div className="text-3xl font-bold font-mono text-white">
                     {baseWidth} &times; {calculatedHeight}
                   </div>
-                  <div className="text-xs font-mono text-white/60 mt-1">
+                  <div className="text-xs font-mono text-white/50 mt-1">
                     Aspect Ratio: {aspectPreset}:1
                   </div>
                 </div>
-                <div className="text-[10px] font-mono text-white/50 pt-3 border-t border-white/[0.08]">
+                <div className="text-[10px] font-mono text-white/40 pt-2 border-t border-white/[0.06]">
                   Top/Bottom Letterbox: {Math.max(0, Math.round((2160 - calculatedHeight) / 2))}px per edge on 2160p timeline
                 </div>
               </div>
@@ -252,18 +238,13 @@ export default function ToolsSection() {
 
       {/* TOOL 3: SMPTE TIMECODE CALCULATOR */}
       {activeTool === 'timecode' && (
-        <div className="border border-white/[0.12] rounded-2xl p-6 sm:p-10 bg-gradient-to-b from-[#0d1424]/95 via-[#090e1a]/95 to-[#060a12]/95 shadow-[0_12px_32px_rgba(0,0,0,0.45)] max-w-4xl">
+        <div className="border border-white/[0.08] rounded-xl p-6 sm:p-10 bg-[#080808] max-w-4xl">
           <div className="space-y-6">
             <div>
-              <div className="flex items-center space-x-2 mb-2">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-blue-400 font-semibold px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">
-                  Utility 03
-                </span>
-              </div>
-              <h3 className="text-xl font-bold text-white tracking-tight">
+              <h3 className="text-lg font-bold text-white tracking-tight">
                 SMPTE Frame Rate & Duration Math
               </h3>
-              <p className="text-xs sm:text-sm text-white/70 mt-1 leading-relaxed font-sans">
+              <p className="text-xs text-white/60 mt-1 leading-relaxed font-sans">
                 Translate runtime durations into exact frame numbers across cinema standard frame rates without rounding drift.
               </p>
             </div>
@@ -271,25 +252,25 @@ export default function ToolsSection() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
               <div className="space-y-4">
                 <div>
-                  <label className="text-[10px] font-mono uppercase tracking-wider text-white/50 block mb-1.5 font-semibold">
+                  <label className="text-[10px] font-mono uppercase tracking-wider text-white/40 block mb-1.5">
                     Duration (Seconds)
                   </label>
                   <input
                     type="number"
                     value={seconds}
                     onChange={(e) => setSeconds(Number(e.target.value))}
-                    className="w-full bg-[#070b15] border border-white/[0.12] rounded-xl px-4 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 transition-all shadow-inner"
+                    className="w-full bg-[#040404] border border-white/[0.08] rounded-lg px-3.5 py-2 text-xs font-mono text-white focus:outline-none focus:border-white/30"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-mono uppercase tracking-wider text-white/50 block mb-1.5 font-semibold">
+                  <label className="text-[10px] font-mono uppercase tracking-wider text-white/40 block mb-1.5">
                     Project Timebase (FPS)
                   </label>
                   <select
                     value={fps}
                     onChange={(e) => setFps(Number(e.target.value))}
-                    className="w-full bg-[#070b15] border border-white/[0.12] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 transition-all shadow-inner"
+                    className="w-full bg-[#040404] border border-white/[0.08] rounded-lg px-3.5 py-2 text-xs text-white focus:outline-none focus:border-white/30"
                   >
                     <option value={24}>24.000 fps — Standard Theatrical Cinema</option>
                     <option value={23.976}>23.976 fps — NTSC Film Standard</option>
@@ -301,19 +282,19 @@ export default function ToolsSection() {
               </div>
 
               {/* Output Display */}
-              <div className="p-6 rounded-xl bg-[#070b15] border border-white/[0.1] flex flex-col justify-between shadow-inner">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-blue-400 font-semibold">
+              <div className="p-5 rounded-lg bg-[#040404] border border-white/[0.06] flex flex-col justify-between">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-white/40">
                   SMPTE Timecode String
                 </span>
                 <div className="my-4">
                   <div className="text-3xl font-bold font-mono text-white">
                     {timecodeString}
                   </div>
-                  <div className="text-xs font-mono text-white/60 mt-1">
+                  <div className="text-xs font-mono text-white/50 mt-1">
                     Absolute Frames: {totalFrames.toLocaleString()} frames
                   </div>
                 </div>
-                <div className="text-[10px] font-mono text-white/50 pt-3 border-t border-white/[0.08]">
+                <div className="text-[10px] font-mono text-white/40 pt-2 border-t border-white/[0.06]">
                   Format: Non-Drop Frame (NDF)
                 </div>
               </div>

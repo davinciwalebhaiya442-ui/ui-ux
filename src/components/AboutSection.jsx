@@ -31,44 +31,41 @@ export default function AboutSection() {
         </div>
 
         {/* Right Column: Grounded Work Principles */}
-        <div className="lg:col-span-5 border border-white/[0.12] rounded-2xl p-6 sm:p-8 bg-gradient-to-b from-[#0d1424]/95 via-[#090e1a]/95 to-[#060a12]/95 shadow-[0_12px_32px_rgba(0,0,0,0.45)] space-y-6">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-mono uppercase tracking-widest text-blue-400 font-semibold px-2.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">
-              Technical Discipline
-            </span>
-            <span className="text-[10px] font-mono text-white/50">Core Tenets</span>
+        <div className="lg:col-span-5 border border-white/[0.08] rounded-xl p-6 sm:p-8 bg-[#080808] space-y-6">
+          <div className="text-[11px] font-mono uppercase tracking-widest text-white/40">
+            TECHNICAL DISCIPLINE
           </div>
 
           <div className="space-y-4 text-xs font-sans">
             <div>
-              <div className="text-white font-semibold mb-1 font-mono text-[11px] uppercase tracking-wider text-blue-300">
+              <div className="text-white font-semibold mb-1 font-mono text-[11px] uppercase tracking-wider">
                 01 &bull; 32-Bit Float Color Science
               </div>
-              <p className="text-white/70 leading-relaxed">
+              <p className="text-white/60 leading-relaxed">
                 All color transforms run in non-destructive 32-bit floating point precision. Highlight roll-offs are mathematically continuous without clipping or banding.
               </p>
             </div>
 
-            <div className="pt-4 border-t border-white/[0.08]">
-              <div className="text-white font-semibold mb-1 font-mono text-[11px] uppercase tracking-wider text-blue-300">
+            <div className="pt-4 border-t border-white/[0.06]">
+              <div className="text-white font-semibold mb-1 font-mono text-[11px] uppercase tracking-wider">
                 02 &bull; Native Resolve Architecture
               </div>
-              <p className="text-white/70 leading-relaxed">
+              <p className="text-white/60 leading-relaxed">
                 No foreign wrapper layers. We use native DaVinci Color Transform Language (.dctl), native OpenFX binaries, and native Fusion compositions.
               </p>
             </div>
 
-            <div className="pt-4 border-t border-white/[0.08]">
-              <div className="text-white font-semibold mb-1 font-mono text-[11px] uppercase tracking-wider text-blue-300">
+            <div className="pt-4 border-t border-white/[0.06]">
+              <div className="text-white font-semibold mb-1 font-mono text-[11px] uppercase tracking-wider">
                 03 &bull; Perpetual Ownership
               </div>
-              <p className="text-white/70 leading-relaxed">
+              <p className="text-white/60 leading-relaxed">
                 You pay once and keep the files forever. Free compatibility updates are provided when Blackmagic releases new major DaVinci Resolve versions.
               </p>
             </div>
           </div>
 
-          <div className="pt-4 border-t border-white/[0.08] text-[10px] font-mono text-white/50">
+          <div className="pt-4 border-t border-white/[0.06] text-[10px] font-mono text-white/40">
             ENGINEERED IN MUMBAI & BANGALORE &bull; CALIBRATED ON FLANDERS QD-OLED
           </div>
         </div>

@@ -15,20 +15,17 @@ export default function ProductCardVisual({ asset }) {
 
   if (imageUrl && !imageError) {
     return (
-      <div className="relative w-full aspect-[16/10] overflow-hidden rounded-xl bg-gradient-to-b from-[#0e1628] via-[#09101d] to-[#060a13] border border-white/[0.12] group-hover:border-blue-400/40 shadow-inner mb-4 group/img transition-all duration-300">
-        {/* Subtle internal blue ambient backlight */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.18)_0%,transparent_75%)] pointer-events-none opacity-60 group-hover:opacity-100 transition-opacity" />
-        
+      <div className="relative w-full aspect-[16/10] overflow-hidden rounded-lg bg-[#070b14] border border-white/[0.08] mb-4 group/img">
         <img
           src={imageUrl}
           alt={asset?.name || 'Product preview'}
           onError={() => setImageError(true)}
-          className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+          className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
         />
-        <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-[#060a14]/80 via-transparent to-transparent opacity-60 group-hover:opacity-30 transition-opacity" />
+        <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
         
         {/* Soft category chip */}
-        <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-md bg-[#070b14]/90 backdrop-blur-md border border-white/15 text-[10px] font-mono text-blue-300 uppercase tracking-wider font-semibold shadow-md">
+        <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded bg-black/70 backdrop-blur-md border border-white/10 text-[9px] font-mono text-white/70 uppercase tracking-wider">
           {asset?.category || 'Asset'}
         </div>
       </div>
@@ -39,13 +36,10 @@ export default function ProductCardVisual({ asset }) {
   const slug = asset?.slug || asset?.id || '';
 
   return (
-    <div className="relative w-full aspect-[16/10] overflow-hidden rounded-xl bg-gradient-to-b from-[#0e1628] via-[#09101d] to-[#060a13] border border-white/[0.12] group-hover:border-blue-400/40 shadow-inner mb-4 flex items-center justify-center group/preview transition-all duration-300">
-      {/* Subtle internal blue ambient backlight */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.16)_0%,transparent_70%)] pointer-events-none opacity-70 group-hover:opacity-100 transition-opacity" />
-      
+    <div className="relative w-full aspect-[16/10] overflow-hidden rounded-lg bg-[#05070d] border border-white/[0.08] mb-4 flex items-center justify-center group/preview">
       {/* Background Grid Pattern */}
       <div 
-        className="absolute inset-0 opacity-[0.18] pointer-events-none"
+        className="absolute inset-0 opacity-[0.15] pointer-events-none"
         style={{
           backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.4) 1px, transparent 0)',
           backgroundSize: '16px 16px'
