@@ -5,7 +5,18 @@ import { getAuthenticatedUser } from '@/lib/supabase/server';
 export async function getAdminUser() {
   const user = await getAuthenticatedUser();
   if (!user) return { user: null, profile: null };
-  const profile = await prisma.profile.findUnique({ where: { userId: user.id }, select: { role: true } });
+  let profile = await prisma.profile.findUnique({ where: { userId: user.id }, select: { role: true } });
+  if (!profile) {
+    profile = await prisma.profile.create({
+      data: {
+        userId: user.id,
+        email: user.email,
+        name: user.user_metadata?.name || null,
+        role: user.email === 'admin@gmail.com' ? 'admin' : 'customer',
+      },
+      select: { role: true },
+    }).catch(() => null);
+  }
   return { user, profile };
 }
 
