@@ -3,13 +3,13 @@
 import { useProducts } from '@/data/useProducts';
 import { ArrowUpRight, Check, Download, Monitor, Terminal } from 'lucide-react';
 
-export default function FeaturedAssets({ onSelectAsset }) {
-  const assets = useProducts();
-  const autoTracer = assets.find((a) => a.id === 'auto-tracer');
-  const rippleEffect = assets.find((a) => a.id === 'ripple-effect');
-  const ytDownloader = assets.find((a) => a.id === 'yt-downloader');
-  const metallicLiquid = assets.find((a) => a.id === 'metallic-liquid');
-  const gridTransition = assets.find((a) => a.id === 'grid-effect-transition');
+export default function FeaturedAssets({ onSelectAsset, initialProducts = [] }) {
+  const assets = useProducts(initialProducts);
+  const autoTracer = assets.find((a) => a.id === 'auto-tracer') || assets[0];
+  const rippleEffect = assets.find((a) => a.id === 'ripple-effect') || assets[1] || assets[0];
+  const ytDownloader = assets.find((a) => a.id === 'yt-downloader') || assets[2] || assets[0];
+  const metallicLiquid = assets.find((a) => a.id === 'metallic-liquid') || assets[3] || assets[0];
+  const gridTransition = assets.find((a) => a.id === 'grid-effect-transition') || assets[4] || assets[0];
 
   return (
     <section id="featured" className="relative py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">

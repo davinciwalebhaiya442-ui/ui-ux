@@ -1037,9 +1037,31 @@ export function ProductList() {
   const { toast, confirm } = useAdmin();
   const router = useRouter();
 
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('dwb_products_cache');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch {}
+    }
+    return [];
+  });
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('dwb_products_cache');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) return false;
+        }
+      } catch {}
+    }
+    return true;
+  });
 
   // Filters
   const [search, setSearch] = useState('');
@@ -1049,8 +1071,8 @@ export function ProductList() {
   const [sort, setSort] = useState('newest');
   const [view, setView] = useState('grid');
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (isBackground = false) => {
+    if (!isBackground && products.length === 0) setLoading(true);
     try {
       const [prodsRes, catsRes] = await Promise.all([
         fetch('/api/products?limit=100'),
@@ -1058,8 +1080,13 @@ export function ProductList() {
       ]);
       const prodsData = await prodsRes.json();
       const catsData = await catsRes.json();
-      setProducts(prodsData.products || []);
-      setCategories(catsData.categories || []);
+      if (prodsData.products) {
+        setProducts(prodsData.products);
+        try {
+          localStorage.setItem('dwb_products_cache', JSON.stringify(prodsData.products));
+        } catch {}
+      }
+      if (catsData.categories) setCategories(catsData.categories);
     } catch (err) {
       console.error(err);
       toast('Failed to load products', 'error');
@@ -1069,7 +1096,7 @@ export function ProductList() {
   };
 
   useEffect(() => {
-    loadData();
+    loadData(products.length > 0);
   }, []);
 
   // Filtered & Sorted
@@ -1107,8 +1134,14 @@ export function ProductList() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to delete');
       toast(`"${name}" deleted successfully`, 'success');
-      setProducts((prev) => prev.filter((p) => p.id !== id && p.dbId !== id && p.slug !== id));
-      loadData();
+      setProducts((prev) => {
+        const updated = prev.filter((p) => p.id !== id && p.dbId !== id && p.slug !== id);
+        try {
+          localStorage.setItem('dwb_products_cache', JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
+      loadData(true);
     } catch (err) {
       toast(err.message, 'error');
     }

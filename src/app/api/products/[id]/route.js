@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { parseBody, toFrontendProduct } from '@/lib/product';
+import { revalidatePath } from 'next/cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,6 +48,11 @@ export async function PATCH(request, { params }) {
       data,
       include: { category: true },
     });
+
+    try {
+      revalidatePath('/');
+      revalidatePath('/api/products');
+    } catch {}
 
     return Response.json({ product: toFrontendProduct(product) });
   } catch (error) {
@@ -95,6 +101,11 @@ export async function DELETE(request, { params }) {
       prisma.analyticsEvent.deleteMany({ where: { productId: existing.id } }),
       prisma.product.delete({ where: { id: existing.id } }),
     ]);
+
+    try {
+      revalidatePath('/');
+      revalidatePath('/api/products');
+    } catch {}
 
     return Response.json({ success: true, deletedId: existing.id });
   } catch (error) {

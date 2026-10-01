@@ -6,13 +6,13 @@ import { useProducts } from '@/data/useProducts';
 import { Search, ArrowUpRight, Monitor } from 'lucide-react';
 import ProductCardVisual from './ProductCardVisual';
 
-export default function AssetCatalogue({ onSelectAsset }) {
+export default function AssetCatalogue({ onSelectAsset, initialProducts = [] }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [pricingFilter, setPricingFilter] = useState('all');
   const [selectedSoftware, setSelectedSoftware] = useState('All Software');
   const [sortBy, setSortBy] = useState('featured');
-  const assets = useProducts();
+  const assets = useProducts(initialProducts);
 
   const filteredAssets = useMemo(() => {
     return assets.filter((asset) => {
