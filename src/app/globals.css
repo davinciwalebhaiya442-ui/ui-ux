@@ -40,19 +40,20 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #141516;
+  background: #000000;
 }
 
 .preloader__svg {
   position: absolute;
   top: 0;
+  left: 0;
   width: 100%;
   height: calc(100% + 300px);
   pointer-events: none;
 }
 
 .preloader__svg path {
-  fill: #141516;
+  fill: #000000;
 }
 
 .preloader__word {

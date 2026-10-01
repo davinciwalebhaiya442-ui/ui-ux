@@ -167,8 +167,8 @@ export default function Preloader({ onLoaded }) {
         </span>
       </p>
 
-      <svg>
-        <path ref={pathRef}></path>
+      <svg className="preloader__svg" id="js-svg" preserveAspectRatio="none">
+        <path ref={pathRef} id="js-path"></path>
       </svg>
     </div>
   );
