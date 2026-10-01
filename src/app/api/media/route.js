@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const key = searchParams.get('key');
+    let key = searchParams.get('key');
 
     if (!key || typeof key !== 'string') {
       return new Response(JSON.stringify({ error: 'Missing key parameter' }), {
@@ -14,7 +14,12 @@ export async function GET(request) {
       });
     }
 
-    if (!key.startsWith('products/') && !key.startsWith('hero/')) {
+    try {
+      key = decodeURIComponent(key);
+    } catch {}
+
+    const isAllowed = key.startsWith('products/') || key.startsWith('hero/');
+    if (!isAllowed) {
       return new Response(JSON.stringify({ error: 'Forbidden media path' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
@@ -27,7 +32,7 @@ export async function GET(request) {
     return new Response(buffer, {
       status: 200,
       headers: {
-        'Content-Type': obj.ContentType || 'image/jpeg',
+        'Content-Type': obj.ContentType || 'image/webp',
         'Content-Length': String(buffer.length),
         'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
       },
