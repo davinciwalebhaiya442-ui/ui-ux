@@ -302,12 +302,12 @@ export default function Scene({
   }, [heroImage]);
 
   return (
-    <div className="relative w-full h-full min-h-screen select-none overflow-hidden bg-black touch-pan-y">
+    <div className="relative w-full h-full min-h-screen select-none overflow-hidden bg-black">
       {/* WebGL Canvas Container */}
       <div
         ref={containerRef}
-        className="absolute inset-0 w-full h-full z-0 touch-pan-y"
-        style={{ touchAction: 'pan-y' }}
+        className="absolute inset-0 w-full h-full z-0"
+        style={{ touchAction: 'none' }}
       />
 
       {/* Centered Editorial Title */}

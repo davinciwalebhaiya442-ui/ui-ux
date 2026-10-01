@@ -144,10 +144,10 @@ export default function HomeClient({ initialProducts = [], initialHero = null })
       {/* 🚨 HERO SECTION (STICKY PINNED AT TOP) 🚨 */}
       <div
         ref={heroSectionRef}
-        className="sticky top-0 w-full h-[100dvh] min-h-screen z-10 overflow-hidden bg-black touch-pan-y"
+        className="sticky top-0 w-full h-screen z-10 overflow-hidden bg-black"
       >
-        <div ref={heroInnerRef} className="w-full h-full will-change-transform origin-center touch-pan-y">
-          <section className="relative h-[100dvh] min-h-screen w-full overflow-hidden bg-black touch-pan-y">
+        <div ref={heroInnerRef} className="w-full h-full will-change-transform origin-center">
+          <section className="relative h-screen w-full overflow-hidden bg-black">
             <Scene
               title={heroSettings.heading || 'DAVINCI WALE BHAIYA'}
               heroImage={heroSettings.heroImage || '/hero/2.jpg'}
@@ -160,20 +160,13 @@ export default function HomeClient({ initialProducts = [], initialHero = null })
               ctaLink={heroSettings.primaryButtonLink}
             />
 
-            {/* Clickable, interactive scroll indicator */}
-            <button
-              type="button"
-              onClick={() => {
-                mainContentRef.current?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center pointer-events-auto cursor-pointer opacity-60 hover:opacity-100 active:scale-95 transition-all p-2 select-none"
-              aria-label="Scroll to Explore"
-            >
-              <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-white/60 mb-1">
+            {/* Subtle, non-intrusive scroll indicator */}
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center pointer-events-none opacity-40 hover:opacity-80 transition-opacity">
+              <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-white/50 mb-1">
                 Scroll to Explore
               </span>
-              <ChevronDown className="w-4 h-4 text-white/70 animate-bounce" />
-            </button>
+              <ChevronDown className="w-3.5 h-3.5 text-white/40" />
+            </div>
           </section>
         </div>
       </div>

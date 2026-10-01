@@ -274,54 +274,50 @@ export default function ProductModal({ asset, onClose }) {
             {/* Action Bar */}
             <div className="pt-2 space-y-3">
               {asset.type === 'free' ? (
-                <div className="space-y-2">
-                  <button
-                    onClick={handleFreeDownload}
-                    disabled={isDownloading}
-                    className={`w-full sm:w-auto px-8 py-3.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center space-x-2.5 ${
-                      isDownloading
-                        ? 'bg-blue-600 text-white cursor-wait opacity-95 shadow-[0_0_20px_rgba(37,99,235,0.4)]'
-                        : downloadSuccess
-                        ? 'bg-emerald-500 text-black hover:bg-emerald-400 font-bold shadow-[0_0_20px_rgba(16,185,129,0.3)]'
-                        : 'text-black bg-white hover:bg-white/90 active:scale-[0.98]'
-                    }`}
-                  >
-                    {isDownloading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin text-white" />
-                        <span>Preparing Download Package...</span>
-                      </>
-                    ) : downloadSuccess ? (
-                      <>
-                        <Check className="w-4 h-4 text-black stroke-[3]" />
-                        <span>Download Started! Check Browser Downloads</span>
-                      </>
-                    ) : (
-                      <>
-                        <Download className="w-4 h-4" />
-                        <span>Download Free Archive ({asset.fileSize || 'Asset Package'})</span>
-                      </>
-                    )}
-                  </button>
-                  <p className="text-[11px] text-emerald-400/80 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    <span>Free Community Edition: Direct browser zip download.</span>
-                  </p>
-                </div>
+                <button
+                  onClick={handleFreeDownload}
+                  disabled={isDownloading}
+                  className={`w-full sm:w-auto px-8 py-3.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center space-x-2.5 ${
+                    isDownloading
+                      ? 'bg-blue-600 text-white cursor-wait opacity-95 shadow-[0_0_20px_rgba(37,99,235,0.4)]'
+                      : downloadSuccess
+                      ? 'bg-emerald-500 text-black hover:bg-emerald-400 font-bold shadow-[0_0_20px_rgba(16,185,129,0.3)]'
+                      : 'text-black bg-white hover:bg-white/90 active:scale-[0.98]'
+                  }`}
+                >
+                  {isDownloading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <span>Preparing Download Package...</span>
+                    </>
+                  ) : downloadSuccess ? (
+                    <>
+                      <Check className="w-4 h-4 text-black stroke-[3]" />
+                      <span>Download Started! Check Browser Downloads</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4" />
+                      <span>Download Free Archive ({asset.fileSize || 'Asset Package'})</span>
+                    </>
+                  )}
+                </button>
               ) : (
-                <div className="space-y-2">
-                  <button
-                    onClick={handlePurchase}
-                    className="w-full sm:w-auto px-8 py-3.5 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 transition-colors flex items-center justify-center space-x-2 shadow-[0_0_25px_rgba(37,99,235,0.35)]"
-                  >
-                    <ShoppingBag className="w-4 h-4" />
-                    <span>Purchase License &bull; ₹{asset.price.toLocaleString()}</span>
-                  </button>
-                  <p className="text-[11px] text-white/50 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                    <span>Licensed Edition: Full digital zip package will be emailed to your inbox upon payment.</span>
-                  </p>
-                </div>
+                <button
+                  onClick={handlePurchase}
+                  className="w-full sm:w-auto px-8 py-3.5 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 transition-colors flex items-center justify-center space-x-2"
+                >
+                  {purchaseStage === 'processing' ? (
+                    <span>Opening Checkout Gateway...</span>
+                  ) : purchaseStage === 'ready' ? (
+                    <span>Gateway Connected &bull; Ready</span>
+                  ) : (
+                    <>
+                      <ShoppingBag className="w-4 h-4" />
+                      <span>Purchase License &bull; ₹{asset.price.toLocaleString()}</span>
+                    </>
+                  )}
+                </button>
               )}
 
               {/* Instant Visual Progress & Status Box */}
