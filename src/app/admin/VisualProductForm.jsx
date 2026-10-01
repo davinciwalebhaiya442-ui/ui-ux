@@ -3,10 +3,18 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Trash2 } from 'lucide-react';
+import { Trash2, FileArchive, UploadCloud, CheckCircle2, File, RefreshCw, X } from 'lucide-react';
 import { AdminLayout, ProductThumb, useAdmin } from './AdminShell';
 import MediaManager from '@/components/admin/MediaManager';
 import { notifyProductsUpdated } from '@/lib/events';
+
+const slugify = (text) =>
+  String(text || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 
 const input = 'w-full rounded-xl border border-white/10 bg-[#080d18] px-3 py-2.5 text-sm text-white outline-none focus:border-blue-400/50';
 function Field({ label, children, hint }) {
@@ -25,6 +33,8 @@ export default function VisualProductForm({ product }) {
   const [categories, setCategories] = useState([]);
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
+  const [fileUploading, setFileUploading] = useState(false);
+  const [pendingFile, setPendingFile] = useState(null);
   const [form, setForm] = useState(() => ({
     name: '',
     slug: '',
@@ -42,6 +52,9 @@ export default function VisualProductForm({ product }) {
     demoVideo: '',
     beforeImage: '',
     afterImage: '',
+    downloadFileKey: product?.downloadFileKey || '',
+    downloadFileName: product?.downloadFileName || '',
+    downloadFileSize: product?.downloadFileSize || 0,
     installationGuide: [],
     featured: false,
     published: false,
@@ -58,14 +71,93 @@ export default function VisualProductForm({ product }) {
   const set = (field, value) => setForm((current) => ({ ...current, [field]: value }));
   const text = (field, separator = ', ') => (Array.isArray(form[field]) ? form[field].join(separator) : form[field] || '');
 
+  const handleFileUpload = async (fileToUpload) => {
+    const file = fileToUpload || pendingFile;
+    if (!file) return;
+
+    const id = product?.dbId || product?.id;
+    if (!id) {
+      setPendingFile(file);
+      set('fileSize', `${(file.size / (1024 * 1024)).toFixed(1)} MB`);
+      toast(`File "${file.name}" selected. It will upload automatically when you save.`, 'info');
+      return;
+    }
+
+    setFileUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch(`/api/admin/products/${encodeURIComponent(id)}/file`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to upload product file');
+
+      setForm((prev) => ({
+        ...prev,
+        downloadFileKey: data.file.key,
+        downloadFileName: data.file.name,
+        downloadFileSize: data.file.size,
+        fileSize: prev.fileSize || `${(data.file.size / (1024 * 1024)).toFixed(1)} MB`,
+      }));
+
+      setPendingFile(null);
+      toast(`Download file "${data.file.name}" uploaded successfully!`, 'success');
+      notifyProductsUpdated();
+    } catch (err) {
+      toast(err.message || 'Error uploading file', 'error');
+    } finally {
+      setFileUploading(false);
+    }
+  };
+
+  const handleFileDelete = async () => {
+    const id = product?.dbId || product?.id;
+    if (!id) {
+      setPendingFile(null);
+      return;
+    }
+
+    const ok = await confirm({
+      title: 'Remove Digital Asset File?',
+      message: `Are you sure you want to remove "${form.downloadFileName || 'the downloadable file'}"? Customers will not be able to download this asset until a new file is uploaded.`,
+      confirmText: 'Remove File',
+      destructive: true,
+    });
+    if (!ok) return;
+
+    try {
+      const res = await fetch(`/api/admin/products/${encodeURIComponent(id)}/file`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete product file');
+
+      setForm((prev) => ({
+        ...prev,
+        downloadFileKey: null,
+        downloadFileName: null,
+        downloadFileSize: null,
+      }));
+      toast('Download file removed', 'success');
+      notifyProductsUpdated();
+    } catch (err) {
+      toast(err.message || 'Error removing file', 'error');
+    }
+  };
+
   const save = async (event, publish) => {
     event?.preventDefault();
     setSaving(true);
     try {
+      const sanitizedSlug = slugify(form.slug || form.name);
       const payload = {
         ...form,
+        slug: sanitizedSlug,
         published: publish ?? form.published,
-        price: Number(form.price),
+        price: Number(form.price || 0),
         software: String(form.software || '')
           .split(',')
           .map((value) => value.trim())
@@ -84,7 +176,17 @@ export default function VisualProductForm({ product }) {
         body: JSON.stringify(payload),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to save product');
+      if (!response.ok) {
+        let errorMsg = data.error || 'Failed to save product';
+        if (data.details && Array.isArray(data.details)) {
+          const detailMsgs = data.details.map((issue) => {
+            const field = issue.path ? issue.path.join('.') : '';
+            return field ? `${field}: ${issue.message}` : issue.message;
+          });
+          errorMsg = detailMsgs.join(' | ');
+        }
+        throw new Error(errorMsg);
+      }
 
       const successMsg = id ? 'Product updated successfully' : 'Product created successfully';
       setMessage(successMsg);
@@ -92,6 +194,19 @@ export default function VisualProductForm({ product }) {
       notifyProductsUpdated();
 
       if (!id) {
+        if (pendingFile) {
+          try {
+            const newId = data.product.slug || data.product.id;
+            const formData = new FormData();
+            formData.append('file', pendingFile);
+            await fetch(`/api/admin/products/${encodeURIComponent(newId)}/file`, {
+              method: 'POST',
+              body: formData,
+            });
+          } catch (fileErr) {
+            console.error('Failed to upload pending file:', fileErr);
+          }
+        }
         router.push(`/admin/products/${data.product.slug || data.product.id}/edit`);
       }
     } catch (err) {
@@ -170,10 +285,30 @@ export default function VisualProductForm({ product }) {
             <p className="mb-5 font-mono text-[10px] uppercase tracking-widest text-white/35">Product Information</p>
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Product name">
-                <input required className={input} value={form.name} onChange={(e) => set('name', e.target.value)} />
+                <input
+                  required
+                  className={input}
+                  value={form.name}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setForm((curr) => {
+                      const shouldUpdateSlug = !product && (!curr.slug || curr.slug === slugify(curr.name));
+                      return {
+                        ...curr,
+                        name: val,
+                        slug: shouldUpdateSlug ? slugify(val) : curr.slug,
+                      };
+                    });
+                  }}
+                />
               </Field>
-              <Field label="Slug">
-                <input required className={input} value={form.slug} onChange={(e) => set('slug', e.target.value)} />
+              <Field label="Slug" hint="Unique URL identifier (auto-formatted lowercase)">
+                <input
+                  required
+                  className={input}
+                  value={form.slug}
+                  onChange={(e) => set('slug', slugify(e.target.value))}
+                />
               </Field>
               <Field label="Short description">
                 <input
@@ -244,6 +379,119 @@ export default function VisualProductForm({ product }) {
 
           <section className="rounded-2xl border border-white/[.08] bg-[#0a0f1b] p-5">
             <p className="mb-5 font-mono text-[10px] uppercase tracking-widest text-white/35">Media & Delivery</p>
+            
+            {/* DIGITAL ASSET DOWNLOAD FILE (CLOUDFLARE R2) */}
+            <div className="mb-6 rounded-xl border border-blue-500/20 bg-gradient-to-b from-[#0c1426] to-[#070b16] p-5 shadow-lg">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <FileArchive className="w-4 h-4 text-blue-400" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-white">
+                    Downloadable Package File (Zip / DCTL / Tool)
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-md font-semibold">
+                  Cloudflare R2 Storage
+                </span>
+              </div>
+              <p className="text-xs text-white/60 mb-4 leading-relaxed font-sans">
+                Upload the actual digital file (.zip, .dctl, .drx, .setting, .cube, .rar, .pkg) that customers will download after purchasing or claiming this asset.
+              </p>
+
+              {form.downloadFileKey || form.downloadFileName ? (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-[#091020] border border-blue-400/30 shadow-inner">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 flex-shrink-0">
+                      <File className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold text-white truncate font-mono">
+                        {form.downloadFileName || 'Attached Asset File'}
+                      </div>
+                      <div className="text-[11px] text-white/50 font-mono mt-0.5">
+                        {form.downloadFileSize ? `${(form.downloadFileSize / (1024 * 1024)).toFixed(2)} MB` : form.fileSize || 'Ready for download'}
+                        {' '}&bull;{' '}
+                        <span className="text-emerald-400 font-sans font-medium">Secured & Active</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <label className="cursor-pointer inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition-colors border border-white/15">
+                      <UploadCloud className="w-4 h-4 text-blue-300" />
+                      <span>{fileUploading ? 'Uploading...' : 'Replace File'}</span>
+                      <input
+                        type="file"
+                        className="hidden"
+                        disabled={fileUploading}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleFileUpload(file);
+                          e.target.value = '';
+                        }}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleFileDelete}
+                      disabled={fileUploading}
+                      className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-colors"
+                      title="Remove file"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const file = e.dataTransfer.files?.[0];
+                      if (file) handleFileUpload(file);
+                    }}
+                    className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all ${
+                      fileUploading
+                        ? 'border-blue-400/50 bg-blue-500/10'
+                        : 'border-white/15 hover:border-blue-400/50 bg-[#060b18]/60 hover:bg-[#070d1e]'
+                    }`}
+                  >
+                    <input
+                      type="file"
+                      className="hidden"
+                      disabled={fileUploading}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload(file);
+                        e.target.value = '';
+                      }}
+                    />
+                    <div className="w-12 h-12 rounded-full bg-blue-500/10 border border-blue-500/25 flex items-center justify-center text-blue-400 mb-3 shadow-[0_0_15px_rgba(37,99,235,0.25)]">
+                      {fileUploading ? (
+                        <RefreshCw className="w-6 h-6 animate-spin text-blue-300" />
+                      ) : (
+                        <UploadCloud className="w-6 h-6" />
+                      )}
+                    </div>
+                    <div className="text-xs font-semibold text-white mb-1">
+                      {fileUploading
+                        ? 'Uploading file to Cloudflare R2...'
+                        : pendingFile
+                        ? `Selected: ${pendingFile.name}`
+                        : 'Click to upload or drag & drop package file here'}
+                    </div>
+                    <div className="text-[11px] text-white/40 font-mono">
+                      Accepts .ZIP, .DCTL, .DRX, .SETTING, .CUBE, .RAR, .PKG, .DMG
+                    </div>
+                  </label>
+                  {!product?.dbId && !product?.id && (
+                    <p className="mt-2 text-[11px] text-amber-300/80 font-mono">
+                      * Note: You can select your file now; it will automatically upload to Cloudflare R2 when you click Publish or Save Draft.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
             <MediaManager
               slug={form.slug}
               thumbnail={form.thumbnailKey}
