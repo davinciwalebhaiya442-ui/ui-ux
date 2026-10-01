@@ -41,6 +41,7 @@ const DEFAULT_HERO = {
 export default function HomeClient({ initialProducts = [], initialHero = null }) {
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [heroSettings, setHeroSettings] = useState(() => initialHero || DEFAULT_HERO);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const heroSectionRef = useRef(null);
   const heroInnerRef = useRef(null);
@@ -136,10 +137,12 @@ export default function HomeClient({ initialProducts = [], initialHero = null })
   return (
     <main className="relative min-h-screen w-full bg-black text-white selection:bg-white/20 selection:text-white">
       {/* 00: AWESOME PRELOADER (PRESERVED) */}
-      <Preloader />
+      <Preloader onLoaded={() => setIsLoaded(true)} />
 
-      {/* FLOATING LIQUID GLASS NAVBAR */}
-      <Navbar />
+      {/* FLOATING LIQUID GLASS NAVBAR - Only visible after loading complete */}
+      <div className={`transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
+        <Navbar />
+      </div>
 
       {/* 🚨 HERO SECTION (STICKY PINNED AT TOP) 🚨 */}
       <div

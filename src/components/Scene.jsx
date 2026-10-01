@@ -107,8 +107,6 @@ export default function Scene({
       renderer.outputColorSpace = THREE.SRGBColorSpace;
     }
 
-    renderer.domElement.style.touchAction = 'pan-y';
-    renderer.domElement.style.pointerEvents = 'none';
     container.appendChild(renderer.domElement);
 
     // Grid data setup
@@ -308,7 +306,7 @@ export default function Scene({
       {/* WebGL Canvas Container */}
       <div
         ref={containerRef}
-        className="absolute inset-0 w-full h-full z-0 pointer-events-none touch-pan-y"
+        className="absolute inset-0 w-full h-full z-0 touch-pan-y"
         style={{ touchAction: 'pan-y' }}
       />
 
