@@ -24,7 +24,17 @@ async function getInitialHero() {
     const hero = await prisma.heroSetting.findUnique({
       where: { id: 'default' },
     });
-    return hero || DEFAULT_HERO_SETTINGS;
+    if (!hero) return DEFAULT_HERO_SETTINGS;
+    return {
+      heading: hero.heading || 'DAVINCI WALE BHAIYA',
+      description: hero.description || '',
+      badge: hero.badge || '',
+      heroImage: hero.heroImage || '/hero/2.jpg',
+      fontFamily: hero.fontFamily || 'sans',
+      textColor: hero.textColor || '#ffffff',
+      primaryButtonText: hero.primaryButtonText || '',
+      primaryButtonLink: hero.primaryButtonLink || '',
+    };
   } catch (error) {
     console.error('Failed to get initial hero:', error);
     return DEFAULT_HERO_SETTINGS;

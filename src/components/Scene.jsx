@@ -31,6 +31,10 @@ void main() {
 }
 `;
 
+function clamp(number, min, max) {
+  return Math.max(min, Math.min(number, max));
+}
+
 const getFontFamilyStyle = (font) => {
   if (!font || font === 'sans') return 'var(--font-sans, inherit)';
   if (font === 'serif') return 'serif';
