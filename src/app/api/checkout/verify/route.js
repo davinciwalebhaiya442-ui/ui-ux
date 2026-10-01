@@ -14,7 +14,7 @@ export async function POST(request) {
       return Response.json({ error: 'MISSING_PAYMENT_DETAILS' }, { status: 400 });
     }
 
-    // Verify cryptographic payment signature from Razorpay
+    // 1. Verify cryptographic payment signature from Razorpay
     let isValid = false;
     if (razorpaySignature) {
       try {
@@ -24,7 +24,7 @@ export async function POST(request) {
       }
     }
 
-    // Direct fallback verification with Razorpay API
+    // 2. Direct bulletproof fallback with Razorpay API
     if (!isValid) {
       try {
         const payment = await getRazorpay().payments.fetch(razorpayPaymentId);

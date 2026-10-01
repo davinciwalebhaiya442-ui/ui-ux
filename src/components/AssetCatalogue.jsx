@@ -179,8 +179,7 @@ export default function AssetCatalogue({ onSelectAsset, initialProducts = [] }) 
 
                 {/* Explicit, high-affordance CTA pill */}
                 <div className="px-3 py-1.5 rounded-lg bg-white/[0.06] group-hover:bg-blue-600/90 border border-white/[0.1] group-hover:border-blue-400/50 text-white/80 group-hover:text-white flex items-center space-x-1.5 transition-all duration-200 shadow-sm">
-                  <span className="text-[11px] font-medium tracking-wide">View Details</span>
-                  <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  <span className="text-[11px] font-semibold tracking-wide">Buy Now ↗</span>
                 </div>
               </div>
             </div>

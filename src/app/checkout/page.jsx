@@ -133,7 +133,7 @@ export default function CheckoutPage() {
               if (verified.ok && resData.orderNumber) {
                 window.location.href = `/order/success?order=${encodeURIComponent(resData.orderNumber)}`;
               } else {
-                setMessage(resData.error || 'Payment verification incomplete. Please contact support.');
+                setMessage(resData?.error || 'Payment verification incomplete. Please contact support.');
                 setMessageType('error');
                 setPaying(false);
               }

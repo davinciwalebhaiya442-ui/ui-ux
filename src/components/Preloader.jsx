@@ -21,8 +21,15 @@ export default function Preloader({ onLoaded }) {
   const pathRef = useRef(null);
   const [isRendered, setIsRendered] = useState(true);
 
+  const onLoadedRef = useRef(onLoaded);
+  onLoadedRef.current = onLoaded;
+
+  const hasStartedRef = useRef(false);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (hasStartedRef.current) return;
+    hasStartedRef.current = true;
 
     let isMounted = true;
     let index = 0;
@@ -56,7 +63,7 @@ export default function Preloader({ onLoaded }) {
       });
     }
 
-    // Word cycling
+    // Word cycling - single pass
     function cycleWords() {
       if (!isMounted || index >= words.length - 1) return;
 
@@ -89,7 +96,7 @@ export default function Preloader({ onLoaded }) {
             preloaderRef.current.style.display = 'none';
           }
           setIsRendered(false);
-          if (onLoaded) onLoaded();
+          if (onLoadedRef.current) onLoadedRef.current();
         },
       });
 
@@ -145,9 +152,9 @@ export default function Preloader({ onLoaded }) {
       isMounted = false;
       window.removeEventListener('resize', handleResize);
       exitCall.kill();
-      gsap.killTweensOf(wordRef.current);
+      if (wordRef.current) gsap.killTweensOf(wordRef.current);
     };
-  }, [onLoaded]);
+  }, []);
 
   if (!isRendered) return null;
 
@@ -160,8 +167,8 @@ export default function Preloader({ onLoaded }) {
         </span>
       </p>
 
-      <svg className="preloader__svg" id="js-svg" preserveAspectRatio="none">
-        <path ref={pathRef} id="js-path"></path>
+      <svg>
+        <path ref={pathRef}></path>
       </svg>
     </div>
   );
