@@ -59,6 +59,13 @@ export default function VisualProductForm({ product }) {
     featured: false,
     published: false,
     ...(product || {}),
+    type: String(product?.type || 'FREE').toUpperCase(),
+    thumbnailKey: product?.thumbnailKey || '',
+    demoVideo: product?.demoVideo || '',
+    beforeImage: product?.beforeImage || '',
+    afterImage: product?.afterImage || '',
+    downloadFileKey: product?.downloadFileKey || '',
+    downloadFileName: product?.downloadFileName || '',
   }));
 
   useEffect(() => {
@@ -156,6 +163,7 @@ export default function VisualProductForm({ product }) {
       const payload = {
         ...form,
         slug: sanitizedSlug,
+        type: String(form.type || 'FREE').toUpperCase(),
         published: publish ?? form.published,
         price: Number(form.price || 0),
         software: String(form.software || '')
@@ -168,6 +176,13 @@ export default function VisualProductForm({ product }) {
           .map((value) => value.trim())
           .filter(Boolean),
         included: Array.isArray(form.included) ? form.included : [],
+        thumbnailKey: form.thumbnailKey || '',
+        demoVideo: form.demoVideo || '',
+        beforeImage: form.beforeImage || '',
+        afterImage: form.afterImage || '',
+        downloadFileKey: form.downloadFileKey || '',
+        downloadFileName: form.downloadFileName || '',
+        downloadFileSize: form.downloadFileSize ? Number(form.downloadFileSize) : 0,
       };
       const id = product?.dbId || product?.id;
       const response = await fetch(id ? `/api/products/${encodeURIComponent(id)}` : '/api/products', {
@@ -333,7 +348,11 @@ export default function VisualProductForm({ product }) {
                 </select>
               </Field>
               <Field label="Type">
-                <select className={input} value={form.type} onChange={(e) => set('type', e.target.value)}>
+                <select
+                  className={input}
+                  value={String(form.type || 'FREE').toUpperCase()}
+                  onChange={(e) => set('type', e.target.value.toUpperCase())}
+                >
                   <option value="FREE">Free</option>
                   <option value="PAID">Paid</option>
                 </select>
