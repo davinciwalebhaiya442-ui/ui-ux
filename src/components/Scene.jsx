@@ -107,6 +107,8 @@ export default function Scene({
       renderer.outputColorSpace = THREE.SRGBColorSpace;
     }
 
+    renderer.domElement.style.touchAction = 'pan-y';
+    renderer.domElement.style.pointerEvents = 'none';
     container.appendChild(renderer.domElement);
 
     // Grid data setup
@@ -302,12 +304,12 @@ export default function Scene({
   }, [heroImage]);
 
   return (
-    <div className="relative w-full h-full min-h-screen select-none overflow-hidden bg-black">
+    <div className="relative w-full h-full min-h-screen select-none overflow-hidden bg-black touch-pan-y">
       {/* WebGL Canvas Container */}
       <div
         ref={containerRef}
-        className="absolute inset-0 w-full h-full z-0"
-        style={{ touchAction: 'none' }}
+        className="absolute inset-0 w-full h-full z-0 pointer-events-none touch-pan-y"
+        style={{ touchAction: 'pan-y' }}
       />
 
       {/* Centered Editorial Title */}
