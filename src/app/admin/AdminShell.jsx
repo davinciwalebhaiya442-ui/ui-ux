@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { notifyProductsUpdated } from '@/lib/events';
 import {
   LayoutDashboard,
   Package,
@@ -1141,6 +1142,7 @@ export function ProductList() {
         } catch {}
         return updated;
       });
+      notifyProductsUpdated();
       loadData(true);
     } catch (err) {
       toast(err.message, 'error');
@@ -1156,6 +1158,7 @@ export function ProductList() {
       });
       if (!res.ok) throw new Error('Toggle failed');
       toast(!currentPublished ? 'Asset published to store' : 'Asset moved to draft');
+      notifyProductsUpdated();
       loadData();
     } catch (err) {
       alert(err.message);
@@ -1178,6 +1181,7 @@ export function ProductList() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Duplicate failed');
       toast('Asset duplicated successfully');
+      notifyProductsUpdated();
       router.push(`/admin/products/${data.product.slug || data.product.id}/edit`);
     } catch (err) {
       alert(err.message);

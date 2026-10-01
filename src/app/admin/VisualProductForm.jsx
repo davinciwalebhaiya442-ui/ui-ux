@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Trash2 } from 'lucide-react';
 import { AdminLayout, ProductThumb, useAdmin } from './AdminShell';
 import MediaManager from '@/components/admin/MediaManager';
+import { notifyProductsUpdated } from '@/lib/events';
 
 const input = 'w-full rounded-xl border border-white/10 bg-[#080d18] px-3 py-2.5 text-sm text-white outline-none focus:border-blue-400/50';
 function Field({ label, children, hint }) {
@@ -88,6 +89,7 @@ export default function VisualProductForm({ product }) {
       const successMsg = id ? 'Product updated successfully' : 'Product created successfully';
       setMessage(successMsg);
       toast(successMsg, 'success');
+      notifyProductsUpdated();
 
       if (!id) {
         router.push(`/admin/products/${data.product.slug || data.product.id}/edit`);
@@ -116,6 +118,7 @@ export default function VisualProductForm({ product }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to delete product');
       toast('Product deleted permanently', 'success');
+      notifyProductsUpdated();
       router.push('/admin/products');
     } catch (err) {
       toast(err.message, 'error');
