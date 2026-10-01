@@ -68,8 +68,8 @@ export default function ProductModal({ asset, onClose }) {
       const data = await response.json().catch(() => ({}));
 
       if (response.status === 401) {
-        setDownloadStatusText('Login required to access this file. Redirecting...');
-        window.location.href = `/login?next=${encodeURIComponent(typeof window !== 'undefined' ? window.location.pathname : '/')}`;
+        setIsDownloading(false);
+        setDownloadError('Download is currently unavailable. Please try again.');
         return;
       }
 
