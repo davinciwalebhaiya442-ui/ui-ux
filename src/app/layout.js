@@ -1,14 +1,9 @@
 import "./globals.css";
 
 export const metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://davinciwalebhaiya.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   title: { default: "DavinciWaleBhaiya — Tools for Colorists & Editors", template: "%s | DavinciWaleBhaiya" },
   description: "Premium tools, presets, effects and editorial resources for working colorists and editors.",
-  icons: {
-    icon: '/icon.png',
-    shortcut: '/favicon.ico',
-    apple: '/apple-icon.png',
-  },
   alternates: { canonical: '/' },
   openGraph: { title: 'DavinciWaleBhaiya', description: 'Tools for working colorists and editors.', type: 'website' },
   twitter: { card: 'summary_large_image', title: 'DavinciWaleBhaiya', description: 'Tools for working colorists and editors.' },

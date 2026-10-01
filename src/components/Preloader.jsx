@@ -152,7 +152,7 @@ export default function Preloader({ onLoaded }) {
   if (!isRendered) return null;
 
   return (
-    <div className="preloader" ref={preloaderRef} id="js-preloader">
+    <div className="preloader" ref={preloaderRef} id="js-preloader" style={{ zIndex: 99999 }}>
       <p className="preloader__word" ref={wordRef} id="js-word">
         <span className="preloader__dot"></span>
         <span ref={wordTextRef} id="js-word-text">

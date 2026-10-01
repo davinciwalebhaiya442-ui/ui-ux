@@ -41,6 +41,14 @@ const DEFAULT_HERO = {
 export default function HomeClient({ initialProducts = [], initialHero = null }) {
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [heroSettings, setHeroSettings] = useState(() => initialHero || DEFAULT_HERO);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    const safetyTimer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 3500);
+    return () => clearTimeout(safetyTimer);
+  }, []);
 
   const heroSectionRef = useRef(null);
   const heroInnerRef = useRef(null);
@@ -136,10 +144,10 @@ export default function HomeClient({ initialProducts = [], initialHero = null })
   return (
     <main className="relative min-h-screen w-full bg-black text-white selection:bg-white/20 selection:text-white">
       {/* 00: AWESOME PRELOADER (PRESERVED) */}
-      <Preloader />
+      <Preloader onLoaded={() => setIsLoaded(true)} />
 
-      {/* FLOATING LIQUID GLASS NAVBAR */}
-      <Navbar />
+      {/* FLOATING LIQUID GLASS NAVBAR - Excluded from DOM until loading finishes */}
+      {isLoaded && <Navbar />}
 
       {/* 🚨 HERO SECTION (STICKY PINNED AT TOP) 🚨 */}
       <div
