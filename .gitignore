@@ -2,6 +2,11 @@ node_modules/
 .next/
 .next.stale*/
 .env
+.env*.local
+.env.local
+.env.production
+.env.development
 prisma/*.db
 prisma/*.db-journal
 .DS_Store
+*.log
