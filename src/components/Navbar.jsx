@@ -6,7 +6,6 @@ import { Search, Sparkles, Layers, Sliders, Film, ArrowUpRight, Menu, X } from '
 export default function Navbar({ onOpenSearch }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [account, setAccount] = useState(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -14,10 +13,6 @@ export default function Navbar({ onOpenSearch }) {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  useEffect(() => {
-    fetch('/api/auth/me').then((response) => response.json()).then((data) => setAccount(data.user || null)).catch(() => {});
   }, []);
 
   const navLinks = [
@@ -74,13 +69,6 @@ export default function Navbar({ onOpenSearch }) {
           </a>
 
           <a
-            href={account ? '/account' : '/login'}
-            className="hidden sm:inline-flex items-center text-xs text-white/70 hover:text-white px-2 py-1.5"
-          >
-            {account ? 'Account' : 'Login'}
-          </a>
-
-          <a
             href="/studio"
             className="inline-flex items-center space-x-1 text-xs font-medium text-black bg-white hover:bg-white/90 px-4 py-1.5 rounded-full transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_25px_rgba(255,255,255,0.3)]"
           >
@@ -121,13 +109,6 @@ export default function Navbar({ onOpenSearch }) {
               >
                 <span>Free Assets</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              </a>
-              <a
-                href={account ? '/account' : '/login'}
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-4 py-2.5 text-sm font-medium text-white/70 hover:text-white hover:bg-white/[0.06] rounded-xl transition-colors"
-              >
-                {account ? 'Account & Orders' : 'Login / Signup'}
               </a>
             </div>
           </nav>
