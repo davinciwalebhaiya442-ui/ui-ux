@@ -37,6 +37,7 @@ export async function PATCH(request) {
       badge: String(body.badge || '').trim(),
       heroImage: String(body.heroImage || '/hero/2.jpg').trim(),
       fontFamily: String(body.fontFamily || 'sans').trim(),
+      customFontUrl: String(body.customFontUrl || '').trim(),
       textColor: String(body.textColor || '#ffffff').trim(),
       primaryButtonText: String(body.primaryButtonText || '').trim(),
       primaryButtonLink: String(body.primaryButtonLink || '').trim(),

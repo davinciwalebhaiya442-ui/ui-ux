@@ -32,6 +32,7 @@ const DEFAULT_HERO = {
   badge: '',
   heroImage: '/hero/2.jpg',
   fontFamily: 'sans',
+  customFontUrl: '',
   textColor: '#ffffff',
   primaryButtonText: '',
   primaryButtonLink: '',
@@ -151,6 +152,7 @@ export default function HomeClient({ initialProducts = [], initialHero = null })
               title={heroSettings.heading || 'DAVINCI WALE BHAIYA'}
               heroImage={heroSettings.heroImage || '/hero/2.jpg'}
               fontFamily={heroSettings.fontFamily || 'sans'}
+              customFontUrl={heroSettings.customFontUrl}
               textColor={heroSettings.textColor || '#ffffff'}
               badge={heroSettings.badge}
               description={heroSettings.description}

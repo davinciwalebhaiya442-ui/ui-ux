@@ -9,6 +9,7 @@ export const DEFAULT_HERO_SETTINGS = {
   badge: 'ECOSYSTEM',
   heroImage: '/hero/2.jpg',
   fontFamily: 'sans',
+  customFontUrl: '',
   textColor: '#ffffff',
   primaryButtonText: 'Work With Us',
   primaryButtonLink: '#catalogue',

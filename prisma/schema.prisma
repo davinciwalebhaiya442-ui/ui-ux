@@ -256,6 +256,7 @@ model HeroSetting {
   badge             String?  @default("")
   heroImage         String   @default("/hero/2.jpg")
   fontFamily        String   @default("sans")
+  customFontUrl     String?  @default("")
   textColor         String   @default("#ffffff")
   primaryButtonText String?  @default("")
   primaryButtonLink String?  @default("")

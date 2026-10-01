@@ -31,6 +31,7 @@ async function getInitialHero() {
       badge: hero.badge || '',
       heroImage: hero.heroImage || '/hero/2.jpg',
       fontFamily: hero.fontFamily || 'sans',
+      customFontUrl: hero.customFontUrl || '',
       textColor: hero.textColor || '#ffffff',
       primaryButtonText: hero.primaryButtonText || '',
       primaryButtonLink: hero.primaryButtonLink || '',
