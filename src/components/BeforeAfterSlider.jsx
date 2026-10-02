@@ -6,11 +6,15 @@ import { SlidersHorizontal } from 'lucide-react';
 export default function BeforeAfterSlider({
   beforeSrc = '',
   afterSrc = '',
+  beforeImage = '',
+  afterImage = '',
   beforeLabel = 'Before',
   afterLabel = 'After',
   aspectRatio = '16/9',
   className = '',
 }) {
+  const resolvedBeforeSrc = beforeSrc || beforeImage || '';
+  const resolvedAfterSrc = afterSrc || afterImage || '';
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -88,8 +92,8 @@ export default function BeforeAfterSlider({
     }
   };
 
-  const hasRealAfter = Boolean(afterSrc);
-  const hasRealBefore = Boolean(beforeSrc);
+  const hasRealAfter = Boolean(resolvedAfterSrc);
+  const hasRealBefore = Boolean(resolvedBeforeSrc);
 
   return (
     <div
@@ -110,7 +114,7 @@ export default function BeforeAfterSlider({
       <div className="absolute inset-0 w-full h-full">
         {hasRealAfter ? (
           <img
-            src={afterSrc}
+            src={resolvedAfterSrc}
             alt={afterLabel}
             className="w-full h-full object-cover"
           />
@@ -162,7 +166,7 @@ export default function BeforeAfterSlider({
         >
           {hasRealBefore ? (
             <img
-              src={beforeSrc}
+              src={resolvedBeforeSrc}
               alt={beforeLabel}
               className="w-full h-full object-cover"
               style={{ maxWidth: 'none' }}
@@ -170,7 +174,7 @@ export default function BeforeAfterSlider({
           ) : hasRealAfter ? (
             /* If only afterSrc exists, render desaturated log version for comparison */
             <img
-              src={afterSrc}
+              src={resolvedAfterSrc}
               alt={beforeLabel}
               className="w-full h-full object-cover grayscale contrast-75 brightness-110"
               style={{ maxWidth: 'none' }}

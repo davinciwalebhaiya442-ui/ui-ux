@@ -249,10 +249,10 @@ export default function ProductViewClient({ asset, relatedAssets = [] }) {
               {activeMediaTab === 'comparison' && (
                 hasBeforeAfter ? (
                   <BeforeAfterSlider
-                    beforeImage={beforeSrc}
-                    afterImage={afterSrc}
-                    beforeLabel="Rec.709 Neutral"
-                    afterLabel={`${asset.name} Active`}
+                    beforeSrc={beforeSrc}
+                    afterSrc={afterSrc}
+                    beforeLabel="Before"
+                    afterLabel="After"
                   />
                 ) : (
                   <div className="relative w-full h-[400px] sm:h-[480px] bg-gradient-to-b from-[#0a1224] to-[#040810] flex items-center justify-center p-8 text-center">
