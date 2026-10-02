@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, Check, Download, ShoppingBag, SlidersHorizontal, Image as ImageIcon, Film, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, Check, Download, ShoppingBag, SlidersHorizontal, Image as ImageIcon, Film, Loader2, CheckCircle2, AlertCircle, Share2, Link2 } from 'lucide-react';
 import BeforeAfterSlider from './BeforeAfterSlider';
 
 export default function ProductModal({ asset, onClose }) {
@@ -12,6 +12,7 @@ export default function ProductModal({ asset, onClose }) {
   const [directDownloadName, setDirectDownloadName] = useState('');
   const [downloadError, setDownloadError] = useState('');
   const [purchaseStage, setPurchaseStage] = useState('idle');
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -115,6 +116,43 @@ export default function ProductModal({ asset, onClose }) {
     window.location.href = `/checkout?product=${asset.slug || asset.id}`;
   };
 
+  const handleShare = async (e) => {
+    if (e) e.stopPropagation();
+    const slugOrId = asset.slug || asset.id;
+    const shareUrl = `${window.location.origin}/product/${slugOrId}`;
+
+    if (navigator.share && /mobile|android|iphone|ipad/i.test(navigator.userAgent || '')) {
+      try {
+        await navigator.share({
+          title: asset.name,
+          text: asset.tagline || `Check out ${asset.name} on DaVinci Wale Bhaiya`,
+          url: shareUrl,
+        });
+        return;
+      } catch (_) {}
+    }
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = shareUrl;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch (_) {
+      window.prompt('Copy product link:', shareUrl);
+    }
+  };
+
   const canShowTabs = (shouldDefaultToComparison || hasBeforeAfter) && (thumbSrc || videoSrc);
 
   return (
@@ -133,13 +171,37 @@ export default function ProductModal({ asset, onClose }) {
           <div className="text-[11px] font-mono uppercase tracking-wider text-white/40">
             {asset.category} &bull; v{asset.version || '1.0'}
           </div>
-          <button
-            onClick={onClose}
-            className="text-white/60 hover:text-white p-1 rounded transition-colors"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={handleShare}
+              type="button"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all border ${
+                copied
+                  ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
+                  : 'border-white/10 bg-white/[0.04] text-white/70 hover:text-white hover:border-white/30 hover:bg-white/[0.08]'
+              }`}
+              title="Share product link"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Link Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>Share Link</span>
+                </>
+              )}
+            </button>
+            <button
+              onClick={onClose}
+              className="text-white/60 hover:text-white p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Body Content */}

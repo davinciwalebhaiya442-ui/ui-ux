@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { CATEGORIES, SOFTWARE_OPTIONS } from '@/data/assets';
 import { useProducts } from '@/data/useProducts';
-import { Search, ArrowUpRight, Monitor } from 'lucide-react';
+import { Search, ArrowUpRight, Monitor, Share2, Check } from 'lucide-react';
 import ProductCardVisual from './ProductCardVisual';
 
 export default function AssetCatalogue({ onSelectAsset, initialProducts = [] }) {
@@ -12,6 +12,7 @@ export default function AssetCatalogue({ onSelectAsset, initialProducts = [] }) 
   const [pricingFilter, setPricingFilter] = useState('all');
   const [selectedSoftware, setSelectedSoftware] = useState('All Software');
   const [sortBy, setSortBy] = useState('featured');
+  const [copiedId, setCopiedId] = useState(null);
   const assets = useProducts(initialProducts);
 
   const filteredAssets = useMemo(() => {
@@ -177,9 +178,43 @@ export default function AssetCatalogue({ onSelectAsset, initialProducts = [] }) 
                   )}
                 </div>
 
-                {/* Explicit, high-affordance CTA pill */}
-                <div className="px-3 py-1.5 rounded-lg bg-white/[0.06] group-hover:bg-blue-600/90 border border-white/[0.1] group-hover:border-blue-400/50 text-white/80 group-hover:text-white flex items-center space-x-1.5 transition-all duration-200 shadow-sm">
-                  <span className="text-[11px] font-semibold tracking-wide">Buy Now ↗</span>
+                {/* Quick actions: Share & Buy Now */}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const slugOrId = asset.slug || asset.id;
+                      const shareUrl = `${window.location.origin}/product/${slugOrId}`;
+                      if (navigator.share && /mobile|android|iphone|ipad/i.test(navigator.userAgent || '')) {
+                        navigator.share({ title: asset.name, text: asset.tagline, url: shareUrl }).catch(() => {});
+                      } else {
+                        try {
+                          navigator.clipboard.writeText(shareUrl).then(() => {
+                            setCopiedId(asset.id);
+                            setTimeout(() => setCopiedId(null), 2000);
+                          });
+                        } catch {
+                          window.prompt('Copy product link:', shareUrl);
+                        }
+                      }
+                    }}
+                    className={`p-1.5 rounded-lg border transition-all ${
+                      copiedId === asset.id
+                        ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-400'
+                        : 'border-white/[0.08] bg-white/[0.04] text-white/50 hover:text-white hover:border-white/25 hover:bg-white/[0.08]'
+                    }`}
+                    title={copiedId === asset.id ? "Link copied!" : "Share link"}
+                  >
+                    {copiedId === asset.id ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    ) : (
+                      <Share2 className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                  <div className="px-3 py-1.5 rounded-lg bg-white/[0.06] group-hover:bg-blue-600/90 border border-white/[0.1] group-hover:border-blue-400/50 text-white/80 group-hover:text-white flex items-center space-x-1.5 transition-all duration-200 shadow-sm">
+                    <span className="text-[11px] font-semibold tracking-wide">Buy Now ↗</span>
+                  </div>
                 </div>
               </div>
             </div>

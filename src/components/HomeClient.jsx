@@ -47,6 +47,53 @@ export default function HomeClient({ initialProducts = [], initialHero = null })
   const heroInnerRef = useRef(null);
   const mainContentRef = useRef(null);
 
+  const handleSelectAsset = useCallback((asset) => {
+    setSelectedAsset(asset);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (asset) {
+        url.searchParams.set('product', asset.slug || asset.id);
+      } else {
+        url.searchParams.delete('product');
+        url.searchParams.delete('p');
+      }
+      window.history.pushState(null, '', url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : ''));
+    }
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setSelectedAsset(null);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('product');
+      url.searchParams.delete('p');
+      window.history.pushState(null, '', url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : ''));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const syncProductFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const productSlug = params.get('product') || params.get('p');
+      if (productSlug && initialProducts?.length > 0) {
+        const found = initialProducts.find(
+          (p) => p.slug === productSlug || p.id === productSlug || p.dbId === productSlug
+        );
+        if (found) {
+          setSelectedAsset(found);
+        }
+      } else if (!productSlug) {
+        setSelectedAsset(null);
+      }
+    };
+
+    syncProductFromUrl();
+    window.addEventListener('popstate', syncProductFromUrl);
+    return () => window.removeEventListener('popstate', syncProductFromUrl);
+  }, [initialProducts]);
+
   const fetchHeroSettings = useCallback(async () => {
     try {
       const res = await fetch('/api/hero?_t=' + Date.now(), { cache: 'no-store' });
@@ -223,13 +270,13 @@ export default function HomeClient({ initialProducts = [], initialHero = null })
         {/* Content Layers (Relative z-10 for perfect contrast) */}
         <div className="relative z-10">
           {/* 01: CURATED RELEASES */}
-          <FeaturedAssets onSelectAsset={setSelectedAsset} initialProducts={initialProducts} />
+          <FeaturedAssets onSelectAsset={handleSelectAsset} initialProducts={initialProducts} />
 
           {/* 02: ASSET REPOSITORY & CATALOGUE */}
-          <AssetCatalogue onSelectAsset={setSelectedAsset} initialProducts={initialProducts} />
+          <AssetCatalogue onSelectAsset={handleSelectAsset} initialProducts={initialProducts} />
 
           {/* 03: BEFORE / AFTER COLOR SCIENCE ENGINE */}
-          <ComparisonSection onSelectAsset={setSelectedAsset} />
+          <ComparisonSection onSelectAsset={handleSelectAsset} />
 
           {/* 04: TECHNICAL WORKSPACE & TOOLS */}
           <ToolsSection />
@@ -255,7 +302,7 @@ export default function HomeClient({ initialProducts = [], initialHero = null })
       {selectedAsset && (
         <ProductModal
           asset={selectedAsset}
-          onClose={() => setSelectedAsset(null)}
+          onClose={handleCloseModal}
         />
       )}
     </main>
