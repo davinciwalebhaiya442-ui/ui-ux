@@ -189,7 +189,7 @@ const NAV_ITEMS = [
     { label: 'Posts & Prompts', href: '/admin/content', icon: FileText },
   ]},
   { group: 'BUSINESS', items: [
-    { label: 'Orders', href: '/admin/orders', icon: ShoppingBag },
+    { label: 'Orders', href: '/admin/orders', icon: ShoppingBag, badgeKey: 'orders' },
     { label: 'Users', href: '/admin/users', icon: Users },
     { label: 'Studio Requests', href: '/admin/studio', icon: BriefcaseBusiness, badgeKey: 'studio' },
     { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
@@ -433,6 +433,7 @@ export function AdminLayout({ children, title = 'Dashboard' }) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [badgeCounts, setBadgeCounts] = useState({ studio: 0, orders: 0 });
 
   // Keyboard shortcut CMD+K / CTRL+K
   useEffect(() => {
@@ -473,6 +474,10 @@ export function AdminLayout({ children, title = 'Dashboard' }) {
       .then((data) => {
         setNotifications(data.notifications || []);
         setUnreadCount(data.unreadCount || 0);
+        setBadgeCounts({
+          studio: data.studioCount || 0,
+          orders: data.orderCount || 0,
+        });
       })
       .catch(() => {});
   }, [pathname]);
@@ -559,7 +564,7 @@ export function AdminLayout({ children, title = 'Dashboard' }) {
                       item.href === '/admin'
                         ? pathname === '/admin'
                         : pathname === item.href || pathname.startsWith(`${item.href}/`);
-                    const badge = item.badgeKey === 'studio' && unreadCount > 0 ? unreadCount : null;
+                    const badge = item.badgeKey && badgeCounts[item.badgeKey] > 0 ? badgeCounts[item.badgeKey] : null;
 
                     return (
                       <Link

@@ -69,10 +69,11 @@ export async function POST(request, { params }) {
       if (authUser) {
         try {
           await ensureProfile(authUser);
+          const accessType = product.type === 'PAID' ? 'PURCHASE' : 'FREE_DOWNLOAD';
           const access = await prisma.productAccess.upsert({
             where: { userId_productId: { userId: authUser.id, productId: product.id } },
             update: {},
-            create: { userId: authUser.id, productId: product.id, accessType: 'FREE_DOWNLOAD' },
+            create: { userId: authUser.id, productId: product.id, accessType },
           });
           await prisma.download.create({
             data: { userId: authUser.id, productId: product.id, accessId: access.id },

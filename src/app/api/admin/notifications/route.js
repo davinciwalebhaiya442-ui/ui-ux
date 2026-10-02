@@ -56,8 +56,10 @@ export async function GET(request) {
     ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 10);
 
     const unreadCount = notifications.filter((n) => n.unread).length;
+    const studioCount = recentStudio.length;
+    const orderCount = recentOrders.filter((o) => o.status === 'PAID').length;
 
-    return Response.json({ notifications, unreadCount });
+    return Response.json({ notifications, unreadCount, studioCount, orderCount });
   } catch (error) {
     console.error('Notifications fetch error:', error);
     return Response.json({ error: 'Unable to load notifications' }, { status: 500 });

@@ -5,6 +5,8 @@ import { ArrowRight, Check } from 'lucide-react';
 
 export default function StudioSection() {
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -14,11 +16,28 @@ export default function StudioSection() {
     portfolio: '',
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
+    setLoading(true);
+    setErrorMsg('');
+    try {
+      const res = await fetch('/api/studio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          requestType: formData.requestType,
+          budget: formData.budget,
+          projectDetails: formData.details,
+          portfolioUrl: formData.portfolio,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to submit request');
+      }
+      setSubmitted(true);
       setFormData({
         name: '',
         email: '',
@@ -27,7 +46,11 @@ export default function StudioSection() {
         details: '',
         portfolio: '',
       });
-    }, 5000);
+    } catch (err) {
+      setErrorMsg(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -167,11 +190,18 @@ export default function StudioSection() {
                 />
               </div>
 
+              {errorMsg && (
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-mono">
+                  {errorMsg}
+                </div>
+              )}
+
               <button
                 type="submit"
-                className="w-full py-3.5 px-6 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all flex items-center justify-center space-x-2"
+                disabled={loading}
+                className="w-full py-3.5 px-6 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all flex items-center justify-center space-x-2 disabled:opacity-50"
               >
-                <span>Initiate Studio Project</span>
+                <span>{loading ? 'Submitting Project Brief...' : 'Initiate Studio Project'}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </form>

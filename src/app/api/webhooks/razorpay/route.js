@@ -30,10 +30,18 @@ export async function POST(request) {
         data: { status: 'PAID', paymentStatus: 'CAPTURED', razorpayPaymentId: payment.id },
       });
       for (const item of order.items) {
-        await tx.productAccess.upsert({
+        const access = await tx.productAccess.upsert({
           where: { userId_productId: { userId: order.userId, productId: item.productId } },
           update: { accessType: 'PURCHASE' },
           create: { userId: order.userId, productId: item.productId, accessType: 'PURCHASE' },
+        });
+
+        await tx.download.create({
+          data: {
+            userId: order.userId,
+            productId: item.productId,
+            accessId: access.id,
+          },
         });
       }
     });
