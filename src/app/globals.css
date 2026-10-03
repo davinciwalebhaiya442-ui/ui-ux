@@ -85,3 +85,141 @@ body {
   }
 }
 
+/* ========================================================
+   SCROLL-POWERED CHAT-BUBBLE FAQ ANIMATION
+   ======================================================== */
+.faq-container {
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3.5rem;
+}
+
+.faq-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.faq-row {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.faq-question-slot {
+  justify-content: flex-start;
+}
+
+.faq-answer-slot {
+  justify-content: flex-end;
+}
+
+.faq-row .faq-message {
+  align-self: flex-start;
+}
+
+.faq-message {
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.faq-question,
+.faq-answer {
+  max-width: 78%;
+  padding: 1.5rem 2rem;
+  border-radius: 2rem;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
+}
+
+.faq-question {
+  align-self: flex-start;
+  background-color: #d2e2eb;
+  color: #111827;
+}
+
+.faq-answer {
+  align-self: flex-end;
+  background-color: #e6b552;
+  color: #111827;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.faq-content {
+  width: max-content;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.faq-content p {
+  opacity: 0;
+  margin: 0;
+  color: #111827;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  font-weight: 500;
+  text-align: left;
+}
+
+.faq-question .faq-content p {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.typing-indicator {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  pointer-events: none;
+}
+
+.typing-indicator span {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background-color: #1a1a1a;
+  animation: typing-pulse 1s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing-pulse {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-0.25rem);
+  }
+}
+
+@media (max-width: 768px) {
+  .faq-container {
+    gap: 2.5rem;
+  }
+  .faq-question,
+  .faq-answer {
+    max-width: 92%;
+    padding: 1.25rem 1.5rem;
+  }
+  .faq-content p {
+    font-size: 0.875rem;
+  }
+}
+
