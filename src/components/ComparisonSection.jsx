@@ -32,11 +32,15 @@ export default function ComparisonSection({ initialComparison = null }) {
     }
 
     // Subscribe to admin updates across tabs
-    const unsubscribe = subscribeToProductUpdates(() => {
-      fetchLatest();
-    });
+    const unsubscribe = typeof subscribeToProductUpdates === 'function'
+      ? subscribeToProductUpdates(() => {
+          fetchLatest();
+        })
+      : () => {};
 
-    return () => unsubscribe();
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
   }, [initialComparison]);
 
   const features = Array.isArray(data.features)
