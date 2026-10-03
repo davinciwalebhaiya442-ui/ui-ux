@@ -158,9 +158,7 @@ export default function HomeClient({ initialProducts = [], initialHero = null })
           // Exactly ONE clean, cinematic stacked transition:
           // Hero stays pinned while the entire website comes up from below and covers it
           gsap.to(heroInnerRef.current, {
-            scale: isDesktop ? 0.95 : 0.98,
-            opacity: 0.72,
-            filter: 'brightness(0.6)',
+            scale: isDesktop ? 0.97 : 1,
             ease: 'none',
             scrollTrigger: {
               trigger: mainContentRef.current,

@@ -25,9 +25,9 @@ varying vec3 vPosition;
 
 void main() {
   vec2 newUV = (vUv - vec2(0.5)) * resolution.zw + vec2(0.5);
-  vec4 color = texture2D(uTexture, newUV);
   vec4 offset = texture2D(uDataTexture, vUv);
-  gl_FragColor = texture2D(uTexture, newUV - 0.02 * offset.rg);
+  vec2 distortedUV = clamp(newUV - 0.015 * offset.rg, 0.001, 0.999);
+  gl_FragColor = texture2D(uTexture, distortedUV);
 }
 `;
 
@@ -168,11 +168,17 @@ export default function Scene({
     let imageAspect = 576 / 1024; // 16:9 ratio
     const activeHeroImage = heroImage || '/hero/2.jpg';
     const texture = textureLoader.load(activeHeroImage, (tex) => {
+      tex.wrapS = THREE.ClampToEdgeWrapping;
+      tex.wrapT = THREE.ClampToEdgeWrapping;
+      tex.minFilter = THREE.LinearFilter;
+      tex.magFilter = THREE.LinearFilter;
       if (tex.image && tex.image.naturalWidth && tex.image.naturalHeight) {
         imageAspect = tex.image.naturalHeight / tex.image.naturalWidth;
         updateResolution();
       }
     });
+    texture.wrapS = THREE.ClampToEdgeWrapping;
+    texture.wrapT = THREE.ClampToEdgeWrapping;
     if ('colorSpace' in texture) {
       texture.colorSpace = THREE.SRGBColorSpace;
     }
@@ -225,9 +231,15 @@ export default function Scene({
     };
 
     const handlePointerMove = (clientX, clientY) => {
+      if (!container) return;
       const rect = container.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+
       const currentX = (clientX - rect.left) / rect.width;
       const currentY = (clientY - rect.top) / rect.height;
+
+      // Only distort if pointer is actually interacting near the container
+      if (currentX < -0.05 || currentX > 1.05 || currentY < -0.05 || currentY > 1.05) return;
 
       if (!mouse.hasMoved) {
         mouse.prevX = currentX;
@@ -238,8 +250,12 @@ export default function Scene({
       mouse.x = Math.max(0, Math.min(1, currentX));
       mouse.y = Math.max(0, Math.min(1, currentY));
 
-      mouse.vX = mouse.x - mouse.prevX;
-      mouse.vY = mouse.y - mouse.prevY;
+      const dx = mouse.x - mouse.prevX;
+      const dy = mouse.y - mouse.prevY;
+
+      // Safely clamp velocity to prevent huge displacement spikes on scroll or fast flicks
+      mouse.vX = Math.max(-0.02, Math.min(0.02, dx));
+      mouse.vY = Math.max(-0.02, Math.min(0.02, dy));
 
       mouse.prevX = mouse.x;
       mouse.prevY = mouse.y;
@@ -252,8 +268,15 @@ export default function Scene({
       }
     };
 
+    // When page is scrolled, immediately zero out any pointer velocity so scrolling never distorts hero into black void
+    const onScroll = () => {
+      mouse.vX = 0;
+      mouse.vY = 0;
+    };
+
     window.addEventListener('mousemove', onMouseMove, { passive: true });
     window.addEventListener('touchmove', onTouchMove, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', updateResolution);
 
     function updateDataTexture() {
@@ -264,6 +287,12 @@ export default function Scene({
       for (let i = 0; i < texData.length; i += 4) {
         texData[i] *= relaxation;
         texData[i + 1] *= relaxation;
+      }
+
+      // If velocity is essentially zero, skip expensive loop
+      if (Math.abs(mouse.vX) < 0.0001 && Math.abs(mouse.vY) < 0.0001) {
+        dataTexture.needsUpdate = true;
+        return;
       }
 
       const gridMouseX = size * mouse.x;
@@ -278,22 +307,24 @@ export default function Scene({
       const minJ = Math.max(0, Math.floor(gridMouseY - maxDist));
       const maxJ = Math.min(size, Math.ceil(gridMouseY + maxDist));
 
+      const maxOffset = 6.0; // Strictly bound max distortion so pixels never blowout or turn black
+
       for (let i = minI; i < maxI; i++) {
         for (let j = minJ; j < maxJ; j++) {
           const distance = ((gridMouseX - i) ** 2) / aspect + (gridMouseY - j) ** 2;
           if (distance < maxDistSq) {
             const index = 4 * (i + size * j);
             let power = maxDist / Math.sqrt(distance);
-            power = clamp(power, 0, 10);
+            power = clamp(power, 0, 5);
 
-            texData[index] += settings.strength * 100 * mouse.vX * power;
-            texData[index + 1] -= settings.strength * 100 * mouse.vY * power;
+            texData[index] = Math.max(-maxOffset, Math.min(maxOffset, texData[index] + settings.strength * 15 * mouse.vX * power));
+            texData[index + 1] = Math.max(-maxOffset, Math.min(maxOffset, texData[index + 1] - settings.strength * 15 * mouse.vY * power));
           }
         }
       }
 
-      mouse.vX *= 0.9;
-      mouse.vY *= 0.9;
+      mouse.vX *= 0.85;
+      mouse.vY *= 0.85;
       dataTexture.needsUpdate = true;
     }
 
@@ -317,6 +348,7 @@ export default function Scene({
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', updateResolution);
       if (renderer.domElement && renderer.domElement.parentNode) {
         renderer.domElement.parentNode.removeChild(renderer.domElement);
