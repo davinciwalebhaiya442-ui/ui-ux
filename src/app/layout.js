@@ -1,4 +1,5 @@
 import "./globals.css";
+import AutoRefreshSync from "@/components/AutoRefreshSync";
 
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
@@ -12,7 +13,11 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className="font-sans antialiased">{children}<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ '@context': 'https://schema.org', '@type': 'WebSite', name: 'DavinciWaleBhaiya', url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000' }) }} /></body>
+      <body className="font-sans antialiased">
+        <AutoRefreshSync />
+        {children}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ '@context': 'https://schema.org', '@type': 'WebSite', name: 'DavinciWaleBhaiya', url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000' }) }} />
+      </body>
     </html>
   );
 }

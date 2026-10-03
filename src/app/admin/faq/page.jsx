@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { AdminLayout, useAdmin } from '../AdminShell';
+import { notifyAdminChange } from '@/lib/events';
 
 export default function FaqAdminPage() {
   const { toast, confirm } = useAdmin();
@@ -33,6 +34,7 @@ export default function FaqAdminPage() {
       toast('FAQ added successfully', 'success');
       setQuestion('');
       setAnswer('');
+      notifyAdminChange();
       load();
     } catch (err) {
       toast(err.message, 'error');
@@ -54,6 +56,7 @@ export default function FaqAdminPage() {
       if (!response.ok) throw new Error(data.error || 'Failed to delete FAQ');
       toast('FAQ deleted successfully', 'success');
       setFaqs((prev) => prev.filter((f) => f.id !== id));
+      notifyAdminChange();
       load();
     } catch (err) {
       toast(err.message, 'error');

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { AdminLayout, useAdmin } from '../AdminShell';
+import { notifyAdminChange } from '@/lib/events';
 
 const input = 'w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-400';
 
@@ -33,6 +34,7 @@ export default function ContentAdminPage() {
       if (!response.ok) throw new Error(resData.error || 'Failed to create post');
       toast(`Post "${form.title}" created`, 'success');
       setForm({ title: '', slug: '', content: '', categoryId: '' });
+      notifyAdminChange();
       load();
     } catch (err) {
       toast(err.message, 'error');
@@ -57,6 +59,7 @@ export default function ContentAdminPage() {
         ...prev,
         posts: prev.posts.filter((p) => p.id !== id),
       }));
+      notifyAdminChange();
       load();
     } catch (err) {
       toast(err.message, 'error');

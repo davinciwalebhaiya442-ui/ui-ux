@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Trash2, ExternalLink } from 'lucide-react';
 import { AdminLayout, useAdmin } from '../AdminShell';
+import { notifyAdminChange } from '@/lib/events';
 
 export default function ToolsAdminPage() {
   const { toast, confirm } = useAdmin();
@@ -31,6 +32,7 @@ export default function ToolsAdminPage() {
       if (!response.ok) throw new Error(data.error || 'Failed to create tool');
       toast(`Tool "${form.name}" created`, 'success');
       setForm({ name: '', slug: '', description: '', url: '' });
+      notifyAdminChange();
       load();
     } catch (err) {
       toast(err.message, 'error');
@@ -52,6 +54,7 @@ export default function ToolsAdminPage() {
       if (!response.ok) throw new Error(data.error || 'Failed to delete tool');
       toast(`Tool "${name}" deleted`, 'success');
       setTools((prev) => prev.filter((t) => t.id !== id));
+      notifyAdminChange();
       load();
     } catch (err) {
       toast(err.message, 'error');

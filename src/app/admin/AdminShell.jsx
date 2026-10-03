@@ -1492,6 +1492,7 @@ export function CategoryList() {
         setSlug('');
         setDescription('');
         setMessage('');
+        notifyProductsUpdated();
         load();
       } else {
         setMessage(d.error || 'Failed to create category');
@@ -1517,6 +1518,7 @@ export function CategoryList() {
       if (!r.ok) throw new Error(d.error || 'Cannot delete category');
       toast(`Category "${catName}" deleted successfully`, 'success');
       setCategories((prev) => prev.filter((c) => c.id !== id && c.slug !== id));
+      notifyProductsUpdated();
       load();
     } catch (err) {
       toast(err.message, 'error');
