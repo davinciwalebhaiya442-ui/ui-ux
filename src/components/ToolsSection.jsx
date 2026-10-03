@@ -40,26 +40,41 @@ export default function ToolsSection() {
         </p>
       </div>
 
-      {/* Tool Mode Tabs */}
-      <div className="flex items-center space-x-2 border-b border-white/[0.08] mb-12 text-xs font-mono overflow-x-auto scrollbar-none pb-0.5">
+      {/* Tool Mode Tabs — Clean Segmented Pills with Spacing & Badges */}
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 p-1.5 rounded-2xl bg-[#070b15]/90 border border-white/[0.08] mb-12 shadow-inner">
         {[
-          { id: 'downloader', label: 'YouTube & Instagram Downloader' },
-          { id: 'export-settings', label: 'Best Export Settings Finder' },
-          { id: 'aspect', label: 'Cinema Aspect Ratio & Blanking' },
-          { id: 'timecode', label: 'SMPTE Timecode Calculator' },
-        ].map((tool) => (
-          <button
-            key={tool.id}
-            onClick={() => setActiveTool(tool.id)}
-            className={`pb-3 border-b-2 transition-all -mb-px whitespace-nowrap cursor-pointer ${
-              activeTool === tool.id
-                ? 'border-blue-400 text-blue-300 font-semibold'
-                : 'border-transparent text-white/50 hover:text-white'
-            }`}
-          >
-            {tool.label}
-          </button>
-        ))}
+          { id: 'downloader', label: 'YouTube & Instagram Downloader', badge: '01' },
+          { id: 'export-settings', label: 'Best Export Settings Finder', badge: '02' },
+          { id: 'aspect', label: 'Cinema Aspect Ratio & Blanking', badge: '03' },
+          { id: 'timecode', label: 'SMPTE Timecode Calculator', badge: '04' },
+        ].map((tool) => {
+          const isActive = activeTool === tool.id;
+          return (
+            <button
+              key={tool.id}
+              onClick={() => setActiveTool(tool.id)}
+              className={`px-4 sm:px-5 py-2.5 rounded-xl text-xs font-mono transition-all duration-200 cursor-pointer flex items-center space-x-2 shrink-0 ${
+                isActive
+                  ? 'bg-blue-600/25 border border-blue-400/60 text-white font-semibold shadow-[0_0_20px_rgba(59,130,246,0.3)]'
+                  : 'text-white/60 hover:text-white hover:bg-white/[0.04] border border-transparent'
+              }`}
+            >
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
+                  isActive
+                    ? 'bg-blue-400/20 text-blue-300'
+                    : 'bg-white/[0.06] text-white/40'
+                }`}
+              >
+                {tool.badge}
+              </span>
+              <span>{tool.label}</span>
+              {isActive && (
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_8px_#60a5fa]" />
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* TOOL 01: YOUTUBE & INSTAGRAM REFERENCE DOWNLOADER */}

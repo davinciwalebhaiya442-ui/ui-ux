@@ -187,16 +187,16 @@ export default function AssetCatalogue({
 
         </div>
 
-        {/* Minimal Category Tabs */}
-        <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none text-xs">
+        {/* Category Tabs */}
+        <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-xl bg-[#070b15]/80 border border-white/[0.08] text-xs">
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1.5 rounded-md whitespace-nowrap transition-colors border ${
+              className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-all font-mono text-xs cursor-pointer ${
                 selectedCategory === cat
-                  ? 'bg-white text-black font-medium border-white'
-                  : 'bg-transparent text-white/50 hover:text-white border-white/[0.06] hover:border-white/20'
+                  ? 'bg-blue-600/30 text-white font-medium border border-blue-400/50 shadow-[0_0_15px_rgba(59,130,246,0.25)]'
+                  : 'bg-transparent text-white/50 hover:text-white hover:bg-white/[0.04] border border-transparent'
               }`}
             >
               {cat}

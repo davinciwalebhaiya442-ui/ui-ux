@@ -34,25 +34,40 @@ export default function ContentSection() {
         </p>
       </div>
 
-      {/* Clean Category Selector */}
-      <div className="flex items-center space-x-2 border-b border-white/[0.08] mb-12 text-xs font-mono">
+      {/* Category Tabs — Segmented Pills with Spacing & Badges */}
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 p-1.5 rounded-2xl bg-[#070b15]/90 border border-white/[0.08] mb-12 shadow-inner">
         {[
-          { id: 'prompts', label: 'Director & AI Prompts' },
-          { id: 'gear', label: 'Hardware & Monitoring' },
-          { id: 'tutorials', label: 'Color Science Breakdowns' },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`pb-3 border-b-2 transition-all -mb-px ${
-              activeTab === tab.id
-                ? 'border-blue-400 text-blue-300 font-semibold'
-                : 'border-transparent text-white/50 hover:text-white'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+          { id: 'prompts', label: 'Director & AI Prompts', badge: '01' },
+          { id: 'gear', label: 'Hardware & Monitoring', badge: '02' },
+          { id: 'tutorials', label: 'Color Science Breakdowns', badge: '03' },
+        ].map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 sm:px-5 py-2.5 rounded-xl text-xs font-mono transition-all duration-200 cursor-pointer flex items-center space-x-2 shrink-0 ${
+                isActive
+                  ? 'bg-blue-600/25 border border-blue-400/60 text-white font-semibold shadow-[0_0_20px_rgba(59,130,246,0.3)]'
+                  : 'text-white/60 hover:text-white hover:bg-white/[0.04] border border-transparent'
+              }`}
+            >
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
+                  isActive
+                    ? 'bg-blue-400/20 text-blue-300'
+                    : 'bg-white/[0.06] text-white/40'
+                }`}
+              >
+                {tab.badge}
+              </span>
+              <span>{tab.label}</span>
+              {isActive && (
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_8px_#60a5fa]" />
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* PROMPTS */}
