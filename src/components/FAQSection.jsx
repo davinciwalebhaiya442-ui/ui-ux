@@ -193,9 +193,12 @@ export default function FAQSection() {
                   <span></span>
                 </div>
                 <div className="faq-content">
-                  {faq.a.split('\n\n').map((paragraph, pIdx) => (
-                    <p key={pIdx}>{paragraph}</p>
-                  ))}
+                  {String(faq.a || '')
+                    .split('\n\n')
+                    .filter(Boolean)
+                    .map((paragraph, pIdx) => (
+                      <p key={pIdx}>{paragraph}</p>
+                    ))}
                 </div>
               </div>
             </div>

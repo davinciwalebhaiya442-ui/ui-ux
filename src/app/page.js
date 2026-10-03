@@ -50,8 +50,17 @@ async function getInitialComparison() {
     });
     if (!comparison) return DEFAULT_COMPARISON_SETTINGS;
     return {
-      ...DEFAULT_COMPARISON_SETTINGS,
-      ...comparison,
+      id: comparison.id || 'default',
+      badge: comparison.badge || DEFAULT_COMPARISON_SETTINGS.badge,
+      title: comparison.title || DEFAULT_COMPARISON_SETTINGS.title,
+      subtitle: comparison.subtitle || DEFAULT_COMPARISON_SETTINGS.subtitle,
+      beforeImage: comparison.beforeImage || '',
+      afterImage: comparison.afterImage || '',
+      beforeLabel: comparison.beforeLabel || DEFAULT_COMPARISON_SETTINGS.beforeLabel,
+      afterLabel: comparison.afterLabel || DEFAULT_COMPARISON_SETTINGS.afterLabel,
+      cardBadge: comparison.cardBadge || DEFAULT_COMPARISON_SETTINGS.cardBadge,
+      cardTag: comparison.cardTag || DEFAULT_COMPARISON_SETTINGS.cardTag,
+      description: comparison.description || DEFAULT_COMPARISON_SETTINGS.description,
       features: Array.isArray(comparison.features)
         ? comparison.features
         : DEFAULT_COMPARISON_SETTINGS.features,
