@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { Download, Check, Video, Calculator, Clock } from 'lucide-react';
+import ExportSettingsFinder from '@/components/ExportSettingsFinder';
 
 export default function ToolsSection() {
-  const [activeTool, setActiveTool] = useState('downloader');
+  const [activeTool, setActiveTool] = useState('export-settings');
 
   // Tool 1: YouTube Downloader States
   const [ytUrl, setYtUrl] = useState('');
@@ -66,8 +67,9 @@ export default function ToolsSection() {
       </div>
 
       {/* Tool Mode Tabs */}
-      <div className="flex items-center space-x-2 border-b border-white/[0.08] mb-12 text-xs font-mono">
+      <div className="flex items-center space-x-2 border-b border-white/[0.08] mb-12 text-xs font-mono overflow-x-auto scrollbar-none pb-0.5">
         {[
+          { id: 'export-settings', label: 'Best Export Settings Finder' },
           { id: 'downloader', label: 'YouTube Reference Extractor' },
           { id: 'aspect', label: 'Cinema Aspect Ratio & Blanking' },
           { id: 'timecode', label: 'SMPTE Timecode Calculator' },
@@ -75,7 +77,7 @@ export default function ToolsSection() {
           <button
             key={tool.id}
             onClick={() => setActiveTool(tool.id)}
-            className={`pb-3 border-b-2 transition-all -mb-px ${
+            className={`pb-3 border-b-2 transition-all -mb-px whitespace-nowrap ${
               activeTool === tool.id
                 ? 'border-blue-400 text-blue-300 font-semibold'
                 : 'border-transparent text-white/50 hover:text-white'
@@ -86,6 +88,11 @@ export default function ToolsSection() {
         ))}
       </div>
 
+      {/* TOOL 0: BEST EXPORT SETTINGS FINDER */}
+      {activeTool === 'export-settings' && (
+        <ExportSettingsFinder />
+      )}
+
       {/* TOOL 1: YOUTUBE REFERENCE EXTRACTOR */}
       {activeTool === 'downloader' && (
         <div className="border border-white/[0.12] rounded-2xl p-6 sm:p-10 bg-gradient-to-b from-[#0d1424]/95 via-[#090e1a]/95 to-[#060a12]/95 shadow-[0_12px_32px_rgba(0,0,0,0.45)] max-w-4xl">
@@ -93,7 +100,7 @@ export default function ToolsSection() {
             <div>
               <div className="flex items-center space-x-2 mb-2">
                 <span className="text-[10px] font-mono uppercase tracking-widest text-blue-400 font-semibold px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">
-                  Utility 01
+                  Utility 02
                 </span>
                 <span className="text-xs font-mono text-emerald-400 font-bold px-2 py-0.5 rounded bg-emerald-500/10">100% Free</span>
               </div>
