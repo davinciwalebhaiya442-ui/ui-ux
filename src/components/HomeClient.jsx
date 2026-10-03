@@ -8,12 +8,10 @@ import Preloader from '@/components/Preloader';
 import Navbar from '@/components/Navbar';
 import FeaturedAssets from '@/components/FeaturedAssets';
 import AssetCatalogue from '@/components/AssetCatalogue';
-import ComparisonSection from '@/components/ComparisonSection';
 import ToolsSection from '@/components/ToolsSection';
 import ContentSection from '@/components/ContentSection';
 import StudioSection from '@/components/StudioSection';
 import AboutSection from '@/components/AboutSection';
-import FAQSection from '@/components/FAQSection';
 import Footer from '@/components/Footer';
 import ProductModal from '@/components/ProductModal';
 import { ChevronDown } from 'lucide-react';
@@ -274,31 +272,26 @@ export default function HomeClient({
           {/* 01: CURATED RELEASES */}
           <FeaturedAssets onSelectAsset={handleSelectAsset} initialProducts={initialProducts} />
 
-          {/* 02: ASSET REPOSITORY & CATALOGUE */}
-          <AssetCatalogue onSelectAsset={handleSelectAsset} initialProducts={initialProducts} />
-
-          {/* 03: BEFORE / AFTER COLOR SCIENCE ENGINE */}
-          <ComparisonSection
-            initialComparison={initialComparison}
+          {/* 02: ASSET REPOSITORY & CATALOGUE (With integrated Before/After Engine) */}
+          <AssetCatalogue
             onSelectAsset={handleSelectAsset}
+            initialProducts={initialProducts}
+            initialComparison={initialComparison}
           />
 
-          {/* 04: TECHNICAL WORKSPACE & TOOLS */}
+          {/* 03: TECHNICAL WORKSPACE & TOOLS */}
           <ToolsSection />
 
-          {/* 05: EDITORIAL VAULT */}
+          {/* 04: EDITORIAL VAULT & CONTENT */}
           <ContentSection />
 
-          {/* 06: STUDIO LAB */}
+          {/* 05: STUDIO LAB & CLIENT SERVICES */}
           <StudioSection />
 
-          {/* 07: STUDIO NOTES & PHILOSOPHY */}
+          {/* 06: STUDIO NOTES & PHILOSOPHY */}
           <AboutSection />
 
-          {/* 08: FREQUENTLY ANSWERED QUESTIONS */}
-          <FAQSection />
-
-          {/* 09: FOOTER CLOSING FRAME */}
+          {/* 07: FOOTER CLOSING FRAME */}
           <Footer />
         </div>
       </div>

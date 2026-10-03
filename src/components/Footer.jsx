@@ -71,11 +71,11 @@ export default function Footer() {
           <div className="space-y-3">
             <div className="font-mono text-[10px] uppercase tracking-widest text-white/40 font-semibold">Products</div>
             <ul className="space-y-2 text-white/60">
+              <li><Link href="/#featured" className="hover:text-white transition-colors">Featured</Link></li>
               <li><Link href="/#catalogue" className="hover:text-white transition-colors">Asset Catalogue</Link></li>
               <li><Link href="/#tools" className="hover:text-white transition-colors">Tools</Link></li>
-              <li><Link href="/#catalogue" className="hover:text-white transition-colors">Free Assets</Link></li>
-              <li><Link href="/#featured" className="hover:text-white transition-colors">Curated Releases</Link></li>
-              <li><Link href="/#comparison" className="hover:text-white transition-colors">Before / After Engine</Link></li>
+              <li><Link href="/#content" className="hover:text-white transition-colors">Content</Link></li>
+              <li><Link href="/#free-assets" className="hover:text-white transition-colors">Free Assets</Link></li>
             </ul>
           </div>
 
@@ -85,8 +85,8 @@ export default function Footer() {
             <ul className="space-y-2 text-white/60">
               <li><Link href="/about" className="hover:text-white transition-colors">About Us</Link></li>
               <li><Link href="/studio" className="hover:text-white transition-colors">Studio</Link></li>
+              <li><Link href="/#studio" className="hover:text-white transition-colors">Work With Us</Link></li>
               <li><Link href="/contact" className="hover:text-white transition-colors">Contact Us</Link></li>
-              <li><Link href="/faq" className="hover:text-white transition-colors">FAQ</Link></li>
             </ul>
           </div>
 

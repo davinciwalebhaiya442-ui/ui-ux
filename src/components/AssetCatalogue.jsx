@@ -1,12 +1,19 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { CATEGORIES, SOFTWARE_OPTIONS } from '@/data/assets';
 import { useProducts } from '@/data/useProducts';
-import { Search, ArrowUpRight, Monitor, Share2, Check } from 'lucide-react';
+import { Search, ArrowUpRight, Monitor, Share2, Check, Sparkles } from 'lucide-react';
 import ProductCardVisual from './ProductCardVisual';
+import BeforeAfterSlider from './BeforeAfterSlider';
+import { DEFAULT_COMPARISON_SETTINGS } from '@/lib/comparison';
+import { subscribeToProductUpdates } from '@/lib/events';
 
-export default function AssetCatalogue({ onSelectAsset, initialProducts = [] }) {
+export default function AssetCatalogue({
+  onSelectAsset,
+  initialProducts = [],
+  initialComparison = null,
+}) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [pricingFilter, setPricingFilter] = useState('all');
@@ -14,6 +21,59 @@ export default function AssetCatalogue({ onSelectAsset, initialProducts = [] }) 
   const [sortBy, setSortBy] = useState('featured');
   const [copiedId, setCopiedId] = useState(null);
   const assets = useProducts(initialProducts);
+
+  // Dynamic Before / After state loaded from initial SSR or live API
+  const [comparisonData, setComparisonData] = useState(
+    () => initialComparison || DEFAULT_COMPARISON_SETTINGS
+  );
+
+  useEffect(() => {
+    const fetchLatestComparison = () => {
+      fetch('/api/comparison')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((json) => {
+          if (json?.comparison) {
+            setComparisonData((prev) => ({
+              ...prev,
+              ...json.comparison,
+              features: Array.isArray(json.comparison.features)
+                ? json.comparison.features
+                : prev.features || DEFAULT_COMPARISON_SETTINGS.features,
+            }));
+          }
+        })
+        .catch(() => {});
+    };
+
+    if (!initialComparison) {
+      fetchLatestComparison();
+    }
+
+    const unsubscribe = typeof subscribeToProductUpdates === 'function'
+      ? subscribeToProductUpdates(() => {
+          fetchLatestComparison();
+        })
+      : () => {};
+
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
+  }, [initialComparison]);
+
+  // Support #free-assets deep linking from navigation
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash;
+      if (hash === '#free' || hash === '#free-assets') {
+        setPricingFilter('free');
+        const el = document.getElementById('catalogue');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }
+    };
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
 
   const filteredAssets = useMemo(() => {
     return assets.filter((asset) => {
@@ -41,6 +101,23 @@ export default function AssetCatalogue({ onSelectAsset, initialProducts = [] }) 
       return a.id.localeCompare(b.id);
     });
   }, [assets, searchQuery, selectedCategory, pricingFilter, selectedSoftware, sortBy]);
+
+  // Client specifically requested removing the existing bottom/last 2 product cards
+  // and using that space for the integrated Before / After showcase
+  const displayAssets = useMemo(() => {
+    if (filteredAssets.length > 2) {
+      return filteredAssets.slice(0, filteredAssets.length - 2);
+    }
+    return filteredAssets;
+  }, [filteredAssets]);
+
+  const comparisonFeatures = Array.isArray(comparisonData.features)
+    ? comparisonData.features
+    : DEFAULT_COMPARISON_SETTINGS.features;
+
+  const comparisonParagraphs = (comparisonData.description || DEFAULT_COMPARISON_SETTINGS.description)
+    .split('\n\n')
+    .filter(Boolean);
 
   return (
     <section id="catalogue" className="relative py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-white/[0.08]">
@@ -128,14 +205,14 @@ export default function AssetCatalogue({ onSelectAsset, initialProducts = [] }) 
         </div>
       </div>
 
-      {/* Product List Grid */}
+      {/* Product List Grid + Integrated Before / After Showcase */}
       {filteredAssets.length === 0 ? (
         <div className="py-20 text-center border border-white/[0.1] rounded-2xl bg-[#080d1a]/60">
           <p className="text-xs font-mono text-white/50">No files found matching the selected filter criteria.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredAssets.map((asset) => (
+          {displayAssets.map((asset) => (
             <div
               key={asset.id}
               onClick={() => onSelectAsset(asset)}
@@ -219,6 +296,97 @@ export default function AssetCatalogue({ onSelectAsset, initialProducts = [] }) 
               </div>
             </div>
           ))}
+
+          {/* ════════════════════════════════════════════════════════════════════════════
+              BEFORE / AFTER SHOWCASE (INTEGRATED INTO CATALOGUE BOTTOM SLOTS)
+              Occupies the exact space of the removed 2 bottom product cards.
+              - Desktop (lg:grid-cols-3): 2 columns slider + 1 column details card = 3 cols
+              - Tablet (md:grid-cols-2): 1 col slider + 1 col details card = 2 cols
+              - Mobile (grid-cols-1): cleanly stacked
+          ════════════════════════════════════════════════════════════════════════════ */}
+
+          {/* Slot 1: Interactive Before/After Emulation Slider Card */}
+          <div
+            id="comparison"
+            className="col-span-1 md:col-span-1 lg:col-span-2 group relative border border-white/[0.14] hover:border-blue-400/40 transition-all duration-300 bg-gradient-to-b from-[#0d1424]/95 via-[#090e1a]/95 to-[#060a12]/95 shadow-[0_8px_30px_rgba(0,0,0,0.5)] rounded-2xl p-4 sm:p-5 flex flex-col justify-between overflow-hidden"
+          >
+            <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-blue-400/35 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
+
+            <div>
+              <div className="flex items-center justify-between text-[11px] font-mono text-white/50 mb-2">
+                <span className="uppercase tracking-widest text-blue-300/90 font-semibold flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                  {comparisonData.badge || '02 / COLOR SCIENCE COMPARISON'}
+                </span>
+                <span className="text-white/40">INTERACTIVE PREVIEW</span>
+              </div>
+
+              <h3 className="text-lg font-bold text-white tracking-tight leading-snug mb-3">
+                {comparisonData.title || 'Photochemical Print Emulation'}
+              </h3>
+
+              {/* The Interactive Slider */}
+              <div className="rounded-xl overflow-hidden border border-white/10 bg-black/50 shadow-inner">
+                <BeforeAfterSlider
+                  beforeSrc={comparisonData.beforeImage || ''}
+                  afterSrc={comparisonData.afterImage || ''}
+                  beforeLabel={comparisonData.beforeLabel || 'RAW Log (DWG / ACES)'}
+                  afterLabel={comparisonData.afterLabel || 'Kodak 2383 Print DCTL'}
+                  aspectRatio="16/9"
+                />
+              </div>
+
+              {comparisonData.subtitle && (
+                <p className="text-xs text-white/60 mt-3 font-sans leading-relaxed">
+                  {comparisonData.subtitle}
+                </p>
+              )}
+            </div>
+
+            <div className="pt-3 mt-4 border-t border-white/[0.08] flex items-center justify-between text-[11px] font-mono text-white/40">
+              <span>Drag slider horizontally to compare transforms</span>
+              <span className="text-blue-400 font-medium">35mm Print DCTL</span>
+            </div>
+          </div>
+
+          {/* Slot 2: Spectral Density Notes & Features Card */}
+          <div
+            className="col-span-1 md:col-span-1 lg:col-span-1 group relative border border-white/[0.14] hover:border-blue-400/40 transition-all duration-300 bg-gradient-to-b from-[#0d1424]/95 via-[#090e1a]/95 to-[#060a12]/95 shadow-[0_8px_30px_rgba(0,0,0,0.5)] rounded-2xl p-4 sm:p-5 flex flex-col justify-between overflow-hidden"
+          >
+            <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-blue-400/35 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
+
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-blue-400 font-semibold px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">
+                  {comparisonData.cardBadge || 'SPECTRAL DENSITY NOTES'}
+                </span>
+                <span className="text-[10px] font-mono text-white/40">
+                  {comparisonData.cardTag || '35mm Print'}
+                </span>
+              </div>
+
+              <div className="space-y-3 text-xs font-sans text-white/75 leading-relaxed">
+                {comparisonParagraphs.map((para, idx) => (
+                  <p key={idx}>{para}</p>
+                ))}
+              </div>
+
+              <div className="pt-4 mt-4 border-t border-white/[0.08] space-y-2 text-xs font-mono text-white/70">
+                {comparisonFeatures.map((feat, idx) => (
+                  <div key={idx} className="flex items-start space-x-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0 mt-1.5" />
+                    <span>{feat}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-3 mt-4 border-t border-white/[0.08] flex items-center justify-between text-[11px] font-mono text-white/45">
+              <span>Color Science Engine</span>
+              <span className="text-emerald-400 font-medium">Included in Suite</span>
+            </div>
+          </div>
+
         </div>
       )}
 

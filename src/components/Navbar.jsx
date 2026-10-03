@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Sparkles, Layers, Sliders, Film, ArrowUpRight, Menu, X } from 'lucide-react';
+import { ArrowUpRight, Menu, X } from 'lucide-react';
 
 export default function Navbar({ onOpenSearch }) {
   const [scrolled, setScrolled] = useState(false);
@@ -17,17 +17,20 @@ export default function Navbar({ onOpenSearch }) {
   }, []);
 
   useEffect(() => {
-    fetch('/api/auth/me').then((response) => response.json()).then((data) => setAccount(data.user || null)).catch(() => {});
+    fetch('/api/auth/me')
+      .then((response) => response.json())
+      .then((data) => setAccount(data.user || null))
+      .catch(() => {});
   }, []);
 
   const navLinks = [
     { name: 'Featured', href: '/#featured' },
     { name: 'Catalogue', href: '/#catalogue' },
-    { name: 'Before/After', href: '/#comparison' },
     { name: 'Tools', href: '/#tools' },
     { name: 'Content', href: '/#content' },
     { name: 'Studio', href: '/studio' },
-    { name: 'FAQ', href: '/faq' },
+    { name: 'Work With Us', href: '/#studio' },
+    { name: 'Free Assets', href: '/#free-assets' },
   ];
 
   return (
@@ -40,7 +43,7 @@ export default function Navbar({ onOpenSearch }) {
         } flex items-center justify-between`}
       >
         {/* Brand */}
-        <a href="/" className="flex items-center space-x-2.5 group">
+        <a href="/" className="flex items-center space-x-2.5 group shrink-0">
           <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_12px_#3b82f6] group-hover:scale-125 transition-transform" />
           <span className="font-semibold text-sm sm:text-base tracking-tight text-white flex items-center">
             DavinciWale<span className="text-white/40 font-normal ml-0.5">Bhaiya</span>
@@ -56,7 +59,11 @@ export default function Navbar({ onOpenSearch }) {
             <a
               key={link.name}
               href={link.href}
-              className="px-3.5 py-1.5 text-xs font-medium text-white/70 hover:text-white rounded-full transition-colors hover:bg-white/[0.04]"
+              className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                link.name === 'Free Assets'
+                  ? 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10'
+                  : 'text-white/70 hover:text-white hover:bg-white/[0.04]'
+              }`}
             >
               {link.name}
             </a>
@@ -65,17 +72,19 @@ export default function Navbar({ onOpenSearch }) {
 
         {/* Right Actions */}
         <div className="flex items-center space-x-2 sm:space-x-3">
+          {/* Mobile-prioritized Free Assets Button (replaces Work With Us on phone viewports) */}
           <a
-            href="/#catalogue"
-            className="hidden sm:inline-flex items-center space-x-1.5 text-xs text-white/80 hover:text-white bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] px-3.5 py-1.5 rounded-full transition-all"
+            href="/#free-assets"
+            className="inline-flex lg:hidden items-center space-x-1.5 text-xs font-mono font-medium text-emerald-300 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 px-3 py-1.5 rounded-full transition-all shadow-sm"
           >
             <span>Free Assets</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
           </a>
 
+          {/* Desktop Work With Us CTA Button */}
           <a
-            href="/studio"
-            className="inline-flex items-center space-x-1 text-xs font-medium text-black bg-white hover:bg-white/90 px-4 py-1.5 rounded-full transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_25px_rgba(255,255,255,0.3)]"
+            href="/#studio"
+            className="hidden lg:inline-flex items-center space-x-1 text-xs font-medium text-black bg-white hover:bg-white/90 px-4 py-1.5 rounded-full transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_25px_rgba(255,255,255,0.3)] shrink-0"
           >
             <span>Work With Us</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
@@ -101,21 +110,18 @@ export default function Navbar({ onOpenSearch }) {
                 key={link.name}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="px-4 py-2.5 text-sm font-medium text-white/80 hover:text-white hover:bg-white/[0.06] rounded-xl transition-colors"
+                className={`px-4 py-2.5 text-sm font-medium rounded-xl transition-colors flex items-center justify-between ${
+                  link.name === 'Free Assets'
+                    ? 'text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 font-semibold'
+                    : 'text-white/80 hover:text-white hover:bg-white/[0.06]'
+                }`}
               >
-                {link.name}
+                <span>{link.name}</span>
+                {link.name === 'Free Assets' && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                )}
               </a>
             ))}
-            <div className="pt-2 mt-2 border-t border-white/[0.08] flex flex-col space-y-1">
-              <a
-                href="/#catalogue"
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-4 py-2.5 text-sm font-medium text-emerald-400 hover:bg-white/[0.06] rounded-xl transition-colors flex items-center justify-between"
-              >
-                <span>Free Assets</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              </a>
-            </div>
           </nav>
         </div>
       )}
