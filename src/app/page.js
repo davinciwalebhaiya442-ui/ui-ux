@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { toFrontendProduct } from '@/lib/product';
 import HomeClient from '@/components/HomeClient';
 import { DEFAULT_HERO_SETTINGS } from '@/app/api/hero/route';
+import { DEFAULT_COMPARISON_SETTINGS } from '@/app/api/comparison/route';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,10 +43,36 @@ async function getInitialHero() {
   }
 }
 
+async function getInitialComparison() {
+  try {
+    const comparison = await prisma.comparisonSetting.findUnique({
+      where: { id: 'default' },
+    });
+    if (!comparison) return DEFAULT_COMPARISON_SETTINGS;
+    return {
+      ...DEFAULT_COMPARISON_SETTINGS,
+      ...comparison,
+      features: Array.isArray(comparison.features)
+        ? comparison.features
+        : DEFAULT_COMPARISON_SETTINGS.features,
+    };
+  } catch (error) {
+    console.error('Failed to get initial comparison:', error);
+    return DEFAULT_COMPARISON_SETTINGS;
+  }
+}
+
 export default async function Home() {
-  const [initialProducts, initialHero] = await Promise.all([
+  const [initialProducts, initialHero, initialComparison] = await Promise.all([
     getInitialProducts(),
     getInitialHero(),
+    getInitialComparison(),
   ]);
-  return <HomeClient initialProducts={initialProducts} initialHero={initialHero} />;
+  return (
+    <HomeClient
+      initialProducts={initialProducts}
+      initialHero={initialHero}
+      initialComparison={initialComparison}
+    />
+  );
 }

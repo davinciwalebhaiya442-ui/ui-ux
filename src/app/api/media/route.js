@@ -43,7 +43,7 @@ export async function GET(request) {
       key = decodeURIComponent(key);
     } catch {}
 
-    const isAllowed = key.startsWith('products/') || key.startsWith('hero/');
+    const isAllowed = key.startsWith('products/') || key.startsWith('hero/') || key.startsWith('comparison/');
     if (!isAllowed) {
       return new Response(JSON.stringify({ error: 'Forbidden media path' }), {
         status: 403,

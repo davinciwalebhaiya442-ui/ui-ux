@@ -38,7 +38,11 @@ const DEFAULT_HERO = {
   primaryButtonLink: '',
 };
 
-export default function HomeClient({ initialProducts = [], initialHero = null }) {
+export default function HomeClient({
+  initialProducts = [],
+  initialHero = null,
+  initialComparison = null,
+}) {
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [heroSettings, setHeroSettings] = useState(() => initialHero || DEFAULT_HERO);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -274,7 +278,10 @@ export default function HomeClient({ initialProducts = [], initialHero = null })
           <AssetCatalogue onSelectAsset={handleSelectAsset} initialProducts={initialProducts} />
 
           {/* 03: BEFORE / AFTER COLOR SCIENCE ENGINE */}
-          <ComparisonSection onSelectAsset={handleSelectAsset} />
+          <ComparisonSection
+            initialComparison={initialComparison}
+            onSelectAsset={handleSelectAsset}
+          />
 
           {/* 04: TECHNICAL WORKSPACE & TOOLS */}
           <ToolsSection />
