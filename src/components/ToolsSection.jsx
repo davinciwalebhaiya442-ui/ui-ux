@@ -5,13 +5,13 @@ import ExportSettingsFinder from '@/components/ExportSettingsFinder';
 import MediaDownloader from '@/components/MediaDownloader';
 
 export default function ToolsSection() {
-  const [activeTool, setActiveTool] = useState('export-settings');
+  const [activeTool, setActiveTool] = useState('downloader');
 
-  // Tool 2: Aspect Ratio Calculator States
+  // Tool 3: Aspect Ratio Calculator States
   const [baseWidth, setBaseWidth] = useState(3840);
   const [aspectPreset, setAspectPreset] = useState('2.39');
 
-  // Tool 3: Timecode Math States
+  // Tool 4: Timecode Math States
   const [fps, setFps] = useState(24);
   const [seconds, setSeconds] = useState(72);
 
@@ -43,8 +43,8 @@ export default function ToolsSection() {
       {/* Tool Mode Tabs */}
       <div className="flex items-center space-x-2 border-b border-white/[0.08] mb-12 text-xs font-mono overflow-x-auto scrollbar-none pb-0.5">
         {[
-          { id: 'export-settings', label: 'Best Export Settings Finder' },
           { id: 'downloader', label: 'YouTube & Instagram Downloader' },
+          { id: 'export-settings', label: 'Best Export Settings Finder' },
           { id: 'aspect', label: 'Cinema Aspect Ratio & Blanking' },
           { id: 'timecode', label: 'SMPTE Timecode Calculator' },
         ].map((tool) => (
@@ -62,14 +62,14 @@ export default function ToolsSection() {
         ))}
       </div>
 
-      {/* TOOL 01: BEST EXPORT SETTINGS FINDER */}
-      {activeTool === 'export-settings' && (
-        <ExportSettingsFinder />
-      )}
-
-      {/* TOOL 02: YOUTUBE & INSTAGRAM REFERENCE DOWNLOADER */}
+      {/* TOOL 01: YOUTUBE & INSTAGRAM REFERENCE DOWNLOADER */}
       {activeTool === 'downloader' && (
         <MediaDownloader />
+      )}
+
+      {/* TOOL 02: BEST EXPORT SETTINGS FINDER */}
+      {activeTool === 'export-settings' && (
+        <ExportSettingsFinder />
       )}
 
       {/* TOOL 03: ASPECT RATIO CALCULATOR */}
