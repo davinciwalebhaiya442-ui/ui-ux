@@ -35,7 +35,8 @@ function clamp(number, min, max) {
   return Math.max(min, Math.min(number, max));
 }
 
-const getFontFamilyStyle = (font) => {
+const getFontFamilyStyle = (font, customFontUrl) => {
+  if (customFontUrl) return "'CustomUploadedHeroFont', sans-serif";
   if (!font || font === 'sans') return 'var(--font-sans, inherit)';
   if (font === 'serif') return 'serif';
   if (font === 'mono') return 'monospace';
@@ -52,6 +53,7 @@ export default function Scene({
   title = "DAVINCI WALE BHAIYA",
   heroImage = "/hero/2.jpg",
   fontFamily = "sans",
+  customFontUrl = "",
   textColor = "#ffffff",
   badge = "",
   description = "",
@@ -70,6 +72,32 @@ export default function Scene({
       document.head.appendChild(link);
     }
   }, []);
+
+  useEffect(() => {
+    if (!customFontUrl) return;
+
+    let style = document.getElementById('dwb-custom-hero-font');
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'dwb-custom-hero-font';
+      document.head.appendChild(style);
+    }
+
+    const cleanUrl = customFontUrl.split('?')[0];
+    const ext = cleanUrl.split('.').pop()?.toLowerCase();
+    let format = 'woff2';
+    if (ext === 'woff') format = 'woff';
+    if (ext === 'ttf') format = 'truetype';
+    if (ext === 'otf') format = 'opentype';
+
+    style.textContent = `
+      @font-face {
+        font-family: 'CustomUploadedHeroFont';
+        src: url('${customFontUrl}') format('${format}');
+        font-display: swap;
+      }
+    `;
+  }, [customFontUrl]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -325,7 +353,7 @@ export default function Scene({
             lineHeight: 0.9,
             maxWidth: '85vw',
             color: textColor || '#ffffff',
-            fontFamily: getFontFamilyStyle(fontFamily),
+            fontFamily: getFontFamilyStyle(fontFamily, customFontUrl),
           }}
         >
           {title}
