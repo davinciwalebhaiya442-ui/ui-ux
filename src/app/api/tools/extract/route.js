@@ -1,5 +1,50 @@
 export const dynamic = 'force-dynamic';
 
+async function fetchCobalt(url, options = {}) {
+  const instances = [
+    { url: 'http://185.197.195.62:9000', auth: null },
+    { url: 'https://dwnld.nichind.dev', auth: 'Api-Key b05007aa-bb63-4267-a66e-78f8e10bf9bf' },
+  ];
+
+  for (const inst of instances) {
+    try {
+      const headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      };
+      if (inst.auth) headers['Authorization'] = inst.auth;
+
+      const res = await fetch(`${inst.url}/`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          url,
+          videoQuality: options.videoQuality || '1080',
+          downloadMode: options.downloadMode || 'auto',
+          filenameStyle: 'classic',
+        }),
+        signal: AbortSignal.timeout(8000),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.url && (data.status === 'tunnel' || data.status === 'redirect' || data.status === 'stream')) {
+          return {
+            success: true,
+            url: data.url,
+            filename: data.filename || 'video.mp4',
+            status: data.status,
+          };
+        }
+      }
+    } catch {
+      // Try next instance
+    }
+  }
+
+  return null;
+}
+
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -21,12 +66,12 @@ export async function POST(request) {
       const videoId = ytMatch[1];
       const cleanUrl = `https://www.youtube.com/watch?v=${videoId}`;
 
-      let title = `YouTube Reference Video (${videoId})`;
+      let title = `YouTube Video (${videoId})`;
       let author = 'YouTube Creator';
       let thumbnail = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
       const highResThumbnail = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
 
-      // Try fetching metadata via oEmbed
+      // Fetch metadata via oEmbed
       try {
         const oembedRes = await fetch(
           `https://noembed.com/embed?url=${encodeURIComponent(cleanUrl)}`,
@@ -39,8 +84,70 @@ export async function POST(request) {
           if (oembedData.thumbnail_url) thumbnail = oembedData.thumbnail_url;
         }
       } catch {
-        // Fallback to default metadata
+        // Fallback
       }
+
+      // Fetch direct video & audio tunnel streams in parallel
+      const [videoTunnel, audioTunnel] = await Promise.all([
+        fetchCobalt(cleanUrl, { downloadMode: 'auto', videoQuality: '1080' }),
+        fetchCobalt(cleanUrl, { downloadMode: 'audio' }),
+      ]);
+
+      const formats = [];
+
+      if (videoTunnel?.url) {
+        formats.push({
+          id: 'video-1080p-direct',
+          label: 'Full HD 1080p MP4 (Direct)',
+          quality: '1080p HD',
+          ext: 'MP4',
+          desc: 'Direct high-speed video download with clean stereo audio',
+          downloadUrl: videoTunnel.url,
+          filename: videoTunnel.filename || `${title}.mp4`,
+          isDirect: true,
+          badge: 'High Speed Direct',
+        });
+      }
+
+      if (audioTunnel?.url) {
+        formats.push({
+          id: 'audio-stem-direct',
+          label: 'Master 48kHz Audio Track (Direct)',
+          quality: '320 kbps',
+          ext: 'MP3',
+          desc: 'Isolated high-bitrate audio track for timeline music sync',
+          downloadUrl: audioTunnel.url,
+          filename: audioTunnel.filename || `${title}.mp3`,
+          isDirect: true,
+          badge: 'Audio Only',
+        });
+      }
+
+      // Always include backup mirrors so user never gets stuck
+      formats.push(
+        {
+          id: 'video-backup-mirror',
+          label: 'Full HD 1080p / 4K (Mirror 2)',
+          quality: '1080p / 4K',
+          ext: 'MP4',
+          desc: 'High-speed alternative CDN render for 4K / 60fps clips',
+          downloadUrl: `https://cobalt.tools/?u=${encodeURIComponent(cleanUrl)}`,
+          directEngine: `https://savetube.me/`,
+          isDirect: false,
+          badge: 'Mirror CDN',
+        },
+        {
+          id: 'audio-backup-mirror',
+          label: 'MP3 Audio Stream (Mirror 2)',
+          quality: '320 kbps',
+          ext: 'MP3',
+          desc: 'Fast audio extract backup mirror',
+          downloadUrl: `https://y2mate.is/en/youtube-to-mp3/`,
+          directEngine: `https://cobalt.tools/?u=${encodeURIComponent(cleanUrl)}`,
+          isDirect: false,
+          badge: 'Audio Mirror',
+        }
+      );
 
       return Response.json({
         success: true,
@@ -52,35 +159,7 @@ export async function POST(request) {
         thumbnail,
         highResThumbnail,
         cleanUrl,
-        formats: [
-          {
-            id: 'video-1080p',
-            label: '1080p / 4K Full HD Video',
-            quality: '1080p / 4K',
-            ext: 'MP4',
-            desc: 'Best visual fidelity for timeline grading & reference cuts',
-            downloadUrl: `https://www.ssyoutube.com/watch?v=${videoId}`,
-            directEngine: `https://cobalt.tools/?u=${encodeURIComponent(cleanUrl)}`,
-          },
-          {
-            id: 'video-720p',
-            label: '720p HD Proxy (Fast)',
-            quality: '720p',
-            ext: 'MP4',
-            desc: 'Fast lightweight proxy file for rapid timeline preview',
-            downloadUrl: `https://y2mate.is/en/youtube-downloader/`,
-            directEngine: `https://savetube.me/`,
-          },
-          {
-            id: 'audio-stem',
-            label: '320kbps Audio / Stem Extract',
-            quality: '320 kbps',
-            ext: 'MP3 / WAV',
-            desc: 'Clean 48kHz audio track for audio sync and stem isolation',
-            downloadUrl: `https://y2mate.is/en/youtube-to-mp3/`,
-            directEngine: `https://cobalt.tools/?u=${encodeURIComponent(cleanUrl)}`,
-          },
-        ],
+        formats,
       });
     }
 
@@ -96,7 +175,7 @@ export async function POST(request) {
       let directVideoUrl = null;
       let thumbnail = null;
 
-      // Try quick backend scraper with tight timeout
+      // Try quick backend scrapers
       try {
         const igRes = await fetch(
           `https://backend1.tioo.eu.org/igdl?url=${encodeURIComponent(cleanUrl)}`,
@@ -110,8 +189,58 @@ export async function POST(request) {
           }
         }
       } catch {
-        // Fallback to rapid mirror generators
+        // Fallback
       }
+
+      // Try Cobalt fallback for Instagram
+      if (!directVideoUrl) {
+        const igCobalt = await fetchCobalt(cleanUrl, { downloadMode: 'auto' });
+        if (igCobalt?.url) {
+          directVideoUrl = igCobalt.url;
+        }
+      }
+
+      const formats = [];
+
+      if (directVideoUrl) {
+        formats.push({
+          id: 'ig-direct-hd',
+          label: 'Original 1080x1920 HD MP4 (Direct)',
+          quality: '1080×1920',
+          ext: 'MP4',
+          desc: 'Direct mobile vertical video with sync stereo audio',
+          downloadUrl: directVideoUrl,
+          filename: `Instagram_Reel_${shortcode}.mp4`,
+          isDirect: true,
+          badge: 'Direct Stream',
+        });
+      }
+
+      // Add high-speed direct web resolver mirrors
+      formats.push(
+        {
+          id: 'ig-fastdl',
+          label: 'FastDL Instant Reel Downloader',
+          quality: '1080×1920 HD',
+          ext: 'MP4',
+          desc: 'Direct instant vertical video deliverable with zero ads',
+          downloadUrl: `https://fastdl.app/`,
+          directEngine: `https://snapinsta.app/`,
+          isDirect: false,
+          badge: 'Fast Mirror',
+        },
+        {
+          id: 'ig-snapinsta',
+          label: 'SnapInsta Reel & Audio Extractor',
+          quality: 'Original HQ',
+          ext: 'MP4 / MP3',
+          desc: 'High-fidelity audio & video extractor for Instagram timelines',
+          downloadUrl: `https://snapinsta.app/`,
+          directEngine: `https://saveig.app/`,
+          isDirect: false,
+          badge: 'Alternative',
+        }
+      );
 
       return Response.json({
         success: true,
@@ -123,27 +252,7 @@ export async function POST(request) {
         thumbnail: thumbnail || null,
         cleanUrl,
         directUrl: directVideoUrl,
-        formats: [
-          {
-            id: 'ig-video-hd',
-            label: 'Original 1080x1920 HD Video',
-            quality: '1080×1920',
-            ext: 'MP4',
-            desc: 'Direct mobile vertical video with original audio sync',
-            downloadUrl: directVideoUrl || `https://snapinsta.app/`,
-            directEngine: `https://fastdl.app/`,
-            isDirect: Boolean(directVideoUrl),
-          },
-          {
-            id: 'ig-audio',
-            label: 'Reel Audio / Music Stem',
-            quality: '320 kbps',
-            ext: 'MP3',
-            desc: 'Isolated audio track for timeline sound design',
-            downloadUrl: `https://saveig.app/`,
-            directEngine: `https://snapinsta.app/`,
-          },
-        ],
+        formats,
       });
     }
 

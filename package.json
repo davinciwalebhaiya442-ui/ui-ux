@@ -18,6 +18,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1143.0",
     "@aws-sdk/s3-request-presigner": "^3.1143.0",
+    "@distube/ytdl-core": "^4.16.12",
     "@pmndrs/vanilla": "^1.14.2",
     "@prisma/client": "6.16.2",
     "@react-three/drei": "^9.92.0",

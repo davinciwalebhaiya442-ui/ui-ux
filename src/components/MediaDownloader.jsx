@@ -48,7 +48,31 @@ export default function MediaDownloader() {
     return null;
   }, [url]);
 
-  // Handle Extraction
+  // Trigger download action
+  const handleDownload = useCallback((format) => {
+    if (!format || !format.downloadUrl) return;
+
+    setDownloadSuccess(true);
+
+    if (format.isDirect) {
+      const streamUrl = `/api/tools/download-stream?url=${encodeURIComponent(
+        format.downloadUrl
+      )}&filename=${encodeURIComponent(format.filename || 'davinci_video.mp4')}`;
+
+      const link = document.createElement('a');
+      link.href = streamUrl;
+      link.setAttribute('download', format.filename || 'davinci_video.mp4');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      window.open(format.downloadUrl, '_blank', 'noopener,noreferrer');
+    }
+
+    setTimeout(() => setDownloadSuccess(false), 8000);
+  }, []);
+
+  // Handle Extraction & Direct Download Trigger
   const handleExtract = useCallback(
     async (e) => {
       e?.preventDefault();
@@ -60,13 +84,13 @@ export default function MediaDownloader() {
 
       setError('');
       setIsProcessing(true);
-      setProgress(15);
+      setProgress(20);
       setResult(null);
       setDownloadSuccess(false);
 
       const progressInterval = setInterval(() => {
-        setProgress((prev) => (prev < 85 ? prev + 12 : prev));
-      }, 250);
+        setProgress((prev) => (prev < 85 ? prev + 15 : prev));
+      }, 300);
 
       try {
         const response = await fetch('/api/tools/extract', {
@@ -87,6 +111,12 @@ export default function MediaDownloader() {
 
         setResult(data);
         setIsProcessing(false);
+
+        // Auto trigger primary direct download if available
+        const primaryDirect = data.formats?.find((f) => f.isDirect);
+        if (primaryDirect) {
+          handleDownload(primaryDirect);
+        }
       } catch (err) {
         clearInterval(progressInterval);
         setIsProcessing(false);
@@ -96,25 +126,8 @@ export default function MediaDownloader() {
         );
       }
     },
-    [url]
+    [url, handleDownload]
   );
-
-  // Trigger download action
-  const handleDownload = (format) => {
-    if (!format || !format.downloadUrl) return;
-
-    setDownloadSuccess(true);
-    // Open download in new tab or trigger link
-    const link = document.createElement('a');
-    link.href = format.downloadUrl;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    setTimeout(() => setDownloadSuccess(false), 5000);
-  };
 
   // Direct paste helper
   const handlePaste = async () => {
@@ -206,12 +219,12 @@ export default function MediaDownloader() {
               {isProcessing ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Extracting ({progress}%)...</span>
+                  <span>Fetching Stream ({progress}%)...</span>
                 </>
               ) : (
                 <>
                   <Download className="w-4 h-4" />
-                  <span>Download Media</span>
+                  <span>Fetch & Download Video</span>
                 </>
               )}
             </button>
@@ -354,10 +367,14 @@ export default function MediaDownloader() {
                       <button
                         type="button"
                         onClick={() => handleDownload(fmt)}
-                        className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg shadow transition-all flex items-center justify-center space-x-1.5 cursor-pointer"
+                        className={`flex-1 py-2.5 px-3.5 text-xs font-semibold rounded-lg shadow transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+                          fmt.isDirect
+                            ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]'
+                            : 'bg-white/10 hover:bg-white/20 text-white'
+                        }`}
                       >
                         <Download className="w-3.5 h-3.5" />
-                        <span>Download {fmt.ext}</span>
+                        <span>{fmt.isDirect ? `Direct Download ${fmt.ext}` : `Open Download Mirror`}</span>
                       </button>
 
                       {fmt.directEngine && (
@@ -366,7 +383,7 @@ export default function MediaDownloader() {
                           target="_blank"
                           rel="noopener noreferrer"
                           title="Instant high-speed mirror"
-                          className="p-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-white/60 hover:text-white transition-colors"
+                          className="p-2.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-white/60 hover:text-white transition-colors"
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
                         </a>
@@ -379,9 +396,11 @@ export default function MediaDownloader() {
 
             {/* Direct Instant Download Trigger Notification */}
             {downloadSuccess && (
-              <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-xs font-mono text-emerald-300 flex items-center space-x-2 shadow-lg animate-in fade-in">
+              <div className="p-3.5 rounded-xl bg-emerald-950/60 border border-emerald-500/50 text-xs font-mono text-emerald-200 flex items-center space-x-2.5 shadow-[0_0_20px_rgba(16,185,129,0.2)] animate-in fade-in">
                 <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Download opened in your browser. Ready for timeline import!</span>
+                <div className="flex-1">
+                  <span className="font-bold">Download Triggered!</span> The video file is being downloaded directly to your computer.
+                </div>
               </div>
             )}
 
