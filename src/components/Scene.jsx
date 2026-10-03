@@ -26,8 +26,7 @@ varying vec3 vPosition;
 void main() {
   vec2 newUV = (vUv - vec2(0.5)) * resolution.zw + vec2(0.5);
   vec4 offset = texture2D(uDataTexture, vUv);
-  vec2 distortedUV = clamp(newUV - 0.015 * offset.rg, 0.001, 0.999);
-  gl_FragColor = texture2D(uTexture, distortedUV);
+  gl_FragColor = texture2D(uTexture, clamp(newUV - 0.02 * offset.rg, 0.0, 1.0));
 }
 `;
 
@@ -250,12 +249,8 @@ export default function Scene({
       mouse.x = Math.max(0, Math.min(1, currentX));
       mouse.y = Math.max(0, Math.min(1, currentY));
 
-      const dx = mouse.x - mouse.prevX;
-      const dy = mouse.y - mouse.prevY;
-
-      // Safely clamp velocity to prevent huge displacement spikes on scroll or fast flicks
-      mouse.vX = Math.max(-0.02, Math.min(0.02, dx));
-      mouse.vY = Math.max(-0.02, Math.min(0.02, dy));
+      mouse.vX = mouse.x - mouse.prevX;
+      mouse.vY = mouse.y - mouse.prevY;
 
       mouse.prevX = mouse.x;
       mouse.prevY = mouse.y;
@@ -268,8 +263,9 @@ export default function Scene({
       }
     };
 
-    // When page is scrolled, immediately zero out any pointer velocity so scrolling never distorts hero into black void
+    // When page is scrolled, reset pointer state so scrolling does not inject sudden delta spikes
     const onScroll = () => {
+      mouse.hasMoved = false;
       mouse.vX = 0;
       mouse.vY = 0;
     };
@@ -289,12 +285,6 @@ export default function Scene({
         texData[i + 1] *= relaxation;
       }
 
-      // If velocity is essentially zero, skip expensive loop
-      if (Math.abs(mouse.vX) < 0.0001 && Math.abs(mouse.vY) < 0.0001) {
-        dataTexture.needsUpdate = true;
-        return;
-      }
-
       const gridMouseX = size * mouse.x;
       const gridMouseY = size * (1 - mouse.y);
       const maxDist = size * settings.mouse;
@@ -307,24 +297,22 @@ export default function Scene({
       const minJ = Math.max(0, Math.floor(gridMouseY - maxDist));
       const maxJ = Math.min(size, Math.ceil(gridMouseY + maxDist));
 
-      const maxOffset = 6.0; // Strictly bound max distortion so pixels never blowout or turn black
-
       for (let i = minI; i < maxI; i++) {
         for (let j = minJ; j < maxJ; j++) {
           const distance = ((gridMouseX - i) ** 2) / aspect + (gridMouseY - j) ** 2;
           if (distance < maxDistSq) {
             const index = 4 * (i + size * j);
             let power = maxDist / Math.sqrt(distance);
-            power = clamp(power, 0, 5);
+            power = clamp(power, 0, 10);
 
-            texData[index] = Math.max(-maxOffset, Math.min(maxOffset, texData[index] + settings.strength * 15 * mouse.vX * power));
-            texData[index + 1] = Math.max(-maxOffset, Math.min(maxOffset, texData[index + 1] - settings.strength * 15 * mouse.vY * power));
+            texData[index] += settings.strength * 100 * mouse.vX * power;
+            texData[index + 1] -= settings.strength * 100 * mouse.vY * power;
           }
         }
       }
 
-      mouse.vX *= 0.85;
-      mouse.vY *= 0.85;
+      mouse.vX *= 0.9;
+      mouse.vY *= 0.9;
       dataTexture.needsUpdate = true;
     }
 
