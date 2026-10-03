@@ -54,20 +54,16 @@ export default function MediaDownloader() {
 
     setDownloadSuccess(true);
 
-    if (format.isDirect) {
-      const streamUrl = `/api/tools/download-stream?url=${encodeURIComponent(
-        format.downloadUrl
-      )}&filename=${encodeURIComponent(format.filename || 'davinci_video.mp4')}`;
-
-      const link = document.createElement('a');
-      link.href = streamUrl;
-      link.setAttribute('download', format.filename || 'davinci_video.mp4');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      window.open(format.downloadUrl, '_blank', 'noopener,noreferrer');
+    const link = document.createElement('a');
+    link.href = format.downloadUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    if (format.filename) {
+      link.setAttribute('download', format.filename);
     }
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
     setTimeout(() => setDownloadSuccess(false), 8000);
   }, []);
