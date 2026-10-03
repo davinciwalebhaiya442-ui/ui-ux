@@ -2,18 +2,9 @@ import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-export const DEFAULT_HERO_SETTINGS = {
-  id: 'default',
-  heading: 'DAVINCI WALE BHAIYA',
-  description: '',
-  badge: 'ECOSYSTEM',
-  heroImage: '/hero/2.jpg',
-  fontFamily: 'sans',
-  customFontUrl: '',
-  textColor: '#ffffff',
-  primaryButtonText: 'Work With Us',
-  primaryButtonLink: '#catalogue',
-};
+import { DEFAULT_HERO_SETTINGS } from '@/lib/hero';
+
+export { DEFAULT_HERO_SETTINGS };
 
 export async function GET() {
   try {

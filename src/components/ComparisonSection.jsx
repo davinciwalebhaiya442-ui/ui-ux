@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import BeforeAfterSlider from './BeforeAfterSlider';
-import { DEFAULT_COMPARISON_SETTINGS } from '@/app/api/comparison/route';
+import { DEFAULT_COMPARISON_SETTINGS } from '@/lib/comparison';
 import { subscribeToProductUpdates } from '@/lib/events';
 
 export default function ComparisonSection({ initialComparison = null }) {

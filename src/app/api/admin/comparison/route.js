@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
-import { DEFAULT_COMPARISON_SETTINGS } from '@/app/api/comparison/route';
+import { DEFAULT_COMPARISON_SETTINGS } from '@/lib/comparison';
 
 export const dynamic = 'force-dynamic';
 

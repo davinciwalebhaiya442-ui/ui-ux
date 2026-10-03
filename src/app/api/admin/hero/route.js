@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
-import { DEFAULT_HERO_SETTINGS } from '@/app/api/hero/route';
+import { DEFAULT_HERO_SETTINGS } from '@/lib/hero';
 
 export const dynamic = 'force-dynamic';
 

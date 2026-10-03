@@ -1,8 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { toFrontendProduct } from '@/lib/product';
 import HomeClient from '@/components/HomeClient';
-import { DEFAULT_HERO_SETTINGS } from '@/app/api/hero/route';
-import { DEFAULT_COMPARISON_SETTINGS } from '@/app/api/comparison/route';
+import { DEFAULT_HERO_SETTINGS } from '@/lib/hero';
+import { DEFAULT_COMPARISON_SETTINGS } from '@/lib/comparison';
 
 export const dynamic = 'force-dynamic';
 

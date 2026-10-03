@@ -21,7 +21,7 @@ import {
 import { AdminLayout, useAdmin } from '../AdminShell';
 import { notifyProductsUpdated } from '@/lib/events';
 import BeforeAfterSlider from '@/components/BeforeAfterSlider';
-import { DEFAULT_COMPARISON_SETTINGS } from '@/app/api/comparison/route';
+import { DEFAULT_COMPARISON_SETTINGS } from '@/lib/comparison';
 
 const inputClass = 'w-full rounded-xl border border-white/10 bg-[#080d18] px-3.5 py-2.5 text-sm text-white placeholder-white/30 outline-none focus:border-blue-400/50 transition-colors';
 
