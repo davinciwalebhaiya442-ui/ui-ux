@@ -115,33 +115,47 @@ export default function CheckoutPage() {
             setMessage('Verifying payment and sending file to your email...');
             setMessageType('info');
 
-            try {
-              const verified = await fetch('/api/checkout/verify', {
-                method: 'POST',
-                headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature,
-                  razorpayOrderId: response.razorpay_order_id,
-                  razorpayPaymentId: response.razorpay_payment_id,
-                  razorpaySignature: response.razorpay_signature,
-                }),
-              });
+            const payload = {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            };
 
-              const resData = await verified.json();
-              if (verified.ok && resData.orderNumber) {
-                window.location.href = `/order/success?order=${encodeURIComponent(resData.orderNumber)}`;
-              } else {
-                setMessage(resData?.error || 'Payment verification incomplete. Please contact support.');
-                setMessageType('error');
-                setPaying(false);
+            for (let i = 0; i < 3; i++) {
+              try {
+                if (i > 0) {
+                  setMessage('Confirming payment with banking network, please wait...');
+                  await new Promise((r) => setTimeout(r, 1200));
+                }
+
+                const verified = await fetch('/api/checkout/verify', {
+                  method: 'POST',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify(payload),
+                });
+
+                const resData = await verified.json();
+                if (verified.ok && resData.orderNumber) {
+                  window.location.href = `/order/success?order=${encodeURIComponent(resData.orderNumber)}`;
+                  return;
+                }
+
+                if (i === 2) {
+                  setMessage(resData?.error || 'Payment verification incomplete. Please contact support.');
+                  setMessageType('error');
+                  setPaying(false);
+                }
+              } catch (err) {
+                console.error('Verification attempt error:', err);
+                if (i === 2) {
+                  setMessage('Network issue during verification. If money was debited, your file will arrive on email.');
+                  setMessageType('error');
+                  setPaying(false);
+                }
               }
-            } catch (err) {
-              console.error(err);
-              setMessage('Network issue during verification. Please check your email for receipt.');
-              setMessageType('error');
-              setPaying(false);
             }
           },
           modal: {
