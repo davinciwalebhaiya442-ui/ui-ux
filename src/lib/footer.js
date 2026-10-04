@@ -1,0 +1,32 @@
+export const DEFAULT_FOOTER_SETTINGS = {
+  brandName: 'DavinciWaleBhaiya',
+  brandTagline: 'Precision color science, optical DCTLs, and timeline utilities for professional colorists and video editors.',
+  newsletterHeading: 'Direct Release Dispatch',
+  newsletterPlaceholder: 'editor@studio.com',
+  newsletterButtonText: 'Join',
+  supportEmail: 'support@davinciwalebhaiya.com',
+  youtubeUrl: 'https://youtube.com',
+  instagramUrl: 'https://instagram.com',
+  twitterUrl: '',
+  discordUrl: '',
+  productsLinks: [
+    { label: 'Featured', href: '/#featured' },
+    { label: 'Asset Catalogue', href: '/#catalogue' },
+    { label: 'Tools', href: '/#tools' },
+    { label: 'Content', href: '/#content' },
+    { label: 'Free Assets', href: '/#free-assets' },
+  ],
+  companyLinks: [
+    { label: 'About Us', href: '/about' },
+    { label: 'Studio', href: '/studio' },
+    { label: 'Work With Us', href: '/#studio' },
+    { label: 'Contact Us', href: '/contact' },
+  ],
+  legalLinks: [
+    { label: 'Terms & Conditions', href: '/terms' },
+    { label: 'Privacy Policy', href: '/privacy' },
+    { label: 'Refund & Cancellation', href: '/refund-policy' },
+    { label: 'Shipping & Delivery', href: '/shipping-policy' },
+  ],
+  copyrightText: 'DavinciWaleBhaiya. All rights reserved.',
+};

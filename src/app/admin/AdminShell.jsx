@@ -47,6 +47,7 @@ import {
   Sparkles,
   Command,
   SlidersHorizontal,
+  PanelsTopBottom,
 } from 'lucide-react';
 
 // Context for Toasts & Confirmations
@@ -199,6 +200,7 @@ const NAV_ITEMS = [
     { label: 'Hero Settings', href: '/admin/hero', icon: Sparkles },
     { label: 'Before/After Comparison', href: '/admin/comparison', icon: SlidersHorizontal },
     { label: 'FAQ', href: '/admin/faq', icon: CircleHelp },
+    { label: 'Footer Settings', href: '/admin/footer', icon: PanelsTopBottom },
     { label: 'Settings', href: '/admin/settings', icon: Settings },
   ]},
 ];

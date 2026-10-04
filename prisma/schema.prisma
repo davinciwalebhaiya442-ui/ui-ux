@@ -280,3 +280,24 @@ model ComparisonSetting {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model FooterSetting {
+  id                    String   @id @default("default")
+  brandName             String   @default("DavinciWaleBhaiya")
+  brandTagline          String   @default("Precision color science, optical DCTLs, and timeline utilities for professional colorists and video editors.")
+  newsletterHeading     String   @default("Direct Release Dispatch")
+  newsletterPlaceholder String   @default("editor@studio.com")
+  newsletterButtonText  String   @default("Join")
+  supportEmail          String   @default("support@davinciwalebhaiya.com")
+  youtubeUrl            String   @default("https://youtube.com")
+  instagramUrl          String   @default("https://instagram.com")
+  twitterUrl            String?  @default("")
+  discordUrl            String?  @default("")
+  productsLinks         Json     @default("[{\"label\":\"Featured\",\"href\":\"/#featured\"},{\"label\":\"Asset Catalogue\",\"href\":\"/#catalogue\"},{\"label\":\"Tools\",\"href\":\"/#tools\"},{\"label\":\"Content\",\"href\":\"/#content\"},{\"label\":\"Free Assets\",\"href\":\"/#free-assets\"}]")
+  companyLinks          Json     @default("[{\"label\":\"About Us\",\"href\":\"/about\"},{\"label\":\"Studio\",\"href\":\"/studio\"},{\"label\":\"Work With Us\",\"href\":\"/#studio\"},{\"label\":\"Contact Us\",\"href\":\"/contact\"}]")
+  legalLinks            Json     @default("[{\"label\":\"Terms & Conditions\",\"href\":\"/terms\"},{\"label\":\"Privacy Policy\",\"href\":\"/privacy\"},{\"label\":\"Refund & Cancellation\",\"href\":\"/refund-policy\"},{\"label\":\"Shipping & Delivery\",\"href\":\"/shipping-policy\"}]")
+  copyrightText         String   @default("DavinciWaleBhaiya. All rights reserved.")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+

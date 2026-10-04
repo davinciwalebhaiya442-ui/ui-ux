@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { Sparkles, ArrowRight, PanelsTopBottom } from 'lucide-react';
 import { AdminLayout } from '../AdminShell';
 
 export default function SettingsPage() {
@@ -8,7 +8,7 @@ export default function SettingsPage() {
       <div className="mb-7">
         <p className="font-mono text-[10px] uppercase tracking-[.24em] text-blue-300/70">System / Configuration</p>
         <h2 className="mt-2 text-3xl font-semibold">Settings</h2>
-        <p className="mt-2 text-sm text-white/40">Manage your homepage hero visual environment and system configurations.</p>
+        <p className="mt-2 text-sm text-white/40">Manage your homepage hero, site footer and system configurations.</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -24,6 +24,24 @@ export default function SettingsPage() {
               <div>
                 <h3 className="text-base font-semibold text-white group-hover:text-blue-300 transition-colors">Hero Section Management</h3>
                 <p className="text-xs text-white/60 mt-0.5">Customize hero title, background artwork image, typography & CTA</p>
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-white/40 group-hover:text-white group-hover:translate-x-1 transition-all" />
+          </div>
+        </Link>
+
+        <Link
+          href="/admin/footer"
+          className="group rounded-2xl border border-blue-500/30 bg-gradient-to-br from-[#0c1628] to-[#070b14] p-6 shadow-xl hover:border-blue-400/60 transition-all block"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
+                <PanelsTopBottom className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-white group-hover:text-indigo-300 transition-colors">Footer Management</h3>
+                <p className="text-xs text-white/60 mt-0.5">Customize brand tagline, directory links, newsletter & social links</p>
               </div>
             </div>
             <ArrowRight className="w-4 h-4 text-white/40 group-hover:text-white group-hover:translate-x-1 transition-all" />
