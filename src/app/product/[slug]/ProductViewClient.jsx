@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -19,6 +19,7 @@ import {
   ArrowLeft,
   ArrowUpRight,
   Sparkles,
+  ExternalLink,
 } from 'lucide-react';
 
 export default function ProductViewClient({ asset, relatedAssets = [] }) {
@@ -39,24 +40,61 @@ export default function ProductViewClient({ asset, relatedAssets = [] }) {
     return `/api/media?key=${encodeURIComponent(str)}`;
   };
 
+  const getEmbedUrl = (val) => {
+    if (!val) return null;
+    const str = String(val).trim();
+    const ytMatch = str.match(
+      /(?:youtu\.be\/|(?:www\.|m\.)?youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/))([a-zA-Z0-9_-]{11})/i
+    );
+    if (ytMatch) {
+      return `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1`;
+    }
+    const vimeoMatch = str.match(/vimeo\.com\/(?:video\/)?([0-9]+)/i);
+    if (vimeoMatch) {
+      return `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1&muted=1&playsinline=1`;
+    }
+    return null;
+  };
+
   const beforeSrc = resolveUrl(asset?.beforeImage);
   const afterSrc = resolveUrl(asset?.afterImage);
   const thumbSrc = resolveUrl(asset?.thumbnailKey || (Array.isArray(asset?.previewImages) && asset.previewImages[0]));
   const videoSrc = resolveUrl(asset?.demoVideo);
+  const videoEmbedUrl = getEmbedUrl(asset?.demoVideo);
 
-  const hasBeforeAfter = Boolean(beforeSrc || afterSrc);
-  const isColorGradingCategory =
-    asset?.id === 'kodak-2383-print' ||
-    asset?.previewType === 'lut' ||
-    asset?.category?.toLowerCase().includes('color') ||
-    asset?.category?.toLowerCase().includes('lut') ||
-    asset?.category?.toLowerCase().includes('grade');
+  const allPreviewImages = useMemo(() => {
+    const list = [];
+    if (asset?.thumbnailKey) {
+      const u = resolveUrl(asset.thumbnailKey);
+      if (u) list.push(u);
+    }
+    if (Array.isArray(asset?.previewImages)) {
+      asset.previewImages.forEach((img) => {
+        const u = resolveUrl(img);
+        if (u && !list.includes(u)) list.push(u);
+      });
+    }
+    return list;
+  }, [asset]);
 
-  const shouldDefaultToComparison = hasBeforeAfter || isColorGradingCategory;
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const currentPreviewImage = allPreviewImages[selectedImageIndex] || thumbSrc;
 
-  const [activeMediaTab, setActiveMediaTab] = useState(
-    shouldDefaultToComparison ? 'comparison' : (thumbSrc ? 'preview' : (videoSrc ? 'video' : 'comparison'))
-  );
+  const hasBeforeAfter = Boolean(beforeSrc && afterSrc) || Boolean(beforeSrc || afterSrc);
+  const hasPreview = Boolean(thumbSrc || allPreviewImages.length > 0);
+  const hasVideo = Boolean(videoSrc || videoEmbedUrl);
+
+  const canShowTabs = [hasPreview, hasBeforeAfter, hasVideo].filter(Boolean).length > 1;
+
+  // Single preview FIRST, then Before/After, then Video
+  const defaultTab = hasPreview ? 'preview' : (hasBeforeAfter ? 'comparison' : (hasVideo ? 'video' : 'preview'));
+
+  const [activeMediaTab, setActiveMediaTab] = useState(defaultTab);
+
+  useEffect(() => {
+    setActiveMediaTab(defaultTab);
+    setSelectedImageIndex(0);
+  }, [asset?.id, asset?.slug]);
 
   const handleShare = async (e) => {
     if (e) e.stopPropagation();
@@ -153,8 +191,6 @@ export default function ProductViewClient({ asset, relatedAssets = [] }) {
     window.location.href = `/checkout?product=${asset.slug || asset.id}`;
   };
 
-  const canShowTabs = (shouldDefaultToComparison || hasBeforeAfter) && (thumbSrc || videoSrc);
-
   return (
     <div className="min-h-screen bg-[#04060c] text-white flex flex-col selection:bg-blue-600 selection:text-white">
       <Navbar />
@@ -199,24 +235,11 @@ export default function ProductViewClient({ asset, relatedAssets = [] }) {
           <div className="lg:col-span-7 space-y-4">
             {canShowTabs && (
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveMediaTab('comparison')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all ${
-                    activeMediaTab === 'comparison'
-                      ? 'bg-blue-600 text-white font-semibold shadow-[0_0_12px_rgba(59,130,246,0.3)]'
-                      : 'bg-white/[0.05] text-white/60 hover:text-white hover:bg-white/[0.08]'
-                  }`}
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
-                  <span>Before / After</span>
-                </button>
-
-                {thumbSrc && (
+                {hasPreview && (
                   <button
                     type="button"
                     onClick={() => setActiveMediaTab('preview')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all cursor-pointer ${
                       activeMediaTab === 'preview'
                         ? 'bg-blue-600 text-white font-semibold shadow-[0_0_12px_rgba(59,130,246,0.3)]'
                         : 'bg-white/[0.05] text-white/60 hover:text-white hover:bg-white/[0.08]'
@@ -227,11 +250,26 @@ export default function ProductViewClient({ asset, relatedAssets = [] }) {
                   </button>
                 )}
 
-                {videoSrc && (
+                {hasBeforeAfter && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveMediaTab('comparison')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all cursor-pointer ${
+                      activeMediaTab === 'comparison'
+                        ? 'bg-blue-600 text-white font-semibold shadow-[0_0_12px_rgba(59,130,246,0.3)]'
+                        : 'bg-white/[0.05] text-white/60 hover:text-white hover:bg-white/[0.08]'
+                    }`}
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    <span>Before / After</span>
+                  </button>
+                )}
+
+                {hasVideo && (
                   <button
                     type="button"
                     onClick={() => setActiveMediaTab('video')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all cursor-pointer ${
                       activeMediaTab === 'video'
                         ? 'bg-blue-600 text-white font-semibold shadow-[0_0_12px_rgba(59,130,246,0.3)]'
                         : 'bg-white/[0.05] text-white/60 hover:text-white hover:bg-white/[0.08]'
@@ -246,6 +284,36 @@ export default function ProductViewClient({ asset, relatedAssets = [] }) {
 
             {/* Media Container */}
             <div className="relative rounded-2xl overflow-hidden border border-white/[0.12] bg-[#080d18] shadow-2xl min-h-[320px] sm:min-h-[460px]">
+              {activeMediaTab === 'preview' && (thumbSrc || currentPreviewImage) && (
+                <div className="w-full flex flex-col justify-center items-center bg-black/40 min-h-[380px] sm:min-h-[460px]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={currentPreviewImage}
+                    alt={asset.name}
+                    className="w-full h-full object-contain max-h-[560px]"
+                  />
+                  {allPreviewImages.length > 1 && (
+                    <div className="flex items-center gap-2 overflow-x-auto p-3 w-full bg-black/60 border-t border-white/10 scrollbar-none justify-center">
+                      {allPreviewImages.map((img, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setSelectedImageIndex(idx)}
+                          className={`relative w-16 h-10 rounded-lg overflow-hidden border transition-all shrink-0 cursor-pointer ${
+                            selectedImageIndex === idx
+                              ? 'border-blue-400 ring-2 ring-blue-500/40 opacity-100 scale-105'
+                              : 'border-white/10 opacity-50 hover:opacity-80'
+                          }`}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={img} alt="" className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {activeMediaTab === 'comparison' && (
                 hasBeforeAfter ? (
                   <BeforeAfterSlider
@@ -267,28 +335,40 @@ export default function ProductViewClient({ asset, relatedAssets = [] }) {
                 )
               )}
 
-              {activeMediaTab === 'preview' && (
-                <div className="w-full h-full flex items-center justify-center bg-black/40 min-h-[380px] sm:min-h-[460px]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={thumbSrc}
-                    alt={asset.name}
-                    className="w-full h-full object-contain max-h-[560px]"
-                  />
-                </div>
-              )}
-
-              {activeMediaTab === 'video' && (
-                <div className="w-full h-full flex items-center justify-center bg-black min-h-[380px] sm:min-h-[460px]">
-                  <video
-                    src={videoSrc}
-                    controls
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="w-full h-full object-contain max-h-[560px]"
-                  />
+              {activeMediaTab === 'video' && (videoEmbedUrl || videoSrc) && (
+                <div className="relative w-full h-full aspect-video min-h-[380px] sm:min-h-[460px] flex items-center justify-center bg-black">
+                  {asset?.demoVideo && (String(asset.demoVideo).includes('youtu') || String(asset.demoVideo).includes('vimeo')) && (
+                    <a
+                      href={asset.demoVideo}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute top-3 right-3 z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-black/75 hover:bg-black/90 text-white/80 hover:text-white text-xs font-mono backdrop-blur-md border border-white/15 transition-all shadow-md"
+                      title="Watch video on original platform"
+                    >
+                      <span>Open External</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                  {videoEmbedUrl ? (
+                    <iframe
+                      key={videoEmbedUrl}
+                      src={videoEmbedUrl}
+                      title={`${asset.name} Demo Video`}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                      referrerPolicy="strict-origin-when-cross-origin"
+                      className="w-full h-full min-h-[380px] sm:min-h-[460px] border-0"
+                    />
+                  ) : (
+                    <video
+                      src={videoSrc}
+                      controls
+                      autoPlay
+                      muted
+                      playsInline
+                      className="w-full h-full object-contain max-h-[560px]"
+                    />
+                  )}
                 </div>
               )}
             </div>
