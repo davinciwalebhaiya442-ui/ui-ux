@@ -248,9 +248,6 @@ export default function FeaturedAssets({ onSelectAsset, initialProducts = [] }) 
                     ) : (
                       <div className="text-xl font-bold font-mono text-white">
                         ₹{Number(card1.price || 0).toLocaleString()}
-                        <span className="text-xs font-normal text-white/50 ml-2">
-                          (${card1.priceUSD || Math.round(Number(card1.price || 0) / 83)} USD)
-                        </span>
                       </div>
                     )}
                   </div>
@@ -321,12 +318,7 @@ export default function FeaturedAssets({ onSelectAsset, initialProducts = [] }) 
                   {card2.type === 'free' ? (
                     <span className="text-emerald-400">FREE</span>
                   ) : (
-                    <>
-                      ₹{Number(card2.price || 0).toLocaleString()}{' '}
-                      <span className="text-white/50 text-xs font-normal">
-                        (${card2.priceUSD || Math.round(Number(card2.price || 0) / 83)})
-                      </span>
-                    </>
+                    <>₹{Number(card2.price || 0).toLocaleString()}</>
                   )}
                 </span>
               </div>

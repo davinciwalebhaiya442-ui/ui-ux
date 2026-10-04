@@ -248,9 +248,6 @@ export default function AssetCatalogue({
                       <span className="text-white font-bold text-sm tracking-tight">
                         ₹{asset.price.toLocaleString()}
                       </span>
-                      <span className="text-white/45 text-[11px] font-normal">
-                        (${asset.priceUSD})
-                      </span>
                     </div>
                   )}
                 </div>

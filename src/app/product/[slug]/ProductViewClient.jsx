@@ -406,7 +406,7 @@ export default function ProductViewClient({ asset, relatedAssets = [] }) {
                         ₹{asset.price.toLocaleString()}
                       </span>
                       <span className="text-xs font-mono text-white/40">
-                        (${asset.priceUSD} USD &bull; One-time Perpetual License)
+                        One-time Perpetual License
                       </span>
                     </div>
                   </div>

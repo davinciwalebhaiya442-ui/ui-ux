@@ -263,7 +263,7 @@ export default function ProductModal({ asset, onClose }) {
                     <div className="text-2xl font-bold font-mono text-white">
                       ₹{asset.price.toLocaleString()}
                     </div>
-                    <div className="text-xs font-mono text-white/40">(${asset.priceUSD} USD perpetual)</div>
+                    <div className="text-xs font-mono text-white/40">Perpetual license</div>
                   </div>
                 )}
               </div>
