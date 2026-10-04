@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { X, Check, Download, ShoppingBag, SlidersHorizontal, Image as ImageIcon, Film, Loader2, CheckCircle2, AlertCircle, Share2, Link2 } from 'lucide-react';
 import BeforeAfterSlider from './BeforeAfterSlider';
 
@@ -35,24 +35,61 @@ export default function ProductModal({ asset, onClose }) {
     return `/api/media?key=${encodeURIComponent(str)}`;
   };
 
+  const getEmbedUrl = (val) => {
+    if (!val) return null;
+    const str = String(val).trim();
+    const ytMatch = str.match(
+      /(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/))([a-zA-Z0-9_-]{11})/i
+    );
+    if (ytMatch) {
+      return `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&rel=0&modestbranding=1`;
+    }
+    const vimeoMatch = str.match(/vimeo\.com\/(?:video\/)?([0-9]+)/i);
+    if (vimeoMatch) {
+      return `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1`;
+    }
+    return null;
+  };
+
   const beforeSrc = resolveUrl(asset?.beforeImage);
   const afterSrc = resolveUrl(asset?.afterImage);
   const thumbSrc = resolveUrl(asset?.thumbnailKey || (Array.isArray(asset?.previewImages) && asset.previewImages[0]));
   const videoSrc = resolveUrl(asset?.demoVideo);
+  const videoEmbedUrl = getEmbedUrl(asset?.demoVideo);
 
-  const hasBeforeAfter = Boolean(beforeSrc || afterSrc);
-  const isColorGradingCategory =
-    asset?.id === 'kodak-2383-print' ||
-    asset?.previewType === 'lut' ||
-    asset?.category?.toLowerCase().includes('color') ||
-    asset?.category?.toLowerCase().includes('lut') ||
-    asset?.category?.toLowerCase().includes('grade');
+  const allPreviewImages = useMemo(() => {
+    const list = [];
+    if (asset?.thumbnailKey) {
+      const u = resolveUrl(asset.thumbnailKey);
+      if (u) list.push(u);
+    }
+    if (Array.isArray(asset?.previewImages)) {
+      asset.previewImages.forEach((img) => {
+        const u = resolveUrl(img);
+        if (u && !list.includes(u)) list.push(u);
+      });
+    }
+    return list;
+  }, [asset]);
 
-  const shouldDefaultToComparison = hasBeforeAfter || isColorGradingCategory;
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const currentPreviewImage = allPreviewImages[selectedImageIndex] || thumbSrc;
 
-  const [activeMediaTab, setActiveMediaTab] = useState(
-    shouldDefaultToComparison ? 'comparison' : (thumbSrc ? 'preview' : (videoSrc ? 'video' : 'comparison'))
-  );
+  const hasBeforeAfter = Boolean(beforeSrc && afterSrc) || Boolean(beforeSrc || afterSrc);
+  const hasPreview = Boolean(thumbSrc || allPreviewImages.length > 0);
+  const hasVideo = Boolean(videoSrc || videoEmbedUrl);
+
+  const canShowTabs = [hasPreview, hasBeforeAfter, hasVideo].filter(Boolean).length > 1;
+
+  // Single preview FIRST, then Before/After, then Video
+  const defaultTab = hasPreview ? 'preview' : (hasBeforeAfter ? 'comparison' : (hasVideo ? 'video' : 'preview'));
+
+  const [activeMediaTab, setActiveMediaTab] = useState(defaultTab);
+
+  useEffect(() => {
+    setActiveMediaTab(defaultTab);
+    setSelectedImageIndex(0);
+  }, [asset?.id, asset?.slug]);
 
   if (!asset) return null;
 
@@ -153,8 +190,6 @@ export default function ProductModal({ asset, onClose }) {
     }
   };
 
-  const canShowTabs = (shouldDefaultToComparison || hasBeforeAfter) && (thumbSrc || videoSrc);
-
   return (
     <div className="fixed inset-0 z-[1100] flex items-center justify-center p-3 sm:p-6 lg:p-10 overflow-y-auto">
       {/* Dark backdrop */}
@@ -234,27 +269,14 @@ export default function ProductModal({ asset, onClose }) {
               </div>
             </div>
 
-            {/* Media Mode Switcher (if multiple media views available) */}
+            {/* Media Mode Switcher (Order: Single Preview -> Before / After -> Demo Video) */}
             {canShowTabs && (
               <div className="flex items-center gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveMediaTab('comparison')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all ${
-                    activeMediaTab === 'comparison'
-                      ? 'bg-blue-600 text-white font-semibold shadow-[0_0_12px_rgba(59,130,246,0.3)]'
-                      : 'bg-white/[0.05] text-white/60 hover:text-white hover:bg-white/[0.08]'
-                  }`}
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
-                  <span>Before / After</span>
-                </button>
-
-                {thumbSrc && (
+                {hasPreview && (
                   <button
                     type="button"
                     onClick={() => setActiveMediaTab('preview')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all cursor-pointer ${
                       activeMediaTab === 'preview'
                         ? 'bg-blue-600 text-white font-semibold shadow-[0_0_12px_rgba(59,130,246,0.3)]'
                         : 'bg-white/[0.05] text-white/60 hover:text-white hover:bg-white/[0.08]'
@@ -265,14 +287,29 @@ export default function ProductModal({ asset, onClose }) {
                   </button>
                 )}
 
-                {videoSrc && (
+                {hasBeforeAfter && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveMediaTab('comparison')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all cursor-pointer ${
+                      activeMediaTab === 'comparison'
+                        ? 'bg-blue-600 text-white font-semibold shadow-[0_0_12px_rgba(59,130,246,0.3)]'
+                        : 'bg-white/[0.05] text-white/60 hover:text-white hover:bg-white/[0.08]'
+                    }`}
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    <span>Before / After</span>
+                  </button>
+                )}
+
+                {hasVideo && (
                   <button
                     type="button"
                     onClick={() => setActiveMediaTab('video')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all cursor-pointer ${
                       activeMediaTab === 'video'
                         ? 'bg-blue-600 text-white font-semibold shadow-[0_0_12px_rgba(59,130,246,0.3)]'
-                      : 'bg-white/[0.05] text-white/60 hover:text-white hover:bg-white/[0.08]'
+                        : 'bg-white/[0.05] text-white/60 hover:text-white hover:bg-white/[0.08]'
                     }`}
                   >
                     <Film className="w-3.5 h-3.5" />
@@ -283,7 +320,37 @@ export default function ProductModal({ asset, onClose }) {
             )}
 
             {/* Visual Demonstration Render Area */}
-            {activeMediaTab === 'comparison' || (shouldDefaultToComparison && activeMediaTab !== 'preview' && activeMediaTab !== 'video') ? (
+            {activeMediaTab === 'preview' && (thumbSrc || currentPreviewImage) ? (
+              <div className="space-y-3">
+                <div className="w-full aspect-video rounded-xl overflow-hidden border border-white/[0.08] relative bg-[#040404] shadow-lg">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={currentPreviewImage}
+                    alt={asset.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                {allPreviewImages.length > 1 && (
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                    {allPreviewImages.map((img, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setSelectedImageIndex(idx)}
+                        className={`relative w-16 h-10 rounded-lg overflow-hidden border transition-all shrink-0 cursor-pointer ${
+                          selectedImageIndex === idx
+                            ? 'border-blue-400 ring-2 ring-blue-500/40 opacity-100 scale-105'
+                            : 'border-white/10 opacity-50 hover:opacity-80'
+                        }`}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={img} alt="" className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : activeMediaTab === 'comparison' && hasBeforeAfter ? (
               <div className="rounded-xl overflow-hidden border border-white/[0.08]">
                 <BeforeAfterSlider
                   beforeSrc={beforeSrc}
@@ -292,18 +359,29 @@ export default function ProductModal({ asset, onClose }) {
                   afterLabel="After"
                 />
               </div>
-            ) : activeMediaTab === 'video' && videoSrc ? (
-              <div className="w-full aspect-video rounded-xl overflow-hidden border border-white/[0.08] bg-black">
-                <video
-                  src={videoSrc}
-                  controls
-                  autoPlay
-                  playsInline
-                  className="w-full h-full object-contain"
-                />
+            ) : activeMediaTab === 'video' && (videoEmbedUrl || videoSrc) ? (
+              <div className="w-full aspect-video rounded-xl overflow-hidden border border-white/[0.08] bg-black shadow-lg">
+                {videoEmbedUrl ? (
+                  <iframe
+                    src={videoEmbedUrl}
+                    title={`${asset.name} Demo Video`}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className="w-full h-full border-0"
+                  />
+                ) : (
+                  <video
+                    src={videoSrc}
+                    controls
+                    autoPlay
+                    playsInline
+                    className="w-full h-full object-contain"
+                  />
+                )}
               </div>
             ) : thumbSrc ? (
               <div className="w-full aspect-video rounded-xl overflow-hidden border border-white/[0.08] relative bg-[#040404]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={thumbSrc}
                   alt={asset.name}
