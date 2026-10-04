@@ -5,17 +5,10 @@ import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { DEFAULT_FOOTER_SETTINGS } from '@/lib/footer';
 
-export default function Footer({ initialSettings = null }) {
+export default function Footer() {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [settings, setSettings] = useState(() => initialSettings || DEFAULT_FOOTER_SETTINGS);
-
-  useEffect(() => {
-    if (initialSettings) {
-      setSettings(initialSettings);
-    }
-  }, [initialSettings]);
+  const [settings, setSettings] = useState(DEFAULT_FOOTER_SETTINGS);
 
   useEffect(() => {
     let isMounted = true;
@@ -35,24 +28,14 @@ export default function Footer({ initialSettings = null }) {
     };
   }, []);
 
-  const handleSubscribe = async (e) => {
+  const handleSubscribe = (e) => {
     e.preventDefault();
-    if (!email || submitting) return;
-    setSubmitting(true);
-    try {
-      await fetch('/api/newsletter', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      }).catch(() => {});
-      setSubscribed(true);
-      setTimeout(() => {
-        setSubscribed(false);
-        setEmail('');
-      }, 4500);
-    } finally {
-      setSubmitting(false);
-    }
+    if (!email) return;
+    setSubscribed(true);
+    setTimeout(() => {
+      setSubscribed(false);
+      setEmail('');
+    }, 4000);
   };
 
   const productsLinks = Array.isArray(settings.productsLinks) ? settings.productsLinks : DEFAULT_FOOTER_SETTINGS.productsLinks;

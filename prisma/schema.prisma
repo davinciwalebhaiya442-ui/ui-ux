@@ -301,3 +301,17 @@ model FooterSetting {
   updatedAt             DateTime @updatedAt
 }
 
+model SitePage {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  badge       String?  @default("")
+  description String?  @default("")
+  lastUpdated String?  @default("")
+  content     String   @db.Text
+  published   Boolean  @default(true)
+  metadata    Json?    @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+

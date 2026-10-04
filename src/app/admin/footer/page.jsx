@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   PanelsTopBottom,
   Save,
@@ -8,50 +9,19 @@ import {
   Trash2,
   ExternalLink,
   Mail,
+  Youtube,
+  Instagram,
+  Twitter,
   Loader2,
   CheckCircle2,
   RefreshCw,
   Sparkles,
   Link as LinkIcon,
-  Globe,
-  Share2,
+  Edit3,
+  BookOpen,
 } from 'lucide-react';
 import { AdminLayout, useAdmin } from '../AdminShell';
 import { DEFAULT_FOOTER_SETTINGS } from '@/lib/footer';
-
-function YoutubeIcon(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
-      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-    </svg>
-  );
-}
-
-function InstagramIcon(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
-      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
-    </svg>
-  );
-}
-
-function TwitterIcon(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-    </svg>
-  );
-}
-
-function DiscordIcon(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
-      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
-    </svg>
-  );
-}
 
 export default function FooterSettingsPage() {
   const { toast } = useAdmin();
@@ -310,13 +280,13 @@ export default function FooterSettingsPage() {
 
             <div className="rounded-2xl border border-white/[0.08] bg-[#0a0f1b] p-6 space-y-4">
               <div className="flex items-center gap-2.5 pb-2 border-b border-white/[0.06]">
-                <Share2 className="w-4 h-4 text-blue-400" />
+                <ExternalLink className="w-4 h-4 text-blue-400" />
                 <h3 className="text-sm font-semibold text-white">Social Media Channels</h3>
               </div>
 
               <div>
                 <label className="flex items-center gap-2 text-xs text-white/60 mb-1.5">
-                  <YoutubeIcon className="w-4 h-4 text-red-500" />
+                  <Youtube className="w-3.5 h-3.5 text-red-400" />
                   <span>YouTube Channel URL</span>
                 </label>
                 <input
@@ -330,7 +300,7 @@ export default function FooterSettingsPage() {
 
               <div>
                 <label className="flex items-center gap-2 text-xs text-white/60 mb-1.5">
-                  <InstagramIcon className="w-4 h-4 text-pink-400" />
+                  <Instagram className="w-3.5 h-3.5 text-pink-400" />
                   <span>Instagram Profile URL</span>
                 </label>
                 <input
@@ -344,7 +314,7 @@ export default function FooterSettingsPage() {
 
               <div>
                 <label className="flex items-center gap-2 text-xs text-white/60 mb-1.5">
-                  <TwitterIcon className="w-4 h-4 text-sky-400" />
+                  <Twitter className="w-3.5 h-3.5 text-sky-400" />
                   <span>Twitter / X Profile URL</span>
                 </label>
                 <input
@@ -358,7 +328,7 @@ export default function FooterSettingsPage() {
 
               <div>
                 <label className="flex items-center gap-2 text-xs text-white/60 mb-1.5">
-                  <DiscordIcon className="w-4 h-4 text-indigo-400" />
+                  <LinkIcon className="w-3.5 h-3.5 text-indigo-400" />
                   <span>Discord Community URL</span>
                 </label>
                 <input
@@ -376,6 +346,28 @@ export default function FooterSettingsPage() {
         {/* Tab 3: Directory Navigation Links */}
         {activeTab === 'links' && (
           <div className="grid gap-6 lg:grid-cols-3">
+            {/* Quick Action Banner to Page Content Editor */}
+            <div className="lg:col-span-3 p-4 rounded-2xl bg-blue-950/20 border border-blue-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold text-white">Need to edit the text inside these linked pages?</h4>
+                  <p className="text-[11px] text-white/50">
+                    Customize legal clauses, terms, privacy policies, return rules, and about text directly in the Page Content Editor.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/admin/pages"
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 w-fit shrink-0"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Open Page Content Editor &rarr;</span>
+              </Link>
+            </div>
+
             {/* Products Column */}
             <div className="rounded-2xl border border-white/[0.08] bg-[#0a0f1b] p-5 space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
@@ -385,7 +377,7 @@ export default function FooterSettingsPage() {
                 <button
                   type="button"
                   onClick={() => handleAddLink('productsLinks')}
-                  className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 font-mono cursor-pointer"
+                  className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 font-mono"
                 >
                   <Plus className="w-3 h-3" /> Add Link
                 </button>
@@ -393,7 +385,7 @@ export default function FooterSettingsPage() {
 
               <div className="space-y-2.5">
                 {(form.productsLinks || []).map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-2 p-2 rounded-xl bg-black/40 border border-white/[0.06]">
+                  <div key={idx} className="flex items-start gap-2 p-2.5 rounded-xl bg-black/40 border border-white/[0.06]">
                     <div className="flex-1 space-y-1">
                       <input
                         type="text"
@@ -413,7 +405,7 @@ export default function FooterSettingsPage() {
                     <button
                       type="button"
                       onClick={() => handleRemoveLink('productsLinks', idx)}
-                      className="p-1.5 text-white/30 hover:text-red-400 transition-colors cursor-pointer"
+                      className="p-1.5 text-white/30 hover:text-red-400 transition-colors shrink-0"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -431,7 +423,7 @@ export default function FooterSettingsPage() {
                 <button
                   type="button"
                   onClick={() => handleAddLink('companyLinks')}
-                  className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 font-mono cursor-pointer"
+                  className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 font-mono"
                 >
                   <Plus className="w-3 h-3" /> Add Link
                 </button>
@@ -439,7 +431,7 @@ export default function FooterSettingsPage() {
 
               <div className="space-y-2.5">
                 {(form.companyLinks || []).map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-2 p-2 rounded-xl bg-black/40 border border-white/[0.06]">
+                  <div key={idx} className="flex items-start gap-2 p-2.5 rounded-xl bg-black/40 border border-white/[0.06]">
                     <div className="flex-1 space-y-1">
                       <input
                         type="text"
@@ -455,11 +447,22 @@ export default function FooterSettingsPage() {
                         onChange={(e) => handleLinkChange('companyLinks', idx, 'href', e.target.value)}
                         className="w-full bg-transparent text-[11px] font-mono text-white/50 outline-none focus:text-white"
                       />
+                      {item.href?.startsWith('/') && !item.href.includes('#') && (
+                        <div className="pt-1">
+                          <Link
+                            href={`/admin/pages?slug=${item.href.replace('/', '')}`}
+                            className="inline-flex items-center gap-1 text-[10px] text-blue-400 hover:text-blue-300 font-mono"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                            <span>Edit Page Content &rarr;</span>
+                          </Link>
+                        </div>
+                      )}
                     </div>
                     <button
                       type="button"
                       onClick={() => handleRemoveLink('companyLinks', idx)}
-                      className="p-1.5 text-white/30 hover:text-red-400 transition-colors cursor-pointer"
+                      className="p-1.5 text-white/30 hover:text-red-400 transition-colors shrink-0"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -477,7 +480,7 @@ export default function FooterSettingsPage() {
                 <button
                   type="button"
                   onClick={() => handleAddLink('legalLinks')}
-                  className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 font-mono cursor-pointer"
+                  className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 font-mono"
                 >
                   <Plus className="w-3 h-3" /> Add Link
                 </button>
@@ -485,7 +488,7 @@ export default function FooterSettingsPage() {
 
               <div className="space-y-2.5">
                 {(form.legalLinks || []).map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-2 p-2 rounded-xl bg-black/40 border border-white/[0.06]">
+                  <div key={idx} className="flex items-start gap-2 p-2.5 rounded-xl bg-black/40 border border-white/[0.06]">
                     <div className="flex-1 space-y-1">
                       <input
                         type="text"
@@ -501,11 +504,22 @@ export default function FooterSettingsPage() {
                         onChange={(e) => handleLinkChange('legalLinks', idx, 'href', e.target.value)}
                         className="w-full bg-transparent text-[11px] font-mono text-white/50 outline-none focus:text-white"
                       />
+                      {item.href?.startsWith('/') && !item.href.includes('#') && (
+                        <div className="pt-1">
+                          <Link
+                            href={`/admin/pages?slug=${item.href.replace('/', '')}`}
+                            className="inline-flex items-center gap-1 text-[10px] text-amber-400 hover:text-amber-300 font-mono"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                            <span>Edit Page Content &rarr;</span>
+                          </Link>
+                        </div>
+                      )}
                     </div>
                     <button
                       type="button"
                       onClick={() => handleRemoveLink('legalLinks', idx)}
-                      className="p-1.5 text-white/30 hover:text-red-400 transition-colors cursor-pointer"
+                      className="p-1.5 text-white/30 hover:text-red-400 transition-colors shrink-0"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

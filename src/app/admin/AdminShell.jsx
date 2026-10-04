@@ -199,6 +199,7 @@ const NAV_ITEMS = [
   { group: 'SITE', items: [
     { label: 'Hero Settings', href: '/admin/hero', icon: Sparkles },
     { label: 'Before/After Comparison', href: '/admin/comparison', icon: SlidersHorizontal },
+    { label: 'Site Pages & Legal', href: '/admin/pages', icon: FileText },
     { label: 'FAQ', href: '/admin/faq', icon: CircleHelp },
     { label: 'Footer Settings', href: '/admin/footer', icon: PanelsTopBottom },
     { label: 'Settings', href: '/admin/settings', icon: Settings },

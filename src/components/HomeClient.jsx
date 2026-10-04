@@ -40,7 +40,6 @@ export default function HomeClient({
   initialProducts = [],
   initialHero = null,
   initialComparison = null,
-  initialFooter = null,
 }) {
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [heroSettings, setHeroSettings] = useState(() => initialHero || DEFAULT_HERO);
@@ -293,7 +292,7 @@ export default function HomeClient({
           <AboutSection />
 
           {/* 07: FOOTER CLOSING FRAME */}
-          <Footer initialSettings={initialFooter} />
+          <Footer />
         </div>
       </div>
 

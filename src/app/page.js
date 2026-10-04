@@ -3,7 +3,6 @@ import { toFrontendProduct } from '@/lib/product';
 import HomeClient from '@/components/HomeClient';
 import { DEFAULT_HERO_SETTINGS } from '@/lib/hero';
 import { DEFAULT_COMPARISON_SETTINGS } from '@/lib/comparison';
-import { DEFAULT_FOOTER_SETTINGS } from '@/lib/footer';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,31 +71,17 @@ async function getInitialComparison() {
   }
 }
 
-async function getInitialFooter() {
-  try {
-    const footer = await prisma.footerSetting.findUnique({
-      where: { id: 'default' },
-    });
-    return footer || DEFAULT_FOOTER_SETTINGS;
-  } catch (error) {
-    console.error('Failed to get initial footer:', error);
-    return DEFAULT_FOOTER_SETTINGS;
-  }
-}
-
 export default async function Home() {
-  const [initialProducts, initialHero, initialComparison, initialFooter] = await Promise.all([
+  const [initialProducts, initialHero, initialComparison] = await Promise.all([
     getInitialProducts(),
     getInitialHero(),
     getInitialComparison(),
-    getInitialFooter(),
   ]);
   return (
     <HomeClient
       initialProducts={initialProducts}
       initialHero={initialHero}
       initialComparison={initialComparison}
-      initialFooter={initialFooter}
     />
   );
 }

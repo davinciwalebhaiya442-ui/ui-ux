@@ -1,10 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import LegalLayout from '@/components/LegalLayout';
+import MarkdownContent from '@/components/MarkdownContent';
 import { Mail, Clock, CheckCircle2, AlertCircle, Send, HelpCircle, DownloadCloud, CreditCard, Sparkles } from 'lucide-react';
+import { DEFAULT_SITE_PAGES } from '@/lib/sitePagesDefaults';
 
 export default function ContactPage() {
+  const [pageData, setPageData] = useState(() => DEFAULT_SITE_PAGES.contact || {});
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -16,6 +19,17 @@ export default function ContactPage() {
 
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState({ type: '', message: '' });
+
+  useEffect(() => {
+    fetch('/api/pages/contact')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.page) {
+          setPageData(data.page);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -62,13 +76,19 @@ export default function ContactPage() {
 
   return (
     <LegalLayout
-      badge="Support Desk"
-      title="Contact Us"
-      description="Have questions regarding a digital purchase, download link, color transform compatibility, or studio collaboration? We are here to help."
+      badge={pageData.badge || 'Support Desk'}
+      title={pageData.title || 'Contact Us'}
+      lastUpdated={pageData.lastUpdated}
+      description={pageData.description || 'Have questions regarding a digital purchase, download link, color transform compatibility, or studio collaboration? We are here to help.'}
     >
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Direct channels and inquiry types */}
         <div className="lg:col-span-5 space-y-6">
+          {pageData.content && (
+            <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/[0.08]">
+              <MarkdownContent content={pageData.content} />
+            </div>
+          )}
           <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] space-y-4">
             <h2 className="text-base font-semibold text-white flex items-center gap-2">
               <Mail className="w-4 h-4 text-blue-400" />
