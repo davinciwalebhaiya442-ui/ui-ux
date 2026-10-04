@@ -59,6 +59,9 @@ export default function VisualProductForm({ product }) {
     featured: false,
     published: false,
     ...(product || {}),
+    type: product?.type
+      ? String(product.type).toUpperCase()
+      : (Number(product?.price || 0) > 0 ? 'PAID' : 'FREE'),
   }));
 
   useEffect(() => {
@@ -153,11 +156,14 @@ export default function VisualProductForm({ product }) {
     setSaving(true);
     try {
       const sanitizedSlug = slugify(form.slug || form.name);
+      const sanitizedPrice = Number(form.price || 0);
+      const sanitizedType = String(form.type || (sanitizedPrice > 0 ? 'PAID' : 'FREE')).toUpperCase();
       const payload = {
         ...form,
+        type: sanitizedType === 'PAID' || sanitizedPrice > 0 ? 'PAID' : 'FREE',
         slug: sanitizedSlug,
         published: publish ?? form.published,
-        price: Number(form.price || 0),
+        price: sanitizedPrice,
         software: String(form.software || '')
           .split(',')
           .map((value) => value.trim())
@@ -333,7 +339,18 @@ export default function VisualProductForm({ product }) {
                 </select>
               </Field>
               <Field label="Type">
-                <select className={input} value={form.type} onChange={(e) => set('type', e.target.value)}>
+                <select
+                  className={input}
+                  value={String(form.type || (Number(form.price) > 0 ? 'PAID' : 'FREE')).toUpperCase()}
+                  onChange={(e) => {
+                    const nextType = e.target.value;
+                    setForm((prev) => ({
+                      ...prev,
+                      type: nextType,
+                      price: nextType === 'FREE' ? 0 : (Number(prev.price) === 0 ? 99 : prev.price),
+                    }));
+                  }}
+                >
                   <option value="FREE">Free</option>
                   <option value="PAID">Paid</option>
                 </select>
@@ -344,7 +361,14 @@ export default function VisualProductForm({ product }) {
                   min="0"
                   className={input}
                   value={form.price}
-                  onChange={(e) => set('price', e.target.value)}
+                  onChange={(e) => {
+                    const nextPrice = e.target.value;
+                    setForm((prev) => ({
+                      ...prev,
+                      price: nextPrice,
+                      type: Number(nextPrice) > 0 ? 'PAID' : prev.type,
+                    }));
+                  }}
                 />
               </Field>
               <Field label="Currency">

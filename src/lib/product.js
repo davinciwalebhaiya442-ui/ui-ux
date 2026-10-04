@@ -8,7 +8,10 @@ export const productSchema = z.object({
   description: z.string().trim().min(1, 'Description is required'),
   shortDescription: z.string().trim().optional().nullable(),
   categoryId: z.string().min(1, 'Category is required'),
-  type: z.enum(['FREE', 'PAID']),
+  type: z.preprocess(
+    (val) => (typeof val === 'string' ? val.trim().toUpperCase() : val),
+    z.enum(['FREE', 'PAID'])
+  ),
   price: z.coerce.number().int().min(0),
   priceUSD: z.coerce.number().int().min(0).optional().default(0),
   currency: z.string().trim().min(3).max(3).default('INR'),
