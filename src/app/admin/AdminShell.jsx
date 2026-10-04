@@ -47,6 +47,7 @@ import {
   Sparkles,
   Command,
   SlidersHorizontal,
+  Star,
 } from 'lucide-react';
 
 // Context for Toasts & Confirmations
@@ -1173,6 +1174,22 @@ export function ProductList() {
     }
   };
 
+  const handleToggleFeatured = async (id, currentFeatured) => {
+    try {
+      const res = await fetch(`/api/products/${id}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ featured: !currentFeatured }),
+      });
+      if (!res.ok) throw new Error('Toggle failed');
+      toast(!currentFeatured ? 'Asset pinned to Featured Releases' : 'Asset unpinned from Featured');
+      notifyProductsUpdated();
+      loadData();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   const handleDuplicate = async (p) => {
     const newSlug = `${p.slug}-copy-${Date.now().toString().slice(-4)}`;
     try {
@@ -1328,9 +1345,16 @@ export function ProductList() {
                 <div className="p-3">
                   <div className="flex items-center justify-between text-[10px] font-mono mb-2">
                     <span className="uppercase text-blue-400 font-semibold">{p.category}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-[9px] ${p.published ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-white/40'}`}>
-                      {p.published ? 'Published' : 'Draft'}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {p.featured && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-0.5">
+                          <Star className="w-2.5 h-2.5 fill-amber-400" /> Featured
+                        </span>
+                      )}
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] ${p.published ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-white/40'}`}>
+                        {p.published ? 'Published' : 'Draft'}
+                      </span>
+                    </div>
                   </div>
                   <h3 className="text-base font-bold text-white tracking-tight truncate group-hover:text-blue-300 transition-colors">
                     {p.name}
@@ -1347,6 +1371,13 @@ export function ProductList() {
                   {p.type === 'free' ? 'FREE' : `₹${p.price.toLocaleString()}`}
                 </span>
                 <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handleToggleFeatured(p.dbId || p.id, p.featured)}
+                    title={p.featured ? 'Unpin from Featured Releases' : 'Pin to Featured Releases'}
+                    className={`p-1.5 rounded-lg transition-colors ${p.featured ? 'text-amber-400 bg-amber-500/10' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
+                  >
+                    <Star className={`w-3.5 h-3.5 ${p.featured ? 'fill-amber-400 text-amber-400' : ''}`} />
+                  </button>
                   <button
                     onClick={() => handleTogglePublish(p.id, p.published)}
                     title={p.published ? 'Unpublish' : 'Publish'}
@@ -1412,12 +1443,26 @@ export function ProductList() {
                     {p.type === 'free' ? 'FREE' : `₹${p.price.toLocaleString()}`}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-mono ${p.published ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-white/40'}`}>
-                      {p.published ? 'Published' : 'Draft'}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {p.featured && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-0.5">
+                          <Star className="w-2.5 h-2.5 fill-amber-400" /> Featured
+                        </span>
+                      )}
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-mono ${p.published ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-white/40'}`}>
+                        {p.published ? 'Published' : 'Draft'}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-5 py-3 text-right">
                     <div className="flex items-center justify-end gap-1.5">
+                      <button
+                        onClick={() => handleToggleFeatured(p.dbId || p.id, p.featured)}
+                        className={`p-1.5 rounded-lg transition-colors ${p.featured ? 'text-amber-400 bg-amber-500/10' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
+                        title={p.featured ? 'Unpin from Featured Releases' : 'Pin to Featured Releases'}
+                      >
+                        <Star className={`w-3.5 h-3.5 ${p.featured ? 'fill-amber-400 text-amber-400' : ''}`} />
+                      </button>
                       <button
                         onClick={() => handleTogglePublish(p.id, p.published)}
                         className="p-1.5 rounded-lg hover:bg-white/10 text-white/60"
