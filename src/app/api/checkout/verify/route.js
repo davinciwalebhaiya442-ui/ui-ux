@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { verifyPaymentSignature, getRazorpay } from '@/lib/payments/razorpay';
-import { sendOrderDeliveryEmail } from '@/lib/email';
+import { fulfillOrder } from '@/lib/orders';
 
 export async function POST(request) {
   try {
@@ -93,43 +93,19 @@ export async function POST(request) {
       return Response.json({ error: 'PAYMENT_VERIFICATION_FAILED' }, { status: 400 });
     }
 
-    // 4. Update order to PAID, grant product access and log download delivery
-    const paid = await prisma.$transaction(async (tx) => {
-      const updated = await tx.order.update({
-        where: { id: order.id },
-        data: {
-          status: 'PAID',
-          paymentStatus: 'CAPTURED',
-          ...(cleanPaymentId ? { razorpayPaymentId: cleanPaymentId } : {}),
-          razorpaySignature: cleanSignature || 'VERIFIED_VIA_RAZORPAY_API',
-        },
-      });
-
-      for (const item of order.items) {
-        const access = await tx.productAccess.upsert({
-          where: { userId_productId: { userId: order.userId, productId: item.productId } },
-          update: { accessType: 'PURCHASE' },
-          create: { userId: order.userId, productId: item.productId, accessType: 'PURCHASE' },
-        });
-
-        await tx.download.create({
-          data: {
-            userId: order.userId,
-            productId: item.productId,
-            accessId: access.id,
-          },
-        });
-      }
-
-      return updated;
+    // 4. Fulfill order, grant downloads, and dispatch delivery email
+    const fulfillment = await fulfillOrder({
+      orderId: order.id,
+      razorpayPaymentId: cleanPaymentId,
+      razorpaySignature: cleanSignature || 'VERIFIED_VIA_RAZORPAY_API',
     });
 
-    // 5. Deliver product zip download links directly to customer email via Resend (asynchronous)
-    sendOrderDeliveryEmail(paid.id).catch((emailErr) => {
-      console.error('Failed to send order email:', emailErr);
-    });
+    if (!fulfillment.success) {
+      console.error('Fulfillment error in verify route:', fulfillment.error);
+      return Response.json({ error: 'FULFILLMENT_FAILED' }, { status: 500 });
+    }
 
-    return Response.json({ success: true, orderNumber: paid.orderNumber });
+    return Response.json({ success: true, orderNumber: fulfillment.order?.orderNumber || order.orderNumber });
   } catch (error) {
     console.error('Payment verification top-level error:', error);
     return Response.json({ error: 'PAYMENT_VERIFICATION_FAILED' }, { status: 400 });
