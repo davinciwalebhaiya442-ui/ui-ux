@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import {
   ShieldCheck,
@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Loader2,
   DownloadCloud,
+  RefreshCw,
 } from 'lucide-react';
 
 export default function CheckoutPage() {
@@ -19,13 +20,97 @@ export default function CheckoutPage() {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [activeOrder, setActiveOrder] = useState(null);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('info');
+
+  const pollIntervalRef = useRef(null);
+  const activeOrderRef = useRef(null);
 
   const slug =
     typeof window !== 'undefined'
       ? new URLSearchParams(window.location.search).get('product')
       : null;
+
+  const stopPolling = () => {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+  };
+
+  // Preload Razorpay checkout script on page mount so it is instant and never blocked on mobile
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !window.Razorpay) {
+      const existing = document.getElementById('rzp-checkout-script');
+      if (!existing) {
+        const script = document.createElement('script');
+        script.id = 'rzp-checkout-script';
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        document.body.appendChild(script);
+      }
+    }
+    return () => stopPolling();
+  }, []);
+
+  const checkStatus = async (orderNum, rzpId) => {
+    if (!orderNum && !rzpId) return false;
+    try {
+      const q = new URLSearchParams();
+      if (orderNum) q.set('orderNumber', orderNum);
+      if (rzpId) q.set('razorpayOrderId', rzpId);
+      const res = await fetch(`/api/checkout/status?${q.toString()}`);
+      if (!res.ok) return false;
+      const data = await res.json();
+      if (data.status === 'PAID') {
+        stopPolling();
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('dwb_active_checkout');
+        }
+        window.location.href = `/order/success?order=${encodeURIComponent(data.orderNumber || orderNum)}`;
+        return true;
+      }
+    } catch (e) {
+      console.warn('Status check poll error:', e);
+    }
+    return false;
+  };
+
+  const startPolling = (orderNum, rzpId) => {
+    stopPolling();
+    let attempts = 0;
+    const maxAttempts = 60; // 60 attempts * 2.5s = 150 seconds
+    pollIntervalRef.current = setInterval(async () => {
+      attempts++;
+      const isPaid = await checkStatus(orderNum, rzpId);
+      if (isPaid || attempts >= maxAttempts) {
+        stopPolling();
+        if (attempts >= maxAttempts && !isPaid) {
+          setVerifying(false);
+          setPaying(false);
+          setMessage('Payment confirmation is taking longer than expected. If money was debited, your file will arrive at your email shortly.');
+          setMessageType('info');
+        }
+      }
+    }, 2500);
+  };
+
+  // Handle mobile return from external UPI app (GPay / PhonePe / Paytm)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && activeOrderRef.current) {
+        setVerifying(true);
+        setMessage('Welcome back! Confirming your payment with banking network...');
+        setMessageType('info');
+        checkStatus(activeOrderRef.current.orderNumber, activeOrderRef.current.razorpayOrderId);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   useEffect(() => {
     // 1. Try to prefill user details if logged in
@@ -57,7 +142,137 @@ export default function CheckoutPage() {
       setLoading(false);
       setMessage('No product selected for checkout.');
     }
+
+    // 3. Check for recently initiated order in case mobile browser refreshed
+    try {
+      const saved = sessionStorage.getItem('dwb_active_checkout');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.orderNumber && Date.now() - (parsed.createdAt || 0) < 30 * 60 * 1000) {
+          setActiveOrder(parsed);
+          activeOrderRef.current = parsed;
+          setVerifying(true);
+          setMessage('Checking previous payment status...');
+          checkStatus(parsed.orderNumber, parsed.razorpayOrderId).then((isPaid) => {
+            if (!isPaid) {
+              setVerifying(false);
+            }
+          });
+        }
+      }
+    } catch (e) {}
   }, [slug]);
+
+  const openRazorpayModal = (data, cleanEmail) => {
+    const active = {
+      orderNumber: data.order.orderNumber,
+      razorpayOrderId: data.order.razorpayOrderId,
+      email: cleanEmail,
+      createdAt: Date.now(),
+    };
+    setActiveOrder(active);
+    activeOrderRef.current = active;
+
+    try {
+      sessionStorage.setItem('dwb_active_checkout', JSON.stringify(active));
+    } catch (e) {}
+
+    // Start background polling immediately (helps auto-detect QR code scan on PC or UPI app on Mobile)
+    startPolling(data.order.orderNumber, data.order.razorpayOrderId);
+
+    const options = {
+      key: data.keyId,
+      amount: data.order.amount,
+      currency: data.order.currency,
+      name: 'DavinciWaleBhaiya',
+      description: product.name,
+      order_id: data.order.razorpayOrderId,
+      prefill: {
+        email: cleanEmail,
+        name: name.trim() || '',
+      },
+      theme: {
+        color: '#2563eb',
+      },
+      handler: async (response) => {
+        stopPolling();
+        setMessage('Verifying payment and sending file to your email...');
+        setMessageType('info');
+        setVerifying(true);
+
+        const payload = {
+          razorpay_order_id: response.razorpay_order_id,
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_signature: response.razorpay_signature,
+          razorpayOrderId: response.razorpay_order_id,
+          razorpayPaymentId: response.razorpay_payment_id,
+          razorpaySignature: response.razorpay_signature,
+        };
+
+        for (let i = 0; i < 3; i++) {
+          try {
+            if (i > 0) {
+              setMessage('Confirming payment with banking network, please wait...');
+              await new Promise((r) => setTimeout(r, 1000));
+            }
+
+            const verified = await fetch('/api/checkout/verify', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify(payload),
+            });
+
+            const resData = await verified.json();
+            if (verified.ok && resData.orderNumber) {
+              try {
+                sessionStorage.removeItem('dwb_active_checkout');
+              } catch (e) {}
+              window.location.href = `/order/success?order=${encodeURIComponent(resData.orderNumber)}`;
+              return;
+            }
+
+            if (i === 2) {
+              setMessage(resData?.error || 'Payment verification incomplete. Please contact support.');
+              setMessageType('error');
+              setPaying(false);
+            }
+          } catch (err) {
+            console.error('Verification attempt error:', err);
+            if (i === 2) {
+              setMessage('Network issue during verification. If money was debited, your file will arrive on email.');
+              setMessageType('error');
+              setPaying(false);
+            }
+          }
+        }
+
+        // Fallback status check
+        const paid = await checkStatus(data.order.orderNumber, data.order.razorpayOrderId);
+        if (!paid) {
+          setVerifying(false);
+        }
+      },
+      modal: {
+        ondismiss: () => {
+          // On mobile, switching to UPI app (GPay/PhonePe) or closing modal triggers ondismiss.
+          // We do NOT dismiss immediately! We check status in case payment was captured.
+          setVerifying(true);
+          setMessage('Checking payment confirmation with your UPI app / bank...');
+          setMessageType('info');
+
+          checkStatus(data.order.orderNumber, data.order.razorpayOrderId).then((isPaid) => {
+            if (!isPaid) {
+              // Keep polling in background for up to 60s
+              startPolling(data.order.orderNumber, data.order.razorpayOrderId);
+            }
+          });
+        },
+      },
+    };
+
+    const checkout = new window.Razorpay(options);
+    checkout.open();
+  };
 
   const pay = async () => {
     if (!product) return;
@@ -70,6 +285,7 @@ export default function CheckoutPage() {
     }
 
     setPaying(true);
+    setVerifying(false);
     setMessage('Connecting to secure Razorpay payment gateway...');
     setMessageType('info');
 
@@ -93,88 +309,21 @@ export default function CheckoutPage() {
         return;
       }
 
-      // Load Razorpay checkout script
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload = () => {
-        const checkout = new window.Razorpay({
-          key: data.keyId,
-          amount: data.order.amount,
-          currency: data.order.currency,
-          name: 'DavinciWaleBhaiya',
-          description: product.name,
-          order_id: data.order.razorpayOrderId,
-          prefill: {
-            email: cleanEmail,
-            name: name.trim() || '',
-          },
-          theme: {
-            color: '#2563eb',
-          },
-          handler: async (response) => {
-            setMessage('Verifying payment and sending file to your email...');
-            setMessageType('info');
-
-            const payload = {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              razorpayOrderId: response.razorpay_order_id,
-              razorpayPaymentId: response.razorpay_payment_id,
-              razorpaySignature: response.razorpay_signature,
-            };
-
-            for (let i = 0; i < 3; i++) {
-              try {
-                if (i > 0) {
-                  setMessage('Confirming payment with banking network, please wait...');
-                  await new Promise((r) => setTimeout(r, 1200));
-                }
-
-                const verified = await fetch('/api/checkout/verify', {
-                  method: 'POST',
-                  headers: { 'content-type': 'application/json' },
-                  body: JSON.stringify(payload),
-                });
-
-                const resData = await verified.json();
-                if (verified.ok && resData.orderNumber) {
-                  window.location.href = `/order/success?order=${encodeURIComponent(resData.orderNumber)}`;
-                  return;
-                }
-
-                if (i === 2) {
-                  setMessage(resData?.error || 'Payment verification incomplete. Please contact support.');
-                  setMessageType('error');
-                  setPaying(false);
-                }
-              } catch (err) {
-                console.error('Verification attempt error:', err);
-                if (i === 2) {
-                  setMessage('Network issue during verification. If money was debited, your file will arrive on email.');
-                  setMessageType('error');
-                  setPaying(false);
-                }
-              }
-            }
-          },
-          modal: {
-            ondismiss: () => {
-              setPaying(false);
-              setMessage('');
-            },
-          },
-        });
-        checkout.open();
-      };
-
-      script.onerror = () => {
-        setPaying(false);
-        setMessage('Payment gateway script failed to load. Please check your internet connection.');
-        setMessageType('error');
-      };
-
-      document.body.appendChild(script);
+      // If Razorpay script is already loaded
+      if (typeof window !== 'undefined' && window.Razorpay) {
+        openRazorpayModal(data, cleanEmail);
+      } else {
+        // Fallback load script if not yet ready
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.onload = () => openRazorpayModal(data, cleanEmail);
+        script.onerror = () => {
+          setPaying(false);
+          setMessage('Payment gateway script failed to load. Please check your internet connection.');
+          setMessageType('error');
+        };
+        document.body.appendChild(script);
+      }
     } catch (err) {
       console.error(err);
       setPaying(false);
@@ -288,8 +437,42 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
+              {/* Verifying / Checking State Banner */}
+              {verifying && activeOrder && (
+                <div className="rounded-2xl border border-blue-500/40 bg-blue-950/40 p-4 space-y-3">
+                  <div className="flex items-center gap-2.5 text-sm font-semibold text-blue-200">
+                    <Loader2 className="w-4 h-4 animate-spin text-blue-400 shrink-0" />
+                    <span>Confirming payment with banking network...</span>
+                  </div>
+                  <p className="text-xs text-white/70 leading-relaxed">
+                    Agar aapne Google Pay, PhonePe, Paytm ya QR code se pay kar diya hai, please thoda wait karein. Verification complete hote hi file download automatically khul jayegi.
+                  </p>
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => checkStatus(activeOrder.orderNumber, activeOrder.razorpayOrderId)}
+                      className="flex-1 rounded-xl bg-blue-600 hover:bg-blue-500 py-2.5 px-3 text-xs font-bold text-white transition-all flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(37,99,235,0.4)]"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>Check Payment Status</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        stopPolling();
+                        setVerifying(false);
+                        setPaying(false);
+                      }}
+                      className="rounded-xl border border-white/10 hover:border-white/20 py-2.5 px-3 text-xs font-mono text-white/60 hover:text-white transition-colors"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Messages / Alerts */}
-              {message && (
+              {message && !verifying && (
                 <div
                   className={`p-3.5 rounded-xl border flex items-center gap-2.5 text-xs ${
                     messageType === 'error'
@@ -309,14 +492,14 @@ export default function CheckoutPage() {
               {/* Pay Button - Direct Razorpay Payment without Login */}
               <button
                 type="button"
-                disabled={paying}
+                disabled={paying || verifying}
                 onClick={pay}
                 className="w-full rounded-2xl bg-blue-600 hover:bg-blue-500 active:scale-[0.99] py-4 text-sm font-bold text-white shadow-[0_0_30px_rgba(37,99,235,0.4)] transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
               >
-                {paying ? (
+                {paying || verifying ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Connecting to Razorpay...</span>
+                    <span>Processing Payment...</span>
                   </>
                 ) : (
                   <>
