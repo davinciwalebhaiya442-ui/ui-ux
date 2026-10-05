@@ -253,6 +253,7 @@ export default function CheckoutPage() {
         }
       },
       modal: {
+        confirm_close: true,
         ondismiss: () => {
           // On mobile, switching to UPI app (GPay/PhonePe) or closing modal triggers ondismiss.
           // We do NOT dismiss immediately! We check status in case payment was captured.
@@ -267,6 +268,10 @@ export default function CheckoutPage() {
             }
           });
         },
+      },
+      retry: {
+        enabled: true,
+        max_count: 4,
       },
     };
 
