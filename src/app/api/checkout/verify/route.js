@@ -124,12 +124,10 @@ export async function POST(request) {
       return updated;
     });
 
-    // 5. Deliver product zip download links directly to customer email via Resend
-    try {
-      await sendOrderDeliveryEmail(paid.id);
-    } catch (emailErr) {
+    // 5. Deliver product zip download links directly to customer email via Resend (asynchronous)
+    sendOrderDeliveryEmail(paid.id).catch((emailErr) => {
       console.error('Failed to send order email:', emailErr);
-    }
+    });
 
     return Response.json({ success: true, orderNumber: paid.orderNumber });
   } catch (error) {

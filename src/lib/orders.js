@@ -58,12 +58,10 @@ export async function fulfillOrder({ orderId, orderNumber, razorpayOrderId, razo
     return updated;
   });
 
-  // 3. Send email with signed direct download URLs to customer
-  try {
-    await sendOrderDeliveryEmail(updatedOrder.id);
-  } catch (emailErr) {
+  // 3. Send email with signed direct download URLs to customer (asynchronous / non-blocking)
+  sendOrderDeliveryEmail(updatedOrder.id).catch((emailErr) => {
     console.error(`[fulfillOrder] Failed to send delivery email for order ${updatedOrder.id}:`, emailErr);
-  }
+  });
 
   return { success: true, order: updatedOrder };
 }
