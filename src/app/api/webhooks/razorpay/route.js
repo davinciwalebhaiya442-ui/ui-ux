@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { verifyWebhookSignature } from '@/lib/payments/razorpay';
-import { fulfillOrder } from '@/lib/orders';
+import { sendOrderDeliveryEmail } from '@/lib/email';
 
 export async function POST(request) {
   const raw = await request.text();
@@ -12,51 +12,56 @@ export async function POST(request) {
     return Response.json({ error: 'WEBHOOK_NOT_CONFIGURED' }, { status: 503 });
   }
 
-  try {
-    const event = JSON.parse(raw);
-    const payment = event.payload?.payment?.entity;
-    const orderPayload = event.payload?.order?.entity;
-    const orderId = payment?.order_id || orderPayload?.id;
-    const paymentId = payment?.id;
+  const event = JSON.parse(raw);
+  const payment = event.payload?.payment?.entity;
+  const orderId = payment?.order_id;
+  if (!orderId) return Response.json({ received: true });
 
-    if (!orderId) {
-      return Response.json({ received: true });
-    }
+  const order = await prisma.order.findUnique({
+    where: { razorpayOrderId: orderId },
+    include: { items: true },
+  });
+  if (!order) return Response.json({ received: true });
 
-    if (event.event === 'payment.captured' || event.event === 'order.paid') {
-      console.log(`[Webhook] Processing ${event.event} for Razorpay order: ${orderId}`);
-      await fulfillOrder({
-        razorpayOrderId: orderId,
-        razorpayPaymentId: paymentId,
-        razorpaySignature: 'VERIFIED_VIA_RAZORPAY_WEBHOOK',
+  if (event.event === 'payment.captured' && order.status !== 'PAID') {
+    await prisma.$transaction(async (tx) => {
+      await tx.order.update({
+        where: { id: order.id },
+        data: { status: 'PAID', paymentStatus: 'CAPTURED', razorpayPaymentId: payment.id },
       });
-    }
+      for (const item of order.items) {
+        const access = await tx.productAccess.upsert({
+          where: { userId_productId: { userId: order.userId, productId: item.productId } },
+          update: { accessType: 'PURCHASE' },
+          create: { userId: order.userId, productId: item.productId, accessType: 'PURCHASE' },
+        });
 
-    if (event.event === 'payment.failed') {
-      const order = await prisma.order.findUnique({
-        where: { razorpayOrderId: orderId },
-      });
-      if (order && order.status !== 'PAID') {
-        await prisma.order.update({
-          where: { id: order.id },
-          data: { status: 'FAILED', paymentStatus: 'FAILED' },
+        await tx.download.create({
+          data: {
+            userId: order.userId,
+            productId: item.productId,
+            accessId: access.id,
+          },
         });
       }
-    }
+    });
 
-    if (event.event === 'refund.processed') {
-      const order = await prisma.order.findUnique({
-        where: { razorpayOrderId: orderId },
-      });
-      if (order) {
-        await prisma.order.update({
-          where: { id: order.id },
-          data: { status: 'REFUNDED', paymentStatus: 'REFUNDED' },
-        });
-      }
-    }
-  } catch (err) {
-    console.error('[Webhook] Error processing event:', err);
+    // Send order confirmation & zip downloads email
+    await sendOrderDeliveryEmail(order.id).catch((err) => console.error('Webhook order email error:', err));
+  }
+
+  if (event.event === 'payment.failed') {
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { status: 'FAILED', paymentStatus: 'FAILED' },
+    });
+  }
+
+  if (event.event === 'refund.processed') {
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { status: 'REFUNDED', paymentStatus: 'REFUNDED' },
+    });
   }
 
   return Response.json({ received: true });

@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { verifyPaymentSignature, getRazorpay } from '@/lib/payments/razorpay';
-import { fulfillOrder } from '@/lib/orders';
+import { sendOrderDeliveryEmail } from '@/lib/email';
 
 export async function POST(request) {
   try {
@@ -14,12 +14,12 @@ export async function POST(request) {
       return Response.json({ error: 'MISSING_PAYMENT_DETAILS' }, { status: 400 });
     }
 
-    let cleanOrderId = rawOrderId ? String(rawOrderId).trim() : '';
+    const cleanOrderId = rawOrderId ? String(rawOrderId).trim() : '';
     const cleanPaymentId = rawPaymentId ? String(rawPaymentId).trim() : '';
     const cleanSignature = rawSignature ? String(rawSignature).trim() : '';
 
     // 1. Locate corresponding order in database
-    let order = await prisma.order.findFirst({
+    const order = await prisma.order.findFirst({
       where: {
         OR: [
           ...(cleanOrderId ? [{ razorpayOrderId: cleanOrderId }] : []),
@@ -28,23 +28,6 @@ export async function POST(request) {
       },
       include: { items: true, user: true },
     });
-
-    // Fallback: If not found in DB by cleanOrderId, fetch payment from Razorpay to get its actual order_id
-    let fetchedPayment = null;
-    if (!order && cleanPaymentId) {
-      try {
-        fetchedPayment = await getRazorpay().payments.fetch(cleanPaymentId);
-        if (fetchedPayment?.order_id) {
-          cleanOrderId = fetchedPayment.order_id;
-          order = await prisma.order.findUnique({
-            where: { razorpayOrderId: cleanOrderId },
-            include: { items: true, user: true },
-          });
-        }
-      } catch (err) {
-        console.error('Fallback Razorpay payment fetch failed:', err);
-      }
-    }
 
     if (!order) {
       console.error('Order not found in DB:', { cleanOrderId, cleanPaymentId });
@@ -70,7 +53,7 @@ export async function POST(request) {
     if (!isValid && cleanPaymentId) {
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
-          const payment = fetchedPayment || (await getRazorpay().payments.fetch(cleanPaymentId));
+          const payment = await getRazorpay().payments.fetch(cleanPaymentId);
           if (payment) {
             const matchesOrder =
               !payment.order_id ||
@@ -110,18 +93,45 @@ export async function POST(request) {
       return Response.json({ error: 'PAYMENT_VERIFICATION_FAILED' }, { status: 400 });
     }
 
-    // 4. Fulfill order: updates to PAID, grants access, and dispatches download delivery email
-    const fulfillment = await fulfillOrder({
-      orderId: order.id,
-      razorpayPaymentId: cleanPaymentId,
-      razorpaySignature: cleanSignature || 'VERIFIED_VIA_RAZORPAY_API',
+    // 4. Update order to PAID, grant product access and log download delivery
+    const paid = await prisma.$transaction(async (tx) => {
+      const updated = await tx.order.update({
+        where: { id: order.id },
+        data: {
+          status: 'PAID',
+          paymentStatus: 'CAPTURED',
+          ...(cleanPaymentId ? { razorpayPaymentId: cleanPaymentId } : {}),
+          razorpaySignature: cleanSignature || 'VERIFIED_VIA_RAZORPAY_API',
+        },
+      });
+
+      for (const item of order.items) {
+        const access = await tx.productAccess.upsert({
+          where: { userId_productId: { userId: order.userId, productId: item.productId } },
+          update: { accessType: 'PURCHASE' },
+          create: { userId: order.userId, productId: item.productId, accessType: 'PURCHASE' },
+        });
+
+        await tx.download.create({
+          data: {
+            userId: order.userId,
+            productId: item.productId,
+            accessId: access.id,
+          },
+        });
+      }
+
+      return updated;
     });
 
-    if (!fulfillment.success) {
-      return Response.json({ error: 'FULFILLMENT_FAILED' }, { status: 500 });
+    // 5. Deliver product zip download links directly to customer email via Resend
+    try {
+      await sendOrderDeliveryEmail(paid.id);
+    } catch (emailErr) {
+      console.error('Failed to send order email:', emailErr);
     }
 
-    return Response.json({ success: true, orderNumber: fulfillment.order.orderNumber });
+    return Response.json({ success: true, orderNumber: paid.orderNumber });
   } catch (error) {
     console.error('Payment verification top-level error:', error);
     return Response.json({ error: 'PAYMENT_VERIFICATION_FAILED' }, { status: 400 });
