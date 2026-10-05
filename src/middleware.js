@@ -2,6 +2,18 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 
 export async function middleware(request) {
+  const host = request.headers.get('host') || '';
+
+  // Canonical domain redirect: ensure all *.vercel.app domains redirect to davinciwalebhaiya.com
+  // so Razorpay's registered domain validation always matches and never gets blocked
+  if (host.includes('vercel.app')) {
+    const canonicalUrl = request.nextUrl.clone();
+    canonicalUrl.host = 'davinciwalebhaiya.com';
+    canonicalUrl.protocol = 'https:';
+    canonicalUrl.port = '';
+    return NextResponse.redirect(canonicalUrl, 308);
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   });
