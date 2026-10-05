@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import {
   PanelsTopBottom,
   Save,
@@ -17,8 +16,6 @@ import {
   RefreshCw,
   Sparkles,
   Link as LinkIcon,
-  Edit3,
-  BookOpen,
 } from 'lucide-react';
 import { AdminLayout, useAdmin } from '../AdminShell';
 import { DEFAULT_FOOTER_SETTINGS } from '@/lib/footer';
@@ -346,28 +343,6 @@ export default function FooterSettingsPage() {
         {/* Tab 3: Directory Navigation Links */}
         {activeTab === 'links' && (
           <div className="grid gap-6 lg:grid-cols-3">
-            {/* Quick Action Banner to Page Content Editor */}
-            <div className="lg:col-span-3 p-4 rounded-2xl bg-blue-950/20 border border-blue-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                  <BookOpen className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-semibold text-white">Need to edit the text inside these linked pages?</h4>
-                  <p className="text-[11px] text-white/50">
-                    Customize legal clauses, terms, privacy policies, return rules, and about text directly in the Page Content Editor.
-                  </p>
-                </div>
-              </div>
-              <Link
-                href="/admin/pages"
-                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 w-fit shrink-0"
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-                <span>Open Page Content Editor &rarr;</span>
-              </Link>
-            </div>
-
             {/* Products Column */}
             <div className="rounded-2xl border border-white/[0.08] bg-[#0a0f1b] p-5 space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
@@ -385,7 +360,7 @@ export default function FooterSettingsPage() {
 
               <div className="space-y-2.5">
                 {(form.productsLinks || []).map((item, idx) => (
-                  <div key={idx} className="flex items-start gap-2 p-2.5 rounded-xl bg-black/40 border border-white/[0.06]">
+                  <div key={idx} className="flex items-center gap-2 p-2 rounded-xl bg-black/40 border border-white/[0.06]">
                     <div className="flex-1 space-y-1">
                       <input
                         type="text"
@@ -405,7 +380,7 @@ export default function FooterSettingsPage() {
                     <button
                       type="button"
                       onClick={() => handleRemoveLink('productsLinks', idx)}
-                      className="p-1.5 text-white/30 hover:text-red-400 transition-colors shrink-0"
+                      className="p-1.5 text-white/30 hover:text-red-400 transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -431,7 +406,7 @@ export default function FooterSettingsPage() {
 
               <div className="space-y-2.5">
                 {(form.companyLinks || []).map((item, idx) => (
-                  <div key={idx} className="flex items-start gap-2 p-2.5 rounded-xl bg-black/40 border border-white/[0.06]">
+                  <div key={idx} className="flex items-center gap-2 p-2 rounded-xl bg-black/40 border border-white/[0.06]">
                     <div className="flex-1 space-y-1">
                       <input
                         type="text"
@@ -447,22 +422,11 @@ export default function FooterSettingsPage() {
                         onChange={(e) => handleLinkChange('companyLinks', idx, 'href', e.target.value)}
                         className="w-full bg-transparent text-[11px] font-mono text-white/50 outline-none focus:text-white"
                       />
-                      {item.href?.startsWith('/') && !item.href.includes('#') && (
-                        <div className="pt-1">
-                          <Link
-                            href={`/admin/pages?slug=${item.href.replace('/', '')}`}
-                            className="inline-flex items-center gap-1 text-[10px] text-blue-400 hover:text-blue-300 font-mono"
-                          >
-                            <Edit3 className="w-3 h-3" />
-                            <span>Edit Page Content &rarr;</span>
-                          </Link>
-                        </div>
-                      )}
                     </div>
                     <button
                       type="button"
                       onClick={() => handleRemoveLink('companyLinks', idx)}
-                      className="p-1.5 text-white/30 hover:text-red-400 transition-colors shrink-0"
+                      className="p-1.5 text-white/30 hover:text-red-400 transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -488,7 +452,7 @@ export default function FooterSettingsPage() {
 
               <div className="space-y-2.5">
                 {(form.legalLinks || []).map((item, idx) => (
-                  <div key={idx} className="flex items-start gap-2 p-2.5 rounded-xl bg-black/40 border border-white/[0.06]">
+                  <div key={idx} className="flex items-center gap-2 p-2 rounded-xl bg-black/40 border border-white/[0.06]">
                     <div className="flex-1 space-y-1">
                       <input
                         type="text"
@@ -504,22 +468,11 @@ export default function FooterSettingsPage() {
                         onChange={(e) => handleLinkChange('legalLinks', idx, 'href', e.target.value)}
                         className="w-full bg-transparent text-[11px] font-mono text-white/50 outline-none focus:text-white"
                       />
-                      {item.href?.startsWith('/') && !item.href.includes('#') && (
-                        <div className="pt-1">
-                          <Link
-                            href={`/admin/pages?slug=${item.href.replace('/', '')}`}
-                            className="inline-flex items-center gap-1 text-[10px] text-amber-400 hover:text-amber-300 font-mono"
-                          >
-                            <Edit3 className="w-3 h-3" />
-                            <span>Edit Page Content &rarr;</span>
-                          </Link>
-                        </div>
-                      )}
                     </div>
                     <button
                       type="button"
                       onClick={() => handleRemoveLink('legalLinks', idx)}
-                      className="p-1.5 text-white/30 hover:text-red-400 transition-colors shrink-0"
+                      className="p-1.5 text-white/30 hover:text-red-400 transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

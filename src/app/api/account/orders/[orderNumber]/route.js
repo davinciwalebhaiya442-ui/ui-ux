@@ -26,7 +26,35 @@ export async function GET(request, { params }) {
       return Response.json({ error: 'ORDER_NOT_FOUND' }, { status: 404 });
     }
 
-    // If order is not paid, require authenticated owner
+    // Auto-reconciliation: If order is still PENDING, verify directly with Razorpay
+    if (order.status !== 'PAID' && order.razorpayOrderId) {
+      try {
+        const { getRazorpay } = await import('@/lib/payments/razorpay');
+        const { fulfillOrder } = await import('@/lib/orders');
+        const payments = await getRazorpay().orders.fetchPayments(order.razorpayOrderId);
+        const captured = payments?.items?.find((p) => p.status === 'captured');
+        if (captured) {
+          const fulfillment = await fulfillOrder({
+            orderId: order.id,
+            razorpayPaymentId: captured.id,
+            razorpaySignature: 'AUTO_RECONCILED_ON_ORDER_VIEW',
+          });
+          if (fulfillment.success) {
+            order = await prisma.order.findUnique({
+              where: { orderNumber },
+              include: {
+                items: true,
+                user: { select: { email: true, name: true } },
+              },
+            });
+          }
+        }
+      } catch (checkErr) {
+        console.warn('[OrderLookup] Razorpay check error:', checkErr?.message || checkErr);
+      }
+    }
+
+    // If order is still not paid, require authenticated owner
     if (order.status !== 'PAID') {
       const authUser = await getAuthenticatedUser().catch(() => null);
       if (!authUser || authUser.id !== order.userId) {

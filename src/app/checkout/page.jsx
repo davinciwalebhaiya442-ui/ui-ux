@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import {
   ShieldCheck,
@@ -21,6 +21,18 @@ export default function CheckoutPage() {
   const [paying, setPaying] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('info');
+  const pollingTimerRef = useRef(null);
+
+  const stopPolling = () => {
+    if (pollingTimerRef.current) {
+      clearInterval(pollingTimerRef.current);
+      pollingTimerRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => stopPolling();
+  }, []);
 
   const slug =
     typeof window !== 'undefined'
@@ -97,13 +109,44 @@ export default function CheckoutPage() {
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       script.onload = () => {
+        const orderNumber = data.order.orderNumber;
+        const razorpayOrderId = data.order.razorpayOrderId;
+
+        // Background polling to catch UPI intent payments automatically
+        const startPolling = () => {
+          stopPolling();
+          let pollAttempts = 0;
+          pollingTimerRef.current = setInterval(async () => {
+            pollAttempts++;
+            try {
+              const res = await fetch(
+                `/api/checkout/status?orderNumber=${encodeURIComponent(orderNumber)}&razorpayOrderId=${encodeURIComponent(razorpayOrderId)}`
+              );
+              if (res.ok) {
+                const statusData = await res.json();
+                if (statusData.status === 'PAID') {
+                  stopPolling();
+                  setMessage('Payment confirmed! Redirecting to your download page...');
+                  setMessageType('success');
+                  window.location.href = `/order/success?order=${encodeURIComponent(orderNumber)}`;
+                }
+              }
+            } catch {}
+
+            // Stop polling after 90 seconds
+            if (pollAttempts > 45) {
+              stopPolling();
+            }
+          }, 2000);
+        };
+
         const checkout = new window.Razorpay({
           key: data.keyId,
           amount: data.order.amount,
           currency: data.order.currency,
           name: 'DavinciWaleBhaiya',
           description: product.name,
-          order_id: data.order.razorpayOrderId,
+          order_id: razorpayOrderId,
           prefill: {
             email: cleanEmail,
             name: name.trim() || '',
@@ -112,6 +155,7 @@ export default function CheckoutPage() {
             color: '#2563eb',
           },
           handler: async (response) => {
+            stopPolling();
             setMessage('Verifying payment and sending file to your email...');
             setMessageType('info');
 
@@ -159,12 +203,36 @@ export default function CheckoutPage() {
             }
           },
           modal: {
-            ondismiss: () => {
-              setPaying(false);
-              setMessage('');
+            ondismiss: async () => {
+              setMessage('Checking if bank / UPI payment completed...');
+              setMessageType('info');
+
+              try {
+                const res = await fetch(
+                  `/api/checkout/status?orderNumber=${encodeURIComponent(orderNumber)}&razorpayOrderId=${encodeURIComponent(razorpayOrderId)}`
+                );
+                if (res.ok) {
+                  const statusData = await res.json();
+                  if (statusData.status === 'PAID') {
+                    stopPolling();
+                    setMessage('Payment verified! Redirecting to download package...');
+                    setMessageType('success');
+                    window.location.href = `/order/success?order=${encodeURIComponent(orderNumber)}`;
+                    return;
+                  }
+                }
+              } catch {}
+
+              // Continue polling for 8 more seconds in case UPI payment notification is on its way
+              setTimeout(() => {
+                setPaying(false);
+                setMessage('');
+              }, 6000);
             },
           },
         });
+
+        startPolling();
         checkout.open();
       };
 
