@@ -11,7 +11,7 @@ export default function StudioSection() {
     name: '',
     email: '',
     requestType: 'Feature / Commercial Color Grading',
-    budget: '$3,000 – $7,500',
+    budget: 'Under ₹500',
     details: '',
     portfolio: '',
   });
@@ -42,7 +42,7 @@ export default function StudioSection() {
         name: '',
         email: '',
         requestType: 'Feature / Commercial Color Grading',
-        budget: '$3,000 – $7,500',
+        budget: 'Under ₹500',
         details: '',
         portfolio: '',
       });
