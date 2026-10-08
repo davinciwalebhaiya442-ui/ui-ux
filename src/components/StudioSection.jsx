@@ -155,10 +155,10 @@ export default function StudioSection() {
                     onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
                     className="w-full bg-[#070b15] border border-white/[0.12] rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 transition-all shadow-inner"
                   >
-                    <option value="Under $2,000">Under $2,000 / ₹1,50,000</option>
-                    <option value="$3,000 – $7,500">$3,000 – $7,500 / ₹2,50,000 – ₹6,00,000</option>
-                    <option value="$7,500 – $15,000">$7,500 – $15,000 / ₹6,00,000 – ₹12,00,000</option>
-                    <option value="$15,000+">$15,000+ / ₹12,00,000+</option>
+                    <option value="Under ₹500">Under ₹500</option>
+                    <option value="Under ₹1,000">Under ₹1,000</option>
+                    <option value="Under ₹2,000">Under ₹2,000</option>
+                    <option value="₹5,000+">₹5,000+</option>
                   </select>
                 </div>
               </div>
