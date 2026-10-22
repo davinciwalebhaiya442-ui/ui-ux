@@ -76,8 +76,8 @@ export async function DELETE(request, { params }) {
   if (!product) return Response.json({ error: 'Product not found' }, { status: 404 });
 
   try {
-    if (product.downloadFileKey) {
-      await deleteAsset(product.downloadFileKey);
+    if (product.downloadFileKey && !product.downloadFileKey.startsWith('http://') && !product.downloadFileKey.startsWith('https://')) {
+      await deleteAsset(product.downloadFileKey).catch(() => {});
     }
 
     await prisma.product.update({

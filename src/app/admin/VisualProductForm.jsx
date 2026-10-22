@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Trash2, FileArchive, UploadCloud, CheckCircle2, File, RefreshCw, X } from 'lucide-react';
+import { Trash2, FileArchive, UploadCloud, CheckCircle2, File, RefreshCw, X, ExternalLink, Link2, HardDrive } from 'lucide-react';
 import { AdminLayout, ProductThumb, useAdmin } from './AdminShell';
 import MediaManager from '@/components/admin/MediaManager';
 import { notifyProductsUpdated } from '@/lib/events';
@@ -35,6 +35,16 @@ export default function VisualProductForm({ product }) {
   const [saving, setSaving] = useState(false);
   const [fileUploading, setFileUploading] = useState(false);
   const [pendingFile, setPendingFile] = useState(null);
+  const [deliveryMode, setDeliveryMode] = useState(() => {
+    const key = product?.downloadFileKey || '';
+    return key.startsWith('http://') || key.startsWith('https://') ? 'drive' : 'r2';
+  });
+  const [driveLinkInput, setDriveLinkInput] = useState(() => {
+    const key = product?.downloadFileKey || '';
+    return key.startsWith('http://') || key.startsWith('https://') ? key : '';
+  });
+  const [driveNameInput, setDriveNameInput] = useState(() => product?.downloadFileName || '');
+  const [driveSizeInput, setDriveSizeInput] = useState(() => product?.fileSize || '150 MB');
   const [form, setForm] = useState(() => ({
     name: '',
     slug: '',
@@ -116,20 +126,55 @@ export default function VisualProductForm({ product }) {
     }
   };
 
-  const handleFileDelete = async () => {
-    const id = product?.dbId || product?.id;
-    if (!id) {
-      setPendingFile(null);
+  const handleSaveDriveLink = () => {
+    const link = (driveLinkInput || '').trim();
+    if (!link) {
+      toast('Please enter a valid Google Drive or cloud link', 'error');
+      return;
+    }
+    if (!link.startsWith('http://') && !link.startsWith('https://')) {
+      toast('Link must start with https:// or http://', 'error');
       return;
     }
 
+    const friendlyName = (driveNameInput || '').trim() || `${form.name || 'Digital Package'} (Google Drive)`;
+    const friendlySize = (driveSizeInput || '').trim() || '150 MB';
+
+    setForm((prev) => ({
+      ...prev,
+      downloadFileKey: link,
+      downloadFileName: friendlyName,
+      fileSize: friendlySize,
+      downloadFileSize: 157286400, // 150MB approx
+    }));
+
+    toast('Google Drive link attached successfully! Remember to click Save/Publish.', 'success');
+  };
+
+  const handleFileDelete = async () => {
+    const id = product?.dbId || product?.id;
+    const isUrl = form.downloadFileKey?.startsWith('http://') || form.downloadFileKey?.startsWith('https://');
+
     const ok = await confirm({
-      title: 'Remove Digital Asset File?',
-      message: `Are you sure you want to remove "${form.downloadFileName || 'the downloadable file'}"? Customers will not be able to download this asset until a new file is uploaded.`,
-      confirmText: 'Remove File',
+      title: isUrl ? 'Remove Google Drive Link?' : 'Remove Digital Asset File?',
+      message: `Are you sure you want to remove "${form.downloadFileName || 'the downloadable package'}"? Customers will not be able to download this asset until a new file or link is attached.`,
+      confirmText: 'Remove',
       destructive: true,
     });
     if (!ok) return;
+
+    if (!id || isUrl) {
+      setPendingFile(null);
+      setForm((prev) => ({
+        ...prev,
+        downloadFileKey: '',
+        downloadFileName: '',
+        downloadFileSize: null,
+      }));
+      setDriveLinkInput('');
+      toast('Download package removed', 'success');
+      return;
+    }
 
     try {
       const res = await fetch(`/api/admin/products/${encodeURIComponent(id)}/file`, {
@@ -140,8 +185,8 @@ export default function VisualProductForm({ product }) {
 
       setForm((prev) => ({
         ...prev,
-        downloadFileKey: null,
-        downloadFileName: null,
+        downloadFileKey: '',
+        downloadFileName: '',
         downloadFileSize: null,
       }));
       toast('Download file removed', 'success');
@@ -404,24 +449,85 @@ export default function VisualProductForm({ product }) {
           <section className="rounded-2xl border border-white/[.08] bg-[#0a0f1b] p-5">
             <p className="mb-5 font-mono text-[10px] uppercase tracking-widest text-white/35">Media & Delivery</p>
             
-            {/* DIGITAL ASSET DOWNLOAD FILE (CLOUDFLARE R2) */}
+            {/* DIGITAL ASSET DOWNLOAD FILE (CLOUDFLARE R2 OR GOOGLE DRIVE) */}
             <div className="mb-6 rounded-xl border border-blue-500/20 bg-gradient-to-b from-[#0c1426] to-[#070b16] p-5 shadow-lg">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <FileArchive className="w-4 h-4 text-blue-400" />
                   <span className="text-xs font-bold uppercase tracking-wider text-white">
-                    Downloadable Package File (Zip / DCTL / Tool)
+                    Downloadable Package (Google Drive / Zip / Tool)
                   </span>
                 </div>
-                <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-md font-semibold">
-                  Cloudflare R2 Storage
+                <span className={`text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-md font-semibold ${
+                  form.downloadFileKey?.startsWith('http')
+                    ? 'text-emerald-400 bg-emerald-500/15 border border-emerald-500/30'
+                    : 'text-blue-400 bg-blue-500/15 border border-blue-500/30'
+                }`}>
+                  {form.downloadFileKey?.startsWith('http') ? 'Google Drive / Cloud Delivery' : 'Cloudflare R2 Storage'}
                 </span>
               </div>
               <p className="text-xs text-white/60 mb-4 leading-relaxed font-sans">
-                Upload the actual digital file (.zip, .dctl, .drx, .setting, .cube, .rar, .pkg) that customers will download after purchasing or claiming this asset.
+                Choose how buyers will receive their files: either attach a <strong>Google Drive link (ideal for 150+ MB heavy packages)</strong> or upload a direct .zip file.
               </p>
 
-              {form.downloadFileKey || form.downloadFileName ? (
+              {form.downloadFileKey?.startsWith('http://') || form.downloadFileKey?.startsWith('https://') ? (
+                /* GOOGLE DRIVE / EXTERNAL LINK ACTIVE CARD */
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-[#09151c] border border-emerald-500/30 shadow-inner">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 flex-shrink-0">
+                      <ExternalLink className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold text-white truncate font-mono flex items-center gap-2">
+                        <span>{form.downloadFileName || 'Google Drive Cloud Asset'}</span>
+                        <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded font-sans font-semibold">
+                          Google Drive Link
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-white/60 font-mono mt-0.5 truncate max-w-md">
+                        {form.downloadFileKey}
+                      </div>
+                      <div className="text-[11px] text-white/40 font-mono mt-0.5">
+                        {form.fileSize || '150 MB'} &bull; <span className="text-emerald-400 font-sans font-medium">Delivered to buyers on payment</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <a
+                      href={form.downloadFileKey}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 text-xs font-semibold text-emerald-200 transition-colors border border-emerald-500/30"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Test Link</span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDriveLinkInput(form.downloadFileKey);
+                        setDriveNameInput(form.downloadFileName || '');
+                        setDriveSizeInput(form.fileSize || '150 MB');
+                        setDeliveryMode('drive');
+                        setForm((prev) => ({ ...prev, downloadFileKey: '', downloadFileName: '' }));
+                      }}
+                      className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition-colors border border-white/15"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleFileDelete}
+                      className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-colors"
+                      title="Remove link"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ) : form.downloadFileKey || form.downloadFileName ? (
+                /* R2 DIRECT FILE ACTIVE CARD */
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-[#091020] border border-blue-400/30 shadow-inner">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-10 h-10 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 flex-shrink-0">
@@ -434,7 +540,7 @@ export default function VisualProductForm({ product }) {
                       <div className="text-[11px] text-white/50 font-mono mt-0.5">
                         {form.downloadFileSize ? `${(form.downloadFileSize / (1024 * 1024)).toFixed(2)} MB` : form.fileSize || 'Ready for download'}
                         {' '}&bull;{' '}
-                        <span className="text-emerald-400 font-sans font-medium">Secured & Active</span>
+                        <span className="text-emerald-400 font-sans font-medium">Secured & Active in R2</span>
                       </div>
                     </div>
                   </div>
@@ -466,49 +572,139 @@ export default function VisualProductForm({ product }) {
                   </div>
                 </div>
               ) : (
+                /* NO FILE ATTACHED - TABS TO CHOOSE DELIVERY MODE */
                 <div>
-                  <label
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      const file = e.dataTransfer.files?.[0];
-                      if (file) handleFileUpload(file);
-                    }}
-                    className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all ${
-                      fileUploading
-                        ? 'border-blue-400/50 bg-blue-500/10'
-                        : 'border-white/15 hover:border-blue-400/50 bg-[#060b18]/60 hover:bg-[#070d1e]'
-                    }`}
-                  >
-                    <input
-                      type="file"
-                      className="hidden"
-                      disabled={fileUploading}
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
+                  <div className="flex items-center gap-2 mb-3 border-b border-white/10 pb-3">
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryMode('drive')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                        deliveryMode === 'drive'
+                          ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
+                          : 'bg-white/5 hover:bg-white/10 border border-white/10 text-white/60'
+                      }`}
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Google Drive Link (For 150+ MB)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryMode('r2')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                        deliveryMode === 'r2'
+                          ? 'bg-blue-500/20 border border-blue-500/40 text-blue-300 shadow-[0_0_12px_rgba(37,99,235,0.2)]'
+                          : 'bg-white/5 hover:bg-white/10 border border-white/10 text-white/60'
+                      }`}
+                    >
+                      <UploadCloud className="w-3.5 h-3.5 text-blue-400" />
+                      <span>Direct File Upload (.zip to R2)</span>
+                    </button>
+                  </div>
+
+                  {deliveryMode === 'drive' ? (
+                    /* GOOGLE DRIVE LINK INPUT SECTION */
+                    <div className="p-4 rounded-xl bg-[#060e18] border border-emerald-500/30 space-y-3 shadow-inner">
+                      <div>
+                        <label className="block text-xs font-semibold text-emerald-300 mb-1">
+                          Google Drive Link (Required) *
+                        </label>
+                        <input
+                          type="url"
+                          placeholder="https://drive.google.com/file/d/..."
+                          value={driveLinkInput}
+                          onChange={(e) => setDriveLinkInput(e.target.value)}
+                          className="w-full rounded-xl border border-white/15 bg-[#091020] px-3.5 py-2.5 text-xs text-white placeholder-white/30 outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/30"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-medium text-white/70 mb-1">
+                            Package Display Name (In Email / Library)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Master LUTs & Assets Pack"
+                            value={driveNameInput}
+                            onChange={(e) => setDriveNameInput(e.target.value)}
+                            className="w-full rounded-xl border border-white/15 bg-[#091020] px-3.5 py-2 text-xs text-white placeholder-white/30 outline-none focus:border-emerald-400"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-medium text-white/70 mb-1">
+                            File Size (e.g. 150 MB)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="150 MB"
+                            value={driveSizeInput}
+                            onChange={(e) => setDriveSizeInput(e.target.value)}
+                            className="w-full rounded-xl border border-white/15 bg-[#091020] px-3.5 py-2 text-xs text-white placeholder-white/30 outline-none focus:border-emerald-400"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-200/90 leading-relaxed font-sans">
+                        💡 <strong>Google Drive Tip:</strong> Google Drive par file upload karke Share setting ko <strong>&ldquo;Anyone with the link can view&rdquo;</strong> set karein, taaki buyer link par click karte hi bina access permission maange direct file download kar sake.
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleSaveDriveLink}
+                        disabled={!driveLinkInput.trim()}
+                        className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold text-white shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all flex items-center justify-center gap-2"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Attach Google Drive Package</span>
+                      </button>
+                    </div>
+                  ) : (
+                    /* R2 DRAG & DROP FILE UPLOAD SECTION */
+                    <label
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const file = e.dataTransfer.files?.[0];
                         if (file) handleFileUpload(file);
-                        e.target.value = '';
                       }}
-                    />
-                    <div className="w-12 h-12 rounded-full bg-blue-500/10 border border-blue-500/25 flex items-center justify-center text-blue-400 mb-3 shadow-[0_0_15px_rgba(37,99,235,0.25)]">
-                      {fileUploading ? (
-                        <RefreshCw className="w-6 h-6 animate-spin text-blue-300" />
-                      ) : (
-                        <UploadCloud className="w-6 h-6" />
-                      )}
-                    </div>
-                    <div className="text-xs font-semibold text-white mb-1">
-                      {fileUploading
-                        ? 'Uploading file to Cloudflare R2...'
-                        : pendingFile
-                        ? `Selected: ${pendingFile.name}`
-                        : 'Click to upload or drag & drop package file here'}
-                    </div>
-                    <div className="text-[11px] text-white/40 font-mono">
-                      Accepts .ZIP, .DCTL, .DRX, .SETTING, .CUBE, .RAR, .PKG, .DMG
-                    </div>
-                  </label>
-                  {!product?.dbId && !product?.id && (
+                      className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all ${
+                        fileUploading
+                          ? 'border-blue-400/50 bg-blue-500/10'
+                          : 'border-white/15 hover:border-blue-400/50 bg-[#060b18]/60 hover:bg-[#070d1e]'
+                      }`}
+                    >
+                      <input
+                        type="file"
+                        className="hidden"
+                        disabled={fileUploading}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleFileUpload(file);
+                          e.target.value = '';
+                        }}
+                      />
+                      <div className="w-12 h-12 rounded-full bg-blue-500/10 border border-blue-500/25 flex items-center justify-center text-blue-400 mb-3 shadow-[0_0_15px_rgba(37,99,235,0.25)]">
+                        {fileUploading ? (
+                          <RefreshCw className="w-6 h-6 animate-spin text-blue-300" />
+                        ) : (
+                          <UploadCloud className="w-6 h-6" />
+                        )}
+                      </div>
+                      <div className="text-xs font-semibold text-white mb-1">
+                        {fileUploading
+                          ? 'Uploading file to Cloudflare R2...'
+                          : pendingFile
+                          ? `Selected: ${pendingFile.name}`
+                          : 'Click to upload or drag & drop package file here'}
+                      </div>
+                      <div className="text-[11px] text-white/40 font-mono">
+                        Accepts .ZIP, .DCTL, .DRX, .SETTING, .CUBE, .RAR, .PKG, .DMG
+                      </div>
+                    </label>
+                  )}
+
+                  {!product?.dbId && !product?.id && deliveryMode === 'r2' && (
                     <p className="mt-2 text-[11px] text-amber-300/80 font-mono">
                       * Note: You can select your file now; it will automatically upload to Cloudflare R2 when you click Publish or Save Draft.
                     </p>

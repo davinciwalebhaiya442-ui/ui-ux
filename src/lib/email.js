@@ -41,21 +41,46 @@ export async function sendEmail({ to, subject, html }) {
 }
 
 export function renderOrderDownloadEmail({ orderNumber, itemsWithDownloads, siteUrl }) {
-  const downloadItemsHtml = itemsWithDownloads.map((item) => `
+  const downloadItemsHtml = itemsWithDownloads.map((item) => {
+    const isDrive = Boolean(item.isDrive || (item.downloadUrl && item.downloadUrl.includes('drive.google.com')));
+    const isExternal = Boolean(item.isExternal || (item.downloadUrl && (item.downloadUrl.startsWith('http://') || item.downloadUrl.startsWith('https://')) && !item.downloadUrl.includes('r2.cloudflarestorage.com')));
+    
+    let btnText = 'Download Zip Package &rarr;';
+    let btnBg = '#2563eb';
+    let btnShadow = 'rgba(37,99,235,0.4)';
+    let archiveLabel = item.fileName || 'Archive.zip';
+
+    if (isDrive) {
+      btnText = 'Access on Google Drive &rarr;';
+      btnBg = '#16a34a';
+      btnShadow = 'rgba(22,163,74,0.4)';
+      archiveLabel = item.fileName || 'Google Drive Cloud Package (150+ MB)';
+    } else if (isExternal) {
+      btnText = 'Access Digital Package &rarr;';
+      btnBg = '#0284c7';
+      btnShadow = 'rgba(2,132,199,0.4)';
+      archiveLabel = item.fileName || 'Cloud Storage Package';
+    }
+
+    return `
     <div style="background-color: #0b1120; border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 20px; margin-bottom: 16px;">
-      <h3 style="margin: 0 0 6px 0; color: #ffffff; font-size: 16px; font-weight: 600;">${item.name}</h3>
+      <div style="margin-bottom: 6px;">
+        <h3 style="margin: 0; color: #ffffff; font-size: 16px; font-weight: 600; display: inline-block;">${item.name}</h3>
+        ${isDrive ? `<span style="display: inline-block; font-size: 10px; background-color: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.35); color: #4ade80; padding: 2px 7px; border-radius: 4px; font-weight: 700; margin-left: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Google Drive</span>` : ''}
+      </div>
       <p style="margin: 0 0 16px 0; color: #94a3b8; font-size: 13px;">
-        File Archive: <strong style="color: #cbd5e1;">${item.fileName || 'Archive.zip'}</strong> ${item.fileSize ? `&bull; ${item.fileSize}` : ''}
+        File Archive: <strong style="color: #cbd5e1;">${archiveLabel}</strong> ${item.fileSize ? `&bull; ${item.fileSize}` : ''}
       </p>
       ${item.downloadUrl ? `
-        <a href="${item.downloadUrl}" style="display: inline-block; background-color: #2563eb; color: #ffffff; font-weight: 600; font-size: 13px; text-decoration: none; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 14px rgba(37,99,235,0.4);">
-          Download Zip Package &rarr;
+        <a href="${item.downloadUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: ${btnBg}; color: #ffffff; font-weight: 600; font-size: 13px; text-decoration: none; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 14px ${btnShadow};">
+          ${btnText}
         </a>
       ` : `
         <p style="color: #f59e0b; font-size: 12px; margin: 0;">Digital package will be available in your library shortly.</p>
       `}
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   return `
     <!DOCTYPE html>
@@ -123,24 +148,35 @@ export async function sendOrderDeliveryEmail(orderId) {
     for (const item of order.items) {
       const prod = products.find((p) => p.id === item.productId);
       let downloadUrl = null;
+      let isExternal = false;
+      let isDrive = false;
 
       if (prod?.downloadFileKey) {
-        try {
-          downloadUrl = await createSignedDownloadUrl(
-            prod.downloadFileKey,
-            7 * 24 * 3600, // 7 days expiration
-            prod.downloadFileName || `${prod.slug || 'product'}.zip`
-          );
-        } catch (storageErr) {
-          console.error(`Failed to generate signed download URL for product ${prod.id}:`, storageErr);
+        const rawKey = prod.downloadFileKey.trim();
+        if (rawKey.startsWith('http://') || rawKey.startsWith('https://')) {
+          downloadUrl = rawKey;
+          isExternal = true;
+          isDrive = rawKey.includes('drive.google.com');
+        } else {
+          try {
+            downloadUrl = await createSignedDownloadUrl(
+              rawKey,
+              7 * 24 * 3600, // 7 days expiration
+              prod.downloadFileName || `${prod.slug || 'product'}.zip`
+            );
+          } catch (storageErr) {
+            console.error(`Failed to generate signed download URL for product ${prod.id}:`, storageErr);
+          }
         }
       }
 
       itemsWithDownloads.push({
         name: prod?.name || item.productName,
-        fileName: prod?.downloadFileName || `${prod?.slug || 'package'}.zip`,
+        fileName: prod?.downloadFileName || (isDrive ? 'Google Drive Cloud Archive' : `${prod?.slug || 'package'}.zip`),
         fileSize: prod?.fileSize || null,
         downloadUrl,
+        isExternal,
+        isDrive,
       });
     }
 

@@ -44,16 +44,25 @@ export async function GET(request, { params }) {
       order.items.map(async (item) => {
         const prod = products.find((p) => p.id === item.productId);
         let downloadUrl = null;
+        let isExternal = false;
+        let isDrive = false;
 
         if (prod?.downloadFileKey) {
-          try {
-            downloadUrl = await createSignedDownloadUrl(
-              prod.downloadFileKey,
-              3600, // 1 hour for immediate web page download
-              prod.downloadFileName || `${prod.slug || 'product'}.zip`
-            );
-          } catch (e) {
-            console.error('Failed to create signed URL for order item:', e);
+          const rawKey = prod.downloadFileKey.trim();
+          if (rawKey.startsWith('http://') || rawKey.startsWith('https://')) {
+            downloadUrl = rawKey;
+            isExternal = true;
+            isDrive = rawKey.includes('drive.google.com');
+          } else {
+            try {
+              downloadUrl = await createSignedDownloadUrl(
+                rawKey,
+                3600, // 1 hour for immediate web page download
+                prod.downloadFileName || `${prod.slug || 'product'}.zip`
+              );
+            } catch (e) {
+              console.error('Failed to create signed URL for order item:', e);
+            }
           }
         }
 
@@ -63,7 +72,9 @@ export async function GET(request, { params }) {
           productName: item.productName,
           price: item.price,
           downloadUrl,
-          downloadFileName: prod?.downloadFileName || `${prod?.slug || 'package'}.zip`,
+          isExternal,
+          isDrive,
+          downloadFileName: prod?.downloadFileName || (isDrive ? 'Google Drive Cloud Archive' : `${prod?.slug || 'package'}.zip`),
           fileSize: prod?.fileSize || null,
         };
       })

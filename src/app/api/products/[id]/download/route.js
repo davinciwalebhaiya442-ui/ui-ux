@@ -57,10 +57,40 @@ export async function POST(request, { params }) {
       );
     }
 
+    const rawKey = (product.downloadFileKey || '').trim();
+    const isUrl = rawKey.startsWith('http://') || rawKey.startsWith('https://');
+    const isDrive = isUrl && rawKey.includes('drive.google.com');
+    const fileName = product.downloadFileName || (isDrive ? 'Google Drive Cloud Archive' : `${product.slug || 'package'}.zip`);
+
+    if (isUrl) {
+      if (authUser) {
+        try {
+          await ensureProfile(authUser);
+          const accessType = product.type === 'PAID' ? 'PURCHASE' : 'FREE_DOWNLOAD';
+          const access = await prisma.productAccess.upsert({
+            where: { userId_productId: { userId: authUser.id, productId: product.id } },
+            update: {},
+            create: { userId: authUser.id, productId: product.id, accessType },
+          });
+          await prisma.download.create({
+            data: { userId: authUser.id, productId: product.id, accessId: access.id },
+          });
+        } catch (e) {
+          console.warn('Analytics tracking non-fatal error:', e);
+        }
+      }
+
+      return Response.json({
+        url: rawKey,
+        fileName,
+        isExternal: true,
+        isDrive,
+      });
+    }
+
     try {
-      const fileName = product.downloadFileName || `${product.slug || 'package'}.zip`;
       const url = await createSignedDownloadUrl(
-        product.downloadFileKey,
+        rawKey,
         3600, // 1 hour link
         fileName
       );
@@ -87,6 +117,8 @@ export async function POST(request, { params }) {
         url,
         fileName,
         expiresIn: 3600,
+        isExternal: false,
+        isDrive: false,
       });
     } catch (storageErr) {
       console.error('Storage error creating signed download URL:', storageErr);
