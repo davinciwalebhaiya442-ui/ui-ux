@@ -4,7 +4,8 @@ import HomeClient from '@/components/HomeClient';
 import { DEFAULT_HERO_SETTINGS } from '@/lib/hero';
 import { DEFAULT_COMPARISON_SETTINGS } from '@/lib/comparison';
 
-export const dynamic = 'force-dynamic';
+// Cache homepage at Edge CDN with 60s revalidation (drastically saves CPU)
+export const revalidate = 60;
 
 async function getInitialProducts() {
   try {

@@ -40,8 +40,8 @@ export function useProducts(initialProducts = null) {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
     try {
-      const res = await fetch('/api/products?limit=100&_t=' + Date.now(), {
-        cache: 'no-store',
+      const res = await fetch('/api/products?limit=100', {
+        cache: 'default',
       });
       if (!res.ok) return;
       const data = await res.json();
@@ -105,19 +105,11 @@ export function useProducts(initialProducts = null) {
       }
     } catch {}
 
-    // 6. Polling interval: Auto-check every 5 seconds while tab is active
-    const interval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        fetchProducts();
-      }
-    }, 5000);
-
     return () => {
       if (bc) bc.close();
       window.removeEventListener('storage', handleStorage);
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('focus', handleVisibility);
-      clearInterval(interval);
       if (sub) {
         try {
           const supabase = getSupabaseBrowserClient();

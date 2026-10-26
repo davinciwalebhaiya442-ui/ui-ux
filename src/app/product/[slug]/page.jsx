@@ -3,7 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { toFrontendProduct } from '@/lib/product';
 import ProductViewClient from './ProductViewClient';
 
-export const dynamic = 'force-dynamic';
+// Edge ISR caching for individual product pages
+export const revalidate = 60;
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;

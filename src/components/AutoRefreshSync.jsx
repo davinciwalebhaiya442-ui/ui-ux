@@ -62,11 +62,11 @@ export default function AutoRefreshSync() {
     };
     window.addEventListener('storage', onStorage);
 
-    // 3. Cross-device poll (checks if database version changed every 5s)
+    // 3. Database version check (on focus / visibility change, cached at edge)
     const checkVersion = async () => {
-      if (document.hidden) return;
+      if (typeof document !== 'undefined' && document.hidden) return;
       try {
-        const res = await fetch('/api/sync/status?_t=' + Date.now(), { cache: 'no-store' });
+        const res = await fetch('/api/sync/status', { cache: 'default' });
         if (!res.ok) return;
         const data = await res.json();
         const serverVersion = Number(data.version || 0);
@@ -80,9 +80,10 @@ export default function AutoRefreshSync() {
       } catch {}
     };
 
-    const intervalId = setInterval(checkVersion, 5000);
+    // Initial check after 3 seconds so page load is instant
+    const initTimer = setTimeout(checkVersion, 3000);
 
-    // 4. Tab visibility change & focus check
+    // 4. Tab visibility change & focus check (no 5s polling loop)
     const onFocus = () => {
       checkVersion();
     };
@@ -91,7 +92,7 @@ export default function AutoRefreshSync() {
 
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
-      clearInterval(intervalId);
+      if (initTimer) clearTimeout(initTimer);
       if (bc) bc.close();
       if (syncBc) syncBc.close();
       window.removeEventListener('storage', onStorage);

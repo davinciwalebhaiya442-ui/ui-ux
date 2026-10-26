@@ -15,7 +15,7 @@ export async function GET() {
       { comparison: setting || DEFAULT_COMPARISON_SETTINGS },
       {
         headers: {
-          'Cache-Control': 'public, s-maxage=5, stale-while-revalidate=30',
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
         },
       }
     );

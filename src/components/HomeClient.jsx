@@ -98,7 +98,7 @@ export default function HomeClient({
 
   const fetchHeroSettings = useCallback(async () => {
     try {
-      const res = await fetch('/api/hero?_t=' + Date.now(), { cache: 'no-store' });
+      const res = await fetch('/api/hero', { cache: 'default' });
       if (!res.ok) return;
       const data = await res.json();
       if (data.hero) {
@@ -108,7 +108,9 @@ export default function HomeClient({
   }, []);
 
   useEffect(() => {
-    fetchHeroSettings();
+    if (!initialHero) {
+      fetchHeroSettings();
+    }
 
     // Instant cross-tab sync when admin updates hero settings
     let bc = null;

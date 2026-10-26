@@ -39,7 +39,7 @@ export async function GET(request) {
       { products: products.map(toFrontendProduct), pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } },
       {
         headers: {
-          'Cache-Control': 'public, s-maxage=5, stale-while-revalidate=59',
+          'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=300',
         },
       }
     );

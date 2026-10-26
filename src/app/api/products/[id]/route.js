@@ -20,7 +20,14 @@ export async function GET(_request, { params }) {
     return Response.json({ error: 'Product not found' }, { status: 404 });
   }
 
-  return Response.json({ product: toFrontendProduct(product) });
+  return Response.json(
+    { product: toFrontendProduct(product) },
+    {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+      },
+    }
+  );
 }
 
 export async function PATCH(request, { params }) {
