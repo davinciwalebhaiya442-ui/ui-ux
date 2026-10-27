@@ -30,6 +30,7 @@ export const productSchema = z.object({
   downloadFileName: urlOrText,
   downloadFileSize: z.coerce.number().int().min(0).optional().nullable(),
   featured: z.boolean().default(false),
+  featuredOrder: z.coerce.number().int().min(0).default(0),
   published: z.boolean().default(false),
 });
 
@@ -37,6 +38,7 @@ export function toFrontendProduct(product) {
   return {
     ...product,
     dbId: product.id,
+    featuredOrder: Number(product.featuredOrder || 0),
     downloadFileKey: product.downloadFileKey || null,
     downloadFileName: product.downloadFileName || null,
     downloadFileSize: product.downloadFileSize || null,

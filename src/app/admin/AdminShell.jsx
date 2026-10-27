@@ -48,6 +48,7 @@ import {
   Command,
   SlidersHorizontal,
   PanelsTopBottom,
+  Star,
 } from 'lucide-react';
 
 // Context for Toasts & Confirmations
@@ -1080,8 +1081,45 @@ export function ProductList() {
   const [category, setCategory] = useState('');
   const [type, setType] = useState('');
   const [published, setPublished] = useState('');
+  const [featuredFilter, setFeaturedFilter] = useState('');
   const [sort, setSort] = useState('newest');
   const [view, setView] = useState('grid');
+  const [showFeaturedModal, setShowFeaturedModal] = useState(false);
+  const [savingSlots, setSavingSlots] = useState(false);
+  const [selectedSlots, setSelectedSlots] = useState({ 1: '', 2: '', 3: '', 4: '', 5: '' });
+
+  useEffect(() => {
+    if (showFeaturedModal && products.length > 0) {
+      const map = { 1: '', 2: '', 3: '', 4: '', 5: '' };
+      products.forEach((p) => {
+        if (p.featured && p.featuredOrder >= 1 && p.featuredOrder <= 5) {
+          map[p.featuredOrder] = p.dbId || p.id;
+        }
+      });
+      setSelectedSlots(map);
+    }
+  }, [showFeaturedModal, products]);
+
+  const handleSaveSlots = async () => {
+    setSavingSlots(true);
+    try {
+      const res = await fetch('/api/admin/products/featured-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slots: selectedSlots }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update featured slots');
+      toast('Featured slots updated successfully! Homepage updated.', 'success');
+      setShowFeaturedModal(false);
+      notifyProductsUpdated();
+      loadData(true);
+    } catch (err) {
+      toast(err.message, 'error');
+    } finally {
+      setSavingSlots(false);
+    }
+  };
 
   const loadData = async (isBackground = false) => {
     if (!isBackground && products.length === 0) setLoading(true);
@@ -1121,14 +1159,28 @@ export function ProductList() {
       const matchCategory = !category || p.category === category;
       const matchType = !type || p.type.toUpperCase() === type.toUpperCase();
       const matchPublished = published === '' || String(p.published) === published;
-      return matchSearch && matchCategory && matchType && matchPublished;
+      const matchFeatured =
+        !featuredFilter ? true :
+        featuredFilter === 'featured' ? Boolean(p.featured) :
+        featuredFilter === 'slots' ? (Boolean(p.featured) && Number(p.featuredOrder || 0) > 0) : true;
+      return matchSearch && matchCategory && matchType && matchPublished && matchFeatured;
     }).sort((a, b) => {
+      if (sort === 'featured') {
+        const orderA = Number(a.featuredOrder || 0);
+        const orderB = Number(b.featuredOrder || 0);
+        if (orderA > 0 && orderB > 0) return orderA - orderB;
+        if (orderA > 0) return -1;
+        if (orderB > 0) return 1;
+        if (a.featured && !b.featured) return -1;
+        if (!a.featured && b.featured) return 1;
+        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+      }
       if (sort === 'name') return a.name.localeCompare(b.name);
       if (sort === 'price-low') return a.price - b.price;
       if (sort === 'price-high') return b.price - a.price;
       return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
     });
-  }, [products, search, category, type, published, sort]);
+  }, [products, search, category, type, published, featuredFilter, sort]);
 
   // Actions
   const handleDelete = async (id, name) => {
@@ -1214,12 +1266,20 @@ export function ProductList() {
             Total {filtered.length} matching asset{filtered.length === 1 ? '' : 's'} in ecosystem
           </p>
         </div>
-        <Link
-          href="/admin/products/new"
-          className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-xs font-semibold text-black hover:bg-white/90 transition-all shadow-lg"
-        >
-          <Plus className="w-4 h-4" /> Create Product
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={() => setShowFeaturedModal(true)}
+            className="inline-flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 px-4 py-3 text-xs font-semibold text-amber-300 transition-all shadow-md"
+          >
+            <Sparkles className="w-4 h-4 text-amber-400" /> Featured Slots (1-5)
+          </button>
+          <Link
+            href="/admin/products/new"
+            className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-xs font-semibold text-black hover:bg-white/90 transition-all shadow-lg"
+          >
+            <Plus className="w-4 h-4" /> Create Product
+          </Link>
+        </div>
       </div>
 
       {/* Filter & Search Bar */}
@@ -1272,6 +1332,17 @@ export function ProductList() {
           <option value="false" className="bg-black text-white">Draft</option>
         </select>
 
+        {/* Featured Filter */}
+        <select
+          value={featuredFilter}
+          onChange={(e) => setFeaturedFilter(e.target.value)}
+          className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-white/80 outline-none"
+        >
+          <option value="">All Featured</option>
+          <option value="featured" className="bg-black text-white">⭐ Featured Only</option>
+          <option value="slots" className="bg-black text-white">⭐ Pinned Slots (1-5)</option>
+        </select>
+
         {/* Sort */}
         <select
           value={sort}
@@ -1279,6 +1350,7 @@ export function ProductList() {
           className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-white/80 outline-none"
         >
           <option value="newest" className="bg-black text-white">Newest First</option>
+          <option value="featured" className="bg-black text-white">⭐ Featured Slots (1-5)</option>
           <option value="name" className="bg-black text-white">Name A-Z</option>
           <option value="price-low" className="bg-black text-white">Price Low-High</option>
           <option value="price-high" className="bg-black text-white">Price High-Low</option>
@@ -1331,9 +1403,17 @@ export function ProductList() {
                 <div className="p-3">
                   <div className="flex items-center justify-between text-[10px] font-mono mb-2">
                     <span className="uppercase text-blue-400 font-semibold">{p.category}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-[9px] ${p.published ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-white/40'}`}>
-                      {p.published ? 'Published' : 'Draft'}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {p.featured && (
+                        <span className="px-2 py-0.5 rounded-full text-[9px] bg-amber-500/15 text-amber-300 border border-amber-500/30 font-semibold flex items-center gap-1">
+                          <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                          {p.featuredOrder > 0 ? `Slot ${p.featuredOrder}` : 'Featured'}
+                        </span>
+                      )}
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] ${p.published ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-white/40'}`}>
+                        {p.published ? 'Published' : 'Draft'}
+                      </span>
+                    </div>
                   </div>
                   <h3 className="text-base font-bold text-white tracking-tight truncate group-hover:text-blue-300 transition-colors">
                     {p.name}
@@ -1415,9 +1495,17 @@ export function ProductList() {
                     {p.type === 'free' ? 'FREE' : `₹${p.price.toLocaleString()}`}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-mono ${p.published ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-white/40'}`}>
-                      {p.published ? 'Published' : 'Draft'}
-                    </span>
+                    <div className="flex flex-col gap-1 items-start">
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-mono ${p.published ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-white/40'}`}>
+                        {p.published ? 'Published' : 'Draft'}
+                      </span>
+                      {p.featured && (
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1 font-semibold">
+                          <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                          {p.featuredOrder > 0 ? `Slot ${p.featuredOrder}` : 'Featured'}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-5 py-3 text-right">
                     <div className="flex items-center justify-end gap-1.5">
@@ -1455,6 +1543,107 @@ export function ProductList() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Featured Slots (1-5) Ordering Modal */}
+      {showFeaturedModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-2xl rounded-3xl border border-white/15 bg-[#090e1a] shadow-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-start justify-between pb-4 border-b border-white/10 mb-6">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 rounded-lg bg-amber-500/20 text-amber-400">
+                    <Sparkles className="w-4 h-4" />
+                  </span>
+                  <h3 className="text-lg font-bold text-white tracking-tight">
+                    Featured Section Ordering (Page 2)
+                  </h3>
+                </div>
+                <p className="text-xs text-white/50 mt-1 leading-relaxed">
+                  Choose which presets appear in each of the 5 cards in the Featured Section.
+                  Products assigned here will <strong>stay pinned at the top</strong> even when you upload new products!
+                </p>
+              </div>
+              <button
+                onClick={() => setShowFeaturedModal(false)}
+                className="p-1.5 rounded-xl hover:bg-white/10 text-white/50 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {[
+                { slot: 1, label: '⭐ Slot 1 — Top Hero Flagship Card (Large Widescreen)', desc: 'Sabse pehle aayega (Biggest flagship card at the top)' },
+                { slot: 2, label: '⭐ Slot 2 — Grid Card 2 (Top Left)', desc: 'First card in the 2-column grid' },
+                { slot: 3, label: '⭐ Slot 3 — Grid Card 3 (Top Right)', desc: 'Second card in the 2-column grid' },
+                { slot: 4, label: '⭐ Slot 4 — Grid Card 4 (Bottom Left)', desc: 'Third card in the lower grid' },
+                { slot: 5, label: '⭐ Slot 5 — Grid Card 5 (Bottom Right)', desc: 'Fourth card in the lower grid' },
+              ].map(({ slot, label, desc }) => {
+                const selectedId = selectedSlots[slot];
+                const selectedProd = products.find((p) => (p.dbId || p.id) === selectedId);
+
+                return (
+                  <div key={slot} className="p-4 rounded-2xl border border-white/[0.08] bg-black/40 hover:border-white/20 transition-all">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-bold text-amber-300">{label}</span>
+                      {selectedProd && (
+                        <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                          Assigned to Slot {slot}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-white/40 mb-2.5">{desc}</p>
+                    
+                    <div className="flex items-center gap-3">
+                      {selectedProd && (
+                        <ProductThumb product={selectedProd} className="w-10 h-10 shrink-0 rounded-lg" />
+                      )}
+                      <select
+                        value={selectedSlots[slot] || ''}
+                        onChange={(e) => setSelectedSlots((prev) => ({ ...prev, [slot]: e.target.value }))}
+                        className="w-full rounded-xl border border-white/10 bg-[#070b14] px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-400 font-mono"
+                      >
+                        <option value="">-- None / Auto from newest --</option>
+                        {products.map((p) => (
+                          <option key={p.dbId || p.id} value={p.dbId || p.id} className="bg-black text-white">
+                            {p.name} {p.type === 'free' ? '(FREE)' : `(₹${p.price})`} {p.published ? '' : '[Draft]'}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-8 flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+              <button
+                onClick={() => setShowFeaturedModal(false)}
+                className="px-4 py-2.5 rounded-xl border border-white/10 text-xs font-semibold text-white/70 hover:text-white hover:bg-white/5 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveSlots}
+                disabled={savingSlots}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-xs font-semibold text-black transition-all shadow-lg shadow-amber-500/30 disabled:opacity-50"
+              >
+                {savingSlots ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-black" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 text-black" />
+                    <span>Save Featured Order</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </AdminLayout>

@@ -57,7 +57,17 @@ export default function FeaturedAssets({ onSelectAsset, initialProducts = [] }) 
   const assets = useProducts(initialProducts);
 
   // 1. Prioritize products from Admin Panel / Database
-  const dbFeatured = assets.filter((a) => a.featured);
+  // Products with specific featuredOrder (1, 2, 3, 4, 5) stay pinned to their slots
+  const dbFeatured = assets
+    .filter((a) => a.featured)
+    .sort((a, b) => {
+      const orderA = Number(a.featuredOrder || 0);
+      const orderB = Number(b.featuredOrder || 0);
+      if (orderA > 0 && orderB > 0) return orderA - orderB;
+      if (orderA > 0) return -1;
+      if (orderB > 0) return 1;
+      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+    });
   const dbNonFeatured = assets.filter((a) => !a.featured);
   const prioritizedDb = [...dbFeatured, ...dbNonFeatured];
 

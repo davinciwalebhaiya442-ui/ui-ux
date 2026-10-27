@@ -67,6 +67,7 @@ export default function VisualProductForm({ product }) {
     downloadFileSize: product?.downloadFileSize || 0,
     installationGuide: [],
     featured: false,
+    featuredOrder: 0,
     published: false,
     ...(product || {}),
     type: product?.type
@@ -208,6 +209,8 @@ export default function VisualProductForm({ product }) {
         type: sanitizedType === 'PAID' || sanitizedPrice > 0 ? 'PAID' : 'FREE',
         slug: sanitizedSlug,
         published: publish ?? form.published,
+        featured: Boolean(form.featured),
+        featuredOrder: form.featured ? Number(form.featuredOrder || 0) : 0,
         price: sanitizedPrice,
         software: String(form.software || '')
           .split(',')
@@ -758,12 +761,47 @@ export default function VisualProductForm({ product }) {
                 <input
                   type="checkbox"
                   checked={form.featured}
-                  onChange={(e) => set('featured', e.target.checked)}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    set('featured', checked);
+                    if (!checked) set('featuredOrder', 0);
+                  }}
                   className="rounded"
                 />{' '}
                 Featured
               </label>
             </div>
+
+            {form.featured && (
+              <div className="mt-4 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
+                  <label className="text-xs font-semibold text-blue-300">
+                    Featured Slot / Display Order
+                  </label>
+                  <span className="text-[10px] font-mono text-blue-400 bg-blue-500/20 px-2 py-0.5 rounded">
+                    Homepage Featured Section
+                  </span>
+                </div>
+                <select
+                  value={form.featuredOrder || 0}
+                  onChange={(e) => set('featuredOrder', Number(e.target.value))}
+                  className="w-full rounded-xl border border-white/10 bg-black/60 px-3 py-2 text-xs text-white outline-none focus:border-blue-400"
+                >
+                  <option value={0}>Auto / Default (Based on newest date)</option>
+                  <option value={1}>⭐ Slot 1 (Top Hero Flagship - Always at Top)</option>
+                  <option value={2}>⭐ Slot 2 (Grid Top Left)</option>
+                  <option value={3}>⭐ Slot 3 (Grid Top Right)</option>
+                  <option value={4}>⭐ Slot 4 (Grid Bottom Left)</option>
+                  <option value={5}>⭐ Slot 5 (Grid Bottom Right)</option>
+                  <option value={6}>Slot 6</option>
+                  <option value={7}>Slot 7</option>
+                  <option value={8}>Slot 8</option>
+                </select>
+                <p className="text-[11px] text-white/50 mt-2 leading-relaxed">
+                  Agar aap chahte ho ki koi specific preset naye product aane par bhi sabse pehle (Top Card) par rahe, toh use <strong>Slot 1</strong> assign karein.
+                </p>
+              </div>
+            )}
           </section>
         </div>
 
