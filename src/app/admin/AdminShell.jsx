@@ -527,7 +527,7 @@ export function AdminLayout({ children, title = 'Dashboard' }) {
               {!collapsed && (
                 <div className="flex flex-col">
                   <span className="text-sm font-semibold tracking-tight text-white whitespace-nowrap">
-                    DavinciWale Bhaiya
+                    DavinciWaleBhaiya
                   </span>
                   <span className="text-[9px] font-mono text-blue-400/80 uppercase tracking-widest">
                     Creator CMS

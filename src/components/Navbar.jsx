@@ -46,7 +46,7 @@ export default function Navbar({ onOpenSearch }) {
         <a href="/" className="flex items-center space-x-2.5 group shrink-0">
           <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_12px_#3b82f6] group-hover:scale-125 transition-transform" />
           <span className="font-semibold text-sm sm:text-base tracking-tight text-white flex items-center">
-            DavinciWale Bhaiya
+            DavinciWaleBhaiya
           </span>
         </a>
 
