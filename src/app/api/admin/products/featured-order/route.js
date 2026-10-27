@@ -46,3 +46,4 @@ export async function POST(request) {
     return Response.json({ error: 'Failed to update featured order' }, { status: 500 });
   }
 }
+

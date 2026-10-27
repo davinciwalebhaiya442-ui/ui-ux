@@ -316,3 +316,15 @@ model SitePage {
   updatedAt   DateTime @updatedAt
 }
 
+model AdminOtp {
+  id        String   @id @default(cuid())
+  userId    String
+  email     String
+  code      String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
