@@ -23,3 +23,4 @@ export async function POST(request) {
     return Response.json({ error: 'Verification failed' }, { status: 500 });
   }
 }
+

@@ -35,7 +35,7 @@ export default function LegalLayout({
             >
               <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_12px_#3b82f6] group-hover:scale-125 transition-transform" />
               <span className="font-semibold text-sm sm:text-base tracking-tight text-white flex items-center">
-                DavinciWale<span className="text-white/40 font-normal ml-0.5">Bhaiya</span>
+                DavinciWale Bhaiya
               </span>
             </Link>
 

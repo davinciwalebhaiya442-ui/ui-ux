@@ -17,3 +17,4 @@ export async function POST() {
     return Response.json({ error: 'Failed to dispatch verification code' }, { status: 500 });
   }
 }
+
