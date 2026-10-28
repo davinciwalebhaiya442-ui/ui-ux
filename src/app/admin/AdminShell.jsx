@@ -783,27 +783,37 @@ export function Dashboard() {
           </h2>
         </div>
 
-        {/* Period Selector Tabs */}
-        <div className="flex items-center gap-1 p-1 bg-white/[0.04] border border-white/10 rounded-xl text-xs">
-          {[
-            { label: 'Today', value: 'today' },
-            { label: '7D', value: '7d' },
-            { label: '30D', value: '30d' },
-            { label: '90D', value: '90d' },
-            { label: 'All', value: 'all' },
-          ].map((item) => (
-            <button
-              key={item.value}
-              onClick={() => setPeriod(item.value)}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
-                period === item.value
-                  ? 'bg-blue-600 text-white shadow-[0_0_12px_rgba(37,99,235,0.4)]'
-                  : 'text-white/50 hover:text-white hover:bg-white/[0.04]'
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
+        {/* Period Selector & Analytics Link */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/admin/analytics"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 hover:bg-blue-600 text-blue-300 hover:text-white text-xs font-medium transition-all shadow-[0_0_12px_rgba(59,130,246,0.15)]"
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+            <span>Detailed Analytics ↗</span>
+          </Link>
+
+          <div className="flex items-center gap-1 p-1 bg-white/[0.04] border border-white/10 rounded-xl text-xs">
+            {[
+              { label: 'Today', value: 'today' },
+              { label: '7D', value: '7d' },
+              { label: '30D', value: '30d' },
+              { label: '90D', value: '90d' },
+              { label: 'All', value: 'all' },
+            ].map((item) => (
+              <button
+                key={item.value}
+                onClick={() => setPeriod(item.value)}
+                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                  period === item.value
+                    ? 'bg-blue-600 text-white shadow-[0_0_12px_rgba(37,99,235,0.4)]'
+                    : 'text-white/50 hover:text-white hover:bg-white/[0.04]'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
