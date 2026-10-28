@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowUpRight, Menu, X } from 'lucide-react';
+import { ArrowUpRight, Menu, X, Globe } from 'lucide-react';
+import { useCurrency } from '@/context/CurrencyContext';
 
 export default function Navbar({ onOpenSearch }) {
+  const { currency, setCurrency } = useCurrency();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [account, setAccount] = useState(null);
@@ -69,6 +71,32 @@ export default function Navbar({ onOpenSearch }) {
 
         {/* Right Actions */}
         <div className="flex items-center space-x-2 sm:space-x-3">
+          {/* Currency Toggle */}
+          <div className="flex items-center p-0.5 rounded-full bg-white/[0.05] border border-white/10 text-[10px] font-mono font-medium">
+            <button
+              onClick={() => setCurrency('INR')}
+              className={`px-2 py-0.5 rounded-full transition-all ${
+                currency === 'INR'
+                  ? 'bg-blue-600 text-white font-semibold shadow-[0_0_8px_rgba(37,99,235,0.4)]'
+                  : 'text-white/40 hover:text-white'
+              }`}
+              title="Show prices in Indian Rupees (₹)"
+            >
+              ₹ INR
+            </button>
+            <button
+              onClick={() => setCurrency('USD')}
+              className={`px-2 py-0.5 rounded-full transition-all ${
+                currency === 'USD'
+                  ? 'bg-emerald-500 text-black font-semibold shadow-[0_0_8px_rgba(16,185,129,0.3)]'
+                  : 'text-white/40 hover:text-white'
+              }`}
+              title="Show prices in US Dollars ($)"
+            >
+              $ USD
+            </button>
+          </div>
+
           {/* Mobile-prioritized Free Assets Button (replaces Work With Us on phone viewports) */}
           <a
             href="/#free-assets"
@@ -101,6 +129,33 @@ export default function Navbar({ onOpenSearch }) {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="lg:hidden mt-2 max-w-7xl mx-auto bg-[#0a0d14]/95 backdrop-blur-2xl border border-white/[0.08] rounded-2xl p-4 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
+          {/* Mobile Currency Bar */}
+          <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/[0.08] text-xs font-mono">
+            <span className="text-white/40">Select Currency:</span>
+            <div className="flex items-center p-0.5 rounded-full bg-white/[0.05] border border-white/10 text-[11px]">
+              <button
+                onClick={() => setCurrency('INR')}
+                className={`px-3 py-1 rounded-full transition-all ${
+                  currency === 'INR'
+                    ? 'bg-blue-600 text-white font-semibold'
+                    : 'text-white/40'
+                }`}
+              >
+                ₹ INR
+              </button>
+              <button
+                onClick={() => setCurrency('USD')}
+                className={`px-3 py-1 rounded-full transition-all ${
+                  currency === 'USD'
+                    ? 'bg-emerald-500 text-black font-semibold'
+                    : 'text-white/40'
+                }`}
+              >
+                $ USD
+              </button>
+            </div>
+          </div>
+
           <nav className="flex flex-col space-y-1">
             {navLinks.map((link) => (
               <a

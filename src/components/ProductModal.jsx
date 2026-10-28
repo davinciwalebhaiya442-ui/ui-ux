@@ -2,9 +2,11 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { X, Check, Download, ShoppingBag, SlidersHorizontal, Image as ImageIcon, Film, Loader2, CheckCircle2, AlertCircle, Share2, Link2, ExternalLink } from 'lucide-react';
+import { useCurrency } from '@/context/CurrencyContext';
 import BeforeAfterSlider from './BeforeAfterSlider';
 
 export default function ProductModal({ asset, onClose }) {
+  const { formatPrice } = useCurrency();
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [downloadStatusText, setDownloadStatusText] = useState('');
@@ -256,16 +258,10 @@ export default function ProductModal({ asset, onClose }) {
 
               {/* Price Tag */}
               <div className="text-left sm:text-right">
-                {asset.type === 'free' ? (
-                  <div className="text-xl font-bold font-mono text-emerald-400">FREE</div>
-                ) : (
-                  <div>
-                    <div className="text-2xl font-bold font-mono text-white">
-                      ₹{asset.price.toLocaleString()}
-                    </div>
-                    <div className="text-xs font-mono text-white/40">Perpetual license</div>
-                  </div>
-                )}
+                <div className={`text-2xl font-bold font-mono ${asset.type === 'free' ? 'text-emerald-400' : 'text-white'}`}>
+                  {formatPrice(asset)}
+                </div>
+                <div className="text-xs font-mono text-white/40">{asset.type === 'free' ? 'Instant Access' : 'Perpetual license'}</div>
               </div>
             </div>
 
@@ -470,7 +466,7 @@ export default function ProductModal({ asset, onClose }) {
                     className="w-full sm:w-auto px-8 py-3.5 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 transition-colors flex items-center justify-center space-x-2 shadow-[0_0_25px_rgba(37,99,235,0.35)]"
                   >
                     <ShoppingBag className="w-4 h-4" />
-                    <span>Purchase License &bull; ₹{asset.price.toLocaleString()}</span>
+                    <span>Purchase License &bull; {formatPrice(asset)}</span>
                   </button>
                   <p className="text-[11px] text-white/50 flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useProducts } from '@/data/useProducts';
+import { useCurrency } from '@/context/CurrencyContext';
 import { ASSETS } from '@/data/assets';
 import { ArrowUpRight, Check, Download, Monitor, Terminal, Sparkles, Star } from 'lucide-react';
 
@@ -54,6 +55,7 @@ function FeaturedMediaBox({ src, alt, category, fallback, className = 'aspect-[1
 }
 
 export default function FeaturedAssets({ onSelectAsset, initialProducts = [] }) {
+  const { formatPrice } = useCurrency();
   const assets = useProducts(initialProducts);
 
   // 1. Prioritize products from Admin Panel / Database
@@ -253,13 +255,9 @@ export default function FeaturedAssets({ onSelectAsset, initialProducts = [] }) 
                     <div className="text-[10px] font-mono uppercase text-white/40 tracking-wider">
                       {card1.type === 'free' ? 'Instant Download' : 'Perpetual License'}
                     </div>
-                    {card1.type === 'free' ? (
-                      <div className="text-xl font-bold font-mono text-emerald-400">FREE</div>
-                    ) : (
-                      <div className="text-xl font-bold font-mono text-white">
-                        ₹{Number(card1.price || 0).toLocaleString()}
-                      </div>
-                    )}
+                    <div className={`text-xl font-bold font-mono ${card1.type === 'free' ? 'text-emerald-400' : 'text-white'}`}>
+                      {formatPrice(card1)}
+                    </div>
                   </div>
 
                   {/* Primary High-Affordance Action Pill */}
@@ -324,12 +322,8 @@ export default function FeaturedAssets({ onSelectAsset, initialProducts = [] }) 
                 <span className="text-[11px] font-mono uppercase tracking-widest text-sky-400 font-semibold px-2.5 py-0.5 rounded bg-sky-500/10 border border-sky-500/20">
                   {card2.category || 'Macro'} &bull; v{card2.version || '1.0'}
                 </span>
-                <span className="text-sm font-mono text-white font-bold">
-                  {card2.type === 'free' ? (
-                    <span className="text-emerald-400">FREE</span>
-                  ) : (
-                    <>₹{Number(card2.price || 0).toLocaleString()}</>
-                  )}
+                <span className={`text-sm font-mono font-bold ${card2.type === 'free' ? 'text-emerald-400' : 'text-white'}`}>
+                  {formatPrice(card2)}
                 </span>
               </div>
 
@@ -393,8 +387,8 @@ export default function FeaturedAssets({ onSelectAsset, initialProducts = [] }) 
                 <span className="text-[11px] font-mono uppercase tracking-widest text-emerald-400 font-semibold px-2.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
                   {card3.category || 'Standalone Tool'}
                 </span>
-                <span className="text-xs font-mono text-emerald-400 font-bold px-2 py-0.5 rounded bg-emerald-500/10">
-                  {card3.type === 'free' ? 'FREE DOWNLOAD' : `₹${Number(card3.price || 0).toLocaleString()}`}
+                <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded ${card3.type === 'free' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/10 text-white'}`}>
+                  {formatPrice(card3)}
                 </span>
               </div>
 
@@ -444,8 +438,8 @@ export default function FeaturedAssets({ onSelectAsset, initialProducts = [] }) 
                 <span className="text-slate-300 uppercase tracking-widest font-semibold px-2 py-0.5 rounded bg-white/[0.06] border border-white/[0.08]">
                   {card4.category || 'FUSION COMPOSITION'}
                 </span>
-                <span className="text-emerald-400 font-bold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
-                  {card4.type === 'free' ? 'FREE ASSET' : `₹${Number(card4.price || 0).toLocaleString()}`}
+                <span className={`font-bold px-2 py-0.5 rounded ${card4.type === 'free' ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20' : 'text-white bg-white/10 border border-white/20'}`}>
+                  {formatPrice(card4)}
                 </span>
               </div>
 
@@ -490,8 +484,8 @@ export default function FeaturedAssets({ onSelectAsset, initialProducts = [] }) 
                 <span className="text-blue-400 uppercase tracking-widest font-semibold px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">
                   {card5.category || 'TIMELINE TRANSITION'}
                 </span>
-                <span className="text-emerald-400 font-bold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
-                  {card5.type === 'free' ? 'FREE ASSET' : `₹${Number(card5.price || 0).toLocaleString()}`}
+                <span className={`font-bold px-2 py-0.5 rounded ${card5.type === 'free' ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20' : 'text-white bg-white/10 border border-white/20'}`}>
+                  {formatPrice(card5)}
                 </span>
               </div>
 

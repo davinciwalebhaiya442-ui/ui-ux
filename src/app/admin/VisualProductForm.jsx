@@ -53,6 +53,7 @@ export default function VisualProductForm({ product }) {
     categoryId: '',
     type: 'FREE',
     price: 0,
+    priceUSD: product?.priceUSD || (product?.price ? Math.max(1, Math.round(Number(product.price) / 83)) : 0),
     currency: 'INR',
     software: [],
     version: '',
@@ -203,6 +204,7 @@ export default function VisualProductForm({ product }) {
     try {
       const sanitizedSlug = slugify(form.slug || form.name);
       const sanitizedPrice = Number(form.price || 0);
+      const sanitizedPriceUSD = Number(form.priceUSD || 0);
       const sanitizedType = String(form.type || (sanitizedPrice > 0 ? 'PAID' : 'FREE')).toUpperCase();
       const payload = {
         ...form,
@@ -212,6 +214,7 @@ export default function VisualProductForm({ product }) {
         featured: Boolean(form.featured),
         featuredOrder: form.featured ? Number(form.featuredOrder || 0) : 0,
         price: sanitizedPrice,
+        priceUSD: sanitizedPriceUSD,
         software: String(form.software || '')
           .split(',')
           .map((value) => value.trim())
@@ -403,29 +406,43 @@ export default function VisualProductForm({ product }) {
                   <option value="PAID">Paid</option>
                 </select>
               </Field>
-              <Field label="Price (INR)">
-                <input
-                  type="number"
-                  min="0"
-                  className={input}
-                  value={form.price}
-                  onChange={(e) => {
-                    const nextPrice = e.target.value;
-                    setForm((prev) => ({
-                      ...prev,
-                      price: nextPrice,
-                      type: Number(nextPrice) > 0 ? 'PAID' : prev.type,
-                    }));
-                  }}
-                />
-              </Field>
-              <Field label="Currency">
-                <input
-                  className={input}
-                  value={form.currency}
-                  onChange={(e) => set('currency', e.target.value.toUpperCase())}
-                />
-              </Field>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="Price in India (INR ₹)" hint="Indian buyers (UPI / GPay / Indian Cards)">
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/50 font-mono text-xs">₹</span>
+                    <input
+                      type="number"
+                      min="0"
+                      className={`${input} pl-8`}
+                      placeholder="99"
+                      value={form.price}
+                      onChange={(e) => {
+                        const nextPrice = e.target.value;
+                        setForm((prev) => ({
+                          ...prev,
+                          price: nextPrice,
+                          type: Number(nextPrice) > 0 ? 'PAID' : prev.type,
+                          priceUSD: prev.priceUSD > 0 ? prev.priceUSD : (Number(nextPrice) > 0 ? Math.max(9, Math.round(Number(nextPrice) / 10)) : 0),
+                        }));
+                      }}
+                    />
+                  </div>
+                </Field>
+
+                <Field label="Price International (USD $)" hint="Foreign buyers (US, UK, Europe, etc.)">
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/50 font-mono text-xs">$</span>
+                    <input
+                      type="number"
+                      min="0"
+                      className={`${input} pl-8`}
+                      placeholder="15"
+                      value={form.priceUSD ?? ''}
+                      onChange={(e) => set('priceUSD', e.target.value)}
+                    />
+                  </div>
+                </Field>
+              </div>
               <Field label="Software compatibility" hint="Comma separated (e.g. DaVinci Resolve 18+, Premiere Pro)">
                 <input className={input} value={text('software')} onChange={(e) => set('software', e.target.value)} />
               </Field>
@@ -820,8 +837,15 @@ export default function VisualProductForm({ product }) {
                 {form.shortDescription || form.description || 'Your product description will appear here.'}
               </p>
               <div className="mt-6 flex items-center justify-between border-t border-white/[.08] pt-4">
-                <span className={form.type === 'FREE' ? 'text-emerald-300 font-mono font-bold' : 'text-white font-mono font-bold'}>
-                  {form.type === 'FREE' ? 'FREE' : `₹${Number(form.price || 0).toLocaleString()}`}
+                <span className={form.type === 'FREE' ? 'text-emerald-300 font-mono font-bold' : 'text-white font-mono font-bold flex items-center gap-1.5'}>
+                  {form.type === 'FREE' ? (
+                    'FREE'
+                  ) : (
+                    <>
+                      <span>₹{Number(form.price || 0).toLocaleString()}</span>
+                      <span className="text-white/40 font-normal text-xs">/ ${Number(form.priceUSD || Math.max(1, Math.round(Number(form.price || 0) / 83)))} USD</span>
+                    </>
+                  )}
                 </span>
                 <span className="text-[10px] font-mono text-white/35">{form.published ? 'Published' : 'Draft'}</span>
               </div>

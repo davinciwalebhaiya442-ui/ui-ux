@@ -1440,7 +1440,7 @@ export function ProductList() {
               {/* Card Footer Actions */}
               <div className="px-5 py-3.5 border-t border-white/[0.06] bg-black/30 flex items-center justify-between text-xs font-mono">
                 <span className="font-semibold text-white">
-                  {p.type === 'free' ? 'FREE' : `₹${p.price.toLocaleString()}`}
+                  {p.type === 'free' ? 'FREE' : `₹${p.price.toLocaleString()} · $${p.priceUSD || Math.max(1, Math.round(p.price / 83))}`}
                 </span>
                 <div className="flex items-center gap-1.5">
                   <button
@@ -1505,7 +1505,7 @@ export function ProductList() {
                   <td className="px-4 py-3 font-mono text-white/60">{p.category}</td>
                   <td className="px-4 py-3 font-mono uppercase text-white/60">{p.type}</td>
                   <td className="px-4 py-3 font-mono font-semibold text-white">
-                    {p.type === 'free' ? 'FREE' : `₹${p.price.toLocaleString()}`}
+                    {p.type === 'free' ? 'FREE' : `₹${p.price.toLocaleString()} · $${p.priceUSD || Math.max(1, Math.round(p.price / 83))}`}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-col gap-1 items-start">

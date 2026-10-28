@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+import { useCurrency } from '@/context/CurrencyContext';
 import {
   ShieldCheck,
   Lock,
@@ -15,6 +16,7 @@ import {
 } from 'lucide-react';
 
 export default function CheckoutPage() {
+  const { currency, setCurrency, formatPrice, isDomestic } = useCurrency();
   const [product, setProduct] = useState(null);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
@@ -302,6 +304,7 @@ export default function CheckoutPage() {
           productIds: [product.id],
           email: cleanEmail,
           name: name.trim(),
+          currency,
         }),
       });
 
@@ -358,7 +361,34 @@ export default function CheckoutPage() {
               <ShieldCheck className="w-4 h-4" />
               <span>Secure Checkout</span>
             </div>
-            <span className="text-[10px] font-mono text-white/40 uppercase">256-Bit SSL</span>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center p-0.5 rounded-full bg-white/[0.05] border border-white/10 text-[10px] font-mono">
+                <button
+                  type="button"
+                  onClick={() => setCurrency('INR')}
+                  className={`px-2 py-0.5 rounded-full transition-all ${
+                    currency === 'INR'
+                      ? 'bg-blue-600 text-white font-semibold shadow-[0_0_8px_rgba(37,99,235,0.4)]'
+                      : 'text-white/40 hover:text-white'
+                  }`}
+                  title="INR Domestic Pricing"
+                >
+                  ₹ INR
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrency('USD')}
+                  className={`px-2 py-0.5 rounded-full transition-all ${
+                    currency === 'USD'
+                      ? 'bg-emerald-500 text-black font-semibold shadow-[0_0_8px_rgba(16,185,129,0.3)]'
+                      : 'text-white/40 hover:text-white'
+                  }`}
+                  title="USD International Pricing"
+                >
+                  $ USD
+                </button>
+              </div>
+            </div>
           </div>
 
           {loading ? (
@@ -435,10 +465,12 @@ export default function CheckoutPage() {
               <div className="flex items-center justify-between border-y border-white/[0.08] py-4">
                 <div>
                   <span className="text-xs text-white/50 block font-mono">TOTAL DUE</span>
-                  <span className="text-[10px] text-white/40 font-mono">Includes Lifetime Commercial License</span>
+                  <span className="text-[10px] text-white/40 font-mono">
+                    {currency === 'USD' ? 'USD International Edition' : 'INR Domestic Edition'} &bull; Lifetime Commercial License
+                  </span>
                 </div>
                 <div className="text-2xl sm:text-3xl font-bold text-white font-mono">
-                  ₹{product.price?.toLocaleString()}
+                  {formatPrice(product)}
                 </div>
               </div>
 
@@ -509,7 +541,7 @@ export default function CheckoutPage() {
                 ) : (
                   <>
                     <Lock className="w-4 h-4" />
-                    <span>Pay ₹{product.price?.toLocaleString()} via Razorpay</span>
+                    <span>Pay {formatPrice(product)} via Razorpay</span>
                   </>
                 )}
               </button>
@@ -519,7 +551,7 @@ export default function CheckoutPage() {
                 <div className="flex items-center justify-center gap-4 text-[10px] font-mono text-white/40">
                   <span className="flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                    UPI / Cards / NetBanking
+                    {currency === 'USD' ? 'International Cards / Apple Pay' : 'UPI / Cards / NetBanking'}
                   </span>
                   <span>&bull;</span>
                   <span className="flex items-center gap-1">

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import BeforeAfterSlider from '@/components/BeforeAfterSlider';
+import { useCurrency } from '@/context/CurrencyContext';
 import {
   Share2,
   Check,
@@ -23,6 +24,7 @@ import {
 } from 'lucide-react';
 
 export default function ProductViewClient({ asset, relatedAssets = [] }) {
+  const { formatPrice } = useCurrency();
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [downloadStatusText, setDownloadStatusText] = useState('');
@@ -403,7 +405,7 @@ export default function ProductViewClient({ asset, relatedAssets = [] }) {
                   <div>
                     <div className="flex items-baseline gap-3">
                       <span className="text-3xl sm:text-4xl font-bold font-mono text-white">
-                        ₹{asset.price.toLocaleString()}
+                        {formatPrice(asset)}
                       </span>
                       <span className="text-xs font-mono text-white/40">
                         One-time Perpetual License
@@ -608,11 +610,9 @@ export default function ProductViewClient({ asset, relatedAssets = [] }) {
 
                   <div className="pt-4 mt-6 border-t border-white/[0.08] flex items-center justify-between text-xs font-mono">
                     <div>
-                      {rel.type === 'free' ? (
-                        <span className="text-emerald-400 font-bold">FREE</span>
-                      ) : (
-                        <span className="text-white font-bold">₹{rel.price?.toLocaleString()}</span>
-                      )}
+                      <span className={rel.type === 'free' ? 'text-emerald-400 font-bold' : 'text-white font-bold'}>
+                        {formatPrice(rel)}
+                      </span>
                     </div>
                     <span className="text-blue-400 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
                       View Details &rarr;

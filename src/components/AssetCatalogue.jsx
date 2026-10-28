@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { CATEGORIES, SOFTWARE_OPTIONS } from '@/data/assets';
 import { useProducts } from '@/data/useProducts';
+import { useCurrency } from '@/context/CurrencyContext';
 import { Search, ArrowUpRight, Monitor, Share2, Check, Sparkles } from 'lucide-react';
 import ProductCardVisual from './ProductCardVisual';
 import BeforeAfterSlider from './BeforeAfterSlider';
@@ -20,6 +21,7 @@ export default function AssetCatalogue({
   const [selectedSoftware, setSelectedSoftware] = useState('All Software');
   const [sortBy, setSortBy] = useState('featured');
   const [copiedId, setCopiedId] = useState(null);
+  const { formatPrice } = useCurrency();
   const assets = useProducts(initialProducts);
 
   // Dynamic Before / After state loaded from initial SSR or live API
@@ -239,17 +241,13 @@ export default function AssetCatalogue({
 
               <div className="pt-4 mt-6 border-t border-white/[0.08] flex items-center justify-between text-xs font-mono">
                 <div>
-                  {asset.type === 'free' ? (
-                    <span className="px-2.5 py-1 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold tracking-wide text-xs inline-block">
-                      FREE
-                    </span>
-                  ) : (
-                    <div className="flex items-baseline space-x-1.5">
-                      <span className="text-white font-bold text-sm tracking-tight">
-                        ₹{asset.price.toLocaleString()}
-                      </span>
-                    </div>
-                  )}
+                  <span className={`px-2.5 py-1 rounded font-mono font-bold tracking-wide text-xs inline-block ${
+                    asset.type === 'free'
+                      ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400'
+                      : 'bg-white/10 border border-white/20 text-white'
+                  }`}>
+                    {formatPrice(asset)}
+                  </span>
                 </div>
 
                 {/* Quick actions: Share & Buy Now */}

@@ -1,5 +1,6 @@
 import "./globals.css";
 import AutoRefreshSync from "@/components/AutoRefreshSync";
+import { CurrencyProvider } from "@/context/CurrencyContext";
 
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
@@ -15,7 +16,9 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className="font-sans antialiased">
         <AutoRefreshSync />
-        {children}
+        <CurrencyProvider>
+          {children}
+        </CurrencyProvider>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ '@context': 'https://schema.org', '@type': 'WebSite', name: 'DavinciWaleBhaiya', url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000' }) }} />
       </body>
     </html>
