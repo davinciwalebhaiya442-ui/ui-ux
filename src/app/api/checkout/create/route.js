@@ -135,14 +135,14 @@ export async function POST(request) {
       }
     }
 
-    // Create database order
+    // Create database order reflecting the customer's true purchase currency (USD or INR)
     const order = await prisma.order.create({
       data: {
         orderNumber,
         userId: profile.userId,
-        subtotal: Math.round(finalGatewayAmount / 100),
-        total: Math.round(finalGatewayAmount / 100),
-        currency: finalGatewayCurrency,
+        subtotal: subtotal,
+        total: subtotal,
+        currency: effectiveCurrency,
         status: 'PENDING',
         paymentStatus: 'PENDING',
         razorpayOrderId: razorpayOrder.id,

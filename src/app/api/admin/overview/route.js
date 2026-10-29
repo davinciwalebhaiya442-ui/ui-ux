@@ -40,8 +40,8 @@ export async function GET(request) {
       periodDownloads,
       totalOrders,
       periodOrders,
-      periodRevenueAggregate,
-      totalRevenueAggregate,
+      periodRevenueOrders,
+      totalRevenueOrders,
       pendingStudioCount,
       recentProducts,
       recentOrders,
@@ -58,8 +58,8 @@ export async function GET(request) {
       prisma.download.count({ where: downloadWhere }).catch(() => 0),
       prisma.order.count().catch(() => 0),
       prisma.order.count({ where: orderWhere }).catch(() => 0),
-      prisma.order.aggregate({ _sum: { total: true }, where: orderWhere }).catch(() => ({ _sum: { total: 0 } })),
-      prisma.order.aggregate({ _sum: { total: true }, where: { status: 'PAID' } }).catch(() => ({ _sum: { total: 0 } })),
+      prisma.order.findMany({ where: orderWhere, select: { total: true, currency: true } }).catch(() => []),
+      prisma.order.findMany({ where: { status: 'PAID' }, select: { total: true, currency: true } }).catch(() => []),
       prisma.studioRequest.count({ where: { status: 'NEW' } }).catch(() => 0),
       prisma.product.findMany({ take: 6, orderBy: { createdAt: 'desc' }, include: { category: true } }).catch(() => []),
       prisma.order.findMany({ take: 6, orderBy: { createdAt: 'desc' }, include: { items: true, user: true } }).catch(() => []),
@@ -121,6 +121,15 @@ export async function GET(request) {
       where: { thumbnailKey: null },
     }).catch(() => 0);
 
+    const periodOrdersList = Array.isArray(periodRevenueOrders) ? periodRevenueOrders : [];
+    const allTimeOrdersList = Array.isArray(totalRevenueOrders) ? totalRevenueOrders : [];
+
+    const periodRevenueINR = periodOrdersList.filter((o) => o.currency !== 'USD').reduce((s, o) => s + (o.total || 0), 0);
+    const periodRevenueUSD = periodOrdersList.filter((o) => o.currency === 'USD').reduce((s, o) => s + (o.total || 0), 0);
+
+    const totalRevenueINR = allTimeOrdersList.filter((o) => o.currency !== 'USD').reduce((s, o) => s + (o.total || 0), 0);
+    const totalRevenueUSD = allTimeOrdersList.filter((o) => o.currency === 'USD').reduce((s, o) => s + (o.total || 0), 0);
+
     return Response.json({
       period,
       stats: {
@@ -132,8 +141,12 @@ export async function GET(request) {
         totalDownloads: totalDownloads ?? 0,
         orders: periodOrders ?? 0,
         totalOrders: totalOrders ?? 0,
-        revenue: periodRevenueAggregate?._sum?.total || 0,
-        totalRevenue: totalRevenueAggregate?._sum?.total || 0,
+        revenue: periodRevenueINR,
+        revenueINR: periodRevenueINR,
+        revenueUSD: periodRevenueUSD,
+        totalRevenue: totalRevenueINR,
+        totalRevenueINR,
+        totalRevenueUSD,
         pendingStudioRequests: pendingStudioCount ?? 0,
       },
       chart: {

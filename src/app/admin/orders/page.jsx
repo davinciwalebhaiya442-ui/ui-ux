@@ -74,10 +74,11 @@ export default function OrdersPage() {
     });
   }, [orders, statusFilter, search]);
 
-  const totalFilteredAmount = useMemo(() => {
-    return filteredOrders
-      .filter((o) => o.status === 'PAID')
-      .reduce((sum, o) => sum + (o.total || 0), 0);
+  const { paidINR, paidUSD } = useMemo(() => {
+    const paid = filteredOrders.filter((o) => o.status === 'PAID');
+    const inr = paid.filter((o) => o.currency !== 'USD').reduce((sum, o) => sum + (o.total || 0), 0);
+    const usd = paid.filter((o) => o.currency === 'USD').reduce((sum, o) => sum + (o.total || 0), 0);
+    return { paidINR: inr, paidUSD: usd };
   }, [filteredOrders]);
 
   return (
@@ -158,7 +159,12 @@ export default function OrdersPage() {
           Showing <strong className="text-white">{filteredOrders.length}</strong> of {orders.length} orders
         </span>
         <span>
-          Paid Total: <strong className="text-emerald-400">₹{totalFilteredAmount.toLocaleString()}</strong>
+          Paid Total: <strong className="text-emerald-400">₹{paidINR.toLocaleString()}</strong>
+          {paidUSD > 0 && (
+            <span className="ml-1.5 text-blue-400 font-semibold">
+              + ${paidUSD.toLocaleString()} USD
+            </span>
+          )}
         </span>
       </div>
 
@@ -216,9 +222,16 @@ export default function OrdersPage() {
 
                   {/* Total */}
                   <td className="px-4 py-3.5">
-                    <span className="font-mono font-semibold text-emerald-400">
-                      ₹{o.total?.toLocaleString()}
-                    </span>
+                    <div className="flex items-center gap-1.5 font-mono font-semibold">
+                      <span className={o.currency === 'USD' ? 'text-blue-400' : 'text-emerald-400'}>
+                        {o.currency === 'USD' ? `$${o.total?.toLocaleString()}` : `₹${o.total?.toLocaleString()}`}
+                      </span>
+                      {o.currency === 'USD' && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-blue-500/15 text-blue-300 border border-blue-500/30">
+                          USD
+                        </span>
+                      )}
+                    </div>
                   </td>
 
                   {/* Status */}

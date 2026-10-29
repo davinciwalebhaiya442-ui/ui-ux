@@ -205,12 +205,26 @@ export default function AnalyticsPage() {
           </div>
           <div className="mt-4">
             <h3 className="text-3xl font-bold font-mono text-emerald-400 tracking-tight">
-              {s ? `₹${s.periodRevenue.toLocaleString()}` : '—'}
+              {s ? (
+                s.periodRevenueUSD > 0 ? (
+                  <span>
+                    ₹{(s.periodRevenueINR || 0).toLocaleString()}
+                    <span className="text-xl text-blue-400 ml-2 font-semibold">
+                      + ${s.periodRevenueUSD.toLocaleString()}
+                    </span>
+                  </span>
+                ) : (
+                  `₹${(s.periodRevenue || 0).toLocaleString()}`
+                )
+              ) : '—'}
             </h3>
             <div className="mt-2 flex items-center gap-2 text-[11px] font-mono text-white/40">
               <span className="text-white/60">AOV: ₹{s?.averageOrderValue || 0}</span>
               <span>·</span>
-              <span>All-time: ₹{(s?.allTimeRevenue || 0).toLocaleString()}</span>
+              <span>
+                All-time: ₹{(s?.allTimeRevenue || 0).toLocaleString()}
+                {s?.allTimeRevenueUSD > 0 && ` + $${s.allTimeRevenueUSD.toLocaleString()}`}
+              </span>
             </div>
           </div>
         </div>

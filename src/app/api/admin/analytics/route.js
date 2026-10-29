@@ -37,9 +37,8 @@ export async function GET(request) {
 
     const [
       allTimeOrdersCount,
-      allTimeRevenueAgg,
+      allTimePaidOrders,
       periodOrdersCount,
-      periodRevenueAgg,
       totalOrdersAttempted,
       allTimeDownloadsCount,
       periodDownloadsCount,
@@ -49,9 +48,8 @@ export async function GET(request) {
       ordersWithItems,
     ] = await Promise.all([
       prisma.order.count({ where: { status: 'PAID' } }).catch(() => 0),
-      prisma.order.aggregate({ _sum: { total: true }, where: { status: 'PAID' } }).catch(() => ({ _sum: { total: 0 } })),
+      prisma.order.findMany({ where: { status: 'PAID' }, select: { total: true, currency: true } }).catch(() => []),
       prisma.order.count({ where: orderWhere }).catch(() => 0),
-      prisma.order.aggregate({ _sum: { total: true }, where: orderWhere }).catch(() => ({ _sum: { total: 0 } })),
       prisma.order.count(dateFilter.gte ? { where: { createdAt: dateFilter } } : {}).catch(() => 0),
       prisma.download.count().catch(() => 0),
       prisma.download.count({ where: downloadWhere }).catch(() => 0),
@@ -77,8 +75,17 @@ export async function GET(request) {
       }).catch(() => []),
     ]);
 
-    const periodRevenue = periodRevenueAgg?._sum?.total || 0;
-    const allTimeRevenue = allTimeRevenueAgg?._sum?.total || 0;
+    const periodPaidList = Array.isArray(ordersWithItems) ? ordersWithItems : [];
+    const allPaidList = Array.isArray(allTimePaidOrders) ? allTimePaidOrders : [];
+
+    const periodRevenueINR = periodPaidList.filter((o) => o.currency !== 'USD').reduce((sum, o) => sum + (o.total || 0), 0);
+    const periodRevenueUSD = periodPaidList.filter((o) => o.currency === 'USD').reduce((sum, o) => sum + (o.total || 0), 0);
+
+    const allTimeRevenueINR = allPaidList.filter((o) => o.currency !== 'USD').reduce((sum, o) => sum + (o.total || 0), 0);
+    const allTimeRevenueUSD = allPaidList.filter((o) => o.currency === 'USD').reduce((sum, o) => sum + (o.total || 0), 0);
+
+    const periodRevenue = periodRevenueINR;
+    const allTimeRevenue = allTimeRevenueINR;
     const averageOrderValue = periodOrdersCount > 0 ? Math.round(periodRevenue / periodOrdersCount) : 0;
     const checkoutSuccessRate = totalOrdersAttempted > 0
       ? Math.round((periodOrdersCount / totalOrdersAttempted) * 100)
@@ -183,7 +190,11 @@ export async function GET(request) {
       period,
       summary: {
         periodRevenue,
+        periodRevenueINR,
+        periodRevenueUSD,
         allTimeRevenue,
+        allTimeRevenueINR,
+        allTimeRevenueUSD,
         periodOrders: periodOrdersCount,
         allTimeOrders: allTimeOrdersCount,
         averageOrderValue,

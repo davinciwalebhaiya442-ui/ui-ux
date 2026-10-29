@@ -211,7 +211,7 @@ export async function GET(request) {
         'Order Status',
         'Payment Status',
         'Currency',
-        'Total Amount (INR)',
+        'Total Amount',
         'Subtotal',
         'Discount',
         'Item Count',

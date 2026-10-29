@@ -370,7 +370,9 @@ function CommandPalette({ open, onClose }) {
                   >
                     <div>
                       <span className="font-medium text-white">{o.orderNumber}</span>
-                      <span className="ml-2 text-emerald-400 text-[10px]">₹{o.total.toLocaleString()}</span>
+                      <span className={`ml-2 text-[10px] font-mono font-medium ${o.currency === 'USD' ? 'text-blue-400' : 'text-emerald-400'}`}>
+                        {o.currency === 'USD' ? `$${o.total.toLocaleString()}` : `₹${o.total.toLocaleString()}`}
+                      </span>
                     </div>
                     <span className="text-[10px] text-white/40 uppercase">{o.status}</span>
                   </button>
@@ -821,7 +823,13 @@ export function Dashboard() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 mb-8">
         <MetricCard
           label="Total Revenue"
-          value={s ? `₹${s.revenue.toLocaleString()}` : '—'}
+          value={
+            s
+              ? s.revenueUSD > 0
+                ? `₹${(s.revenueINR || 0).toLocaleString()} + $${s.revenueUSD.toLocaleString()}`
+                : `₹${(s.revenue || 0).toLocaleString()}`
+              : '—'
+          }
           note={period === 'all' ? 'All verified checkouts' : `In selected ${period}`}
           tone="green"
         />
@@ -1022,8 +1030,8 @@ export function Dashboard() {
                     </p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-xs font-mono font-semibold text-emerald-400">
-                      ₹{o.total.toLocaleString()}
+                    <p className={`text-xs font-mono font-semibold ${o.currency === 'USD' ? 'text-blue-400' : 'text-emerald-400'}`}>
+                      {o.currency === 'USD' ? `$${o.total.toLocaleString()}` : `₹${o.total.toLocaleString()}`}
                     </p>
                     <span className="inline-block mt-0.5 text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300">
                       {o.status}
