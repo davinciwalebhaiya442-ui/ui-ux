@@ -392,7 +392,7 @@ export default function CheckoutPage() {
                   <span>Enter Your Email for File Delivery</span>
                 </div>
                 <p className="text-xs text-white/65 leading-relaxed">
-                  Apna email address daalein. Payment hote hi download link aur file automatically aapke isi email pe bhej di jayegi.
+                  Enter your email address. Your download link and files will be automatically sent to this email as soon as payment is confirmed.
                 </p>
                 <div className="space-y-3 pt-1">
                   <div>
@@ -409,7 +409,7 @@ export default function CheckoutPage() {
                           setEmail(e.target.value);
                           if (messageType === 'error') setMessage('');
                         }}
-                        placeholder="apnamail@gmail.com"
+                        placeholder="you@example.com"
                         className="w-full rounded-xl border border-white/20 bg-black/60 pl-10 pr-4 py-3 text-sm text-white placeholder-white/30 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
                       />
                     </div>
@@ -454,7 +454,7 @@ export default function CheckoutPage() {
                     <span>Confirming payment with banking network...</span>
                   </div>
                   <p className="text-xs text-white/70 leading-relaxed">
-                    Agar aapne Google Pay, PhonePe, Paytm ya QR code se pay kar diya hai, please thoda wait karein. Verification complete hote hi file download automatically khul jayegi.
+                    If you have completed the payment via your UPI app, card, or PayPal, please hold on. Your files and download link will unlock automatically as soon as verification completes.
                   </p>
                   <div className="flex items-center gap-2 pt-1">
                     <button
