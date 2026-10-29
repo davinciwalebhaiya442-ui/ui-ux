@@ -361,11 +361,6 @@ export default function CheckoutPage() {
               <ShieldCheck className="w-4 h-4" />
               <span>Secure Checkout</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded-full bg-white/[0.05] border border-white/10 text-[10px] font-mono text-white/60">
-                {currency === 'USD' ? '$ USD International' : '₹ INR Domestic'}
-              </span>
-            </div>
           </div>
 
           {loading ? (
@@ -443,7 +438,7 @@ export default function CheckoutPage() {
                 <div>
                   <span className="text-xs text-white/50 block font-mono">TOTAL DUE</span>
                   <span className="text-[10px] text-white/40 font-mono">
-                    {currency === 'USD' ? 'USD International Edition' : 'INR Domestic Edition'} &bull; Lifetime Commercial License
+                    Official Release &bull; Lifetime Commercial License
                   </span>
                 </div>
                 <div className="text-2xl sm:text-3xl font-bold text-white font-mono">
@@ -528,7 +523,7 @@ export default function CheckoutPage() {
                 <div className="flex items-center justify-center gap-4 text-[10px] font-mono text-white/40">
                   <span className="flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                    {currency === 'USD' ? 'International Cards / Apple Pay' : 'UPI / Cards / NetBanking'}
+                    Secure & Verified Payment
                   </span>
                   <span>&bull;</span>
                   <span className="flex items-center gap-1">
