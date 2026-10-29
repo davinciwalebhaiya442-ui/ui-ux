@@ -18,40 +18,23 @@ export function CurrencyProvider({ children }) {
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    // 1. Check if user already manually chose a currency
-    let saved = null;
+    // Clear any legacy manual overrides so edge geolocation directly dictates currency
     try {
-      saved = localStorage.getItem('dwb_currency');
+      localStorage.removeItem('dwb_currency');
     } catch (e) {}
 
-    if (saved && (saved === 'INR' || saved === 'USD')) {
-      setCurrencyState(saved);
-      setInitialized(true);
-    }
-
-    // 2. Fetch server-detected country & default currency
+    // Fetch server-detected country & default currency automatically based on visitor location
     fetch('/api/geo')
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (!data) return;
-        setCountry(data.country || 'IN');
-        // If user hasn't explicitly chosen a currency, use geo recommendation
-        if (!saved) {
-          const autoCur = data.currency || (data.country === 'IN' ? 'INR' : 'USD');
-          setCurrencyState(autoCur);
-        }
+        const detectedCountry = data.country || 'IN';
+        setCountry(detectedCountry);
+        const autoCur = data.currency || (detectedCountry === 'IN' ? 'INR' : 'USD');
+        setCurrencyState(autoCur);
       })
       .catch(() => {})
       .finally(() => setInitialized(true));
-
-    // Listen to changes across tabs
-    const handleStorage = (e) => {
-      if (e.key === 'dwb_currency' && e.newValue && (e.newValue === 'INR' || e.newValue === 'USD')) {
-        setCurrencyState(e.newValue);
-      }
-    };
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
   const setCurrency = (newCurrency) => {
@@ -143,3 +126,4 @@ export function CurrencyProvider({ children }) {
 export function useCurrency() {
   return useContext(CurrencyContext);
 }
+

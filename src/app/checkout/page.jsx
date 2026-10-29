@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export default function CheckoutPage() {
-  const { currency, setCurrency, formatPrice, isDomestic } = useCurrency();
+  const { currency, formatPrice, isDomestic } = useCurrency();
   const [product, setProduct] = useState(null);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
@@ -362,32 +362,9 @@ export default function CheckoutPage() {
               <span>Secure Checkout</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex items-center p-0.5 rounded-full bg-white/[0.05] border border-white/10 text-[10px] font-mono">
-                <button
-                  type="button"
-                  onClick={() => setCurrency('INR')}
-                  className={`px-2 py-0.5 rounded-full transition-all ${
-                    currency === 'INR'
-                      ? 'bg-blue-600 text-white font-semibold shadow-[0_0_8px_rgba(37,99,235,0.4)]'
-                      : 'text-white/40 hover:text-white'
-                  }`}
-                  title="INR Domestic Pricing"
-                >
-                  ₹ INR
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCurrency('USD')}
-                  className={`px-2 py-0.5 rounded-full transition-all ${
-                    currency === 'USD'
-                      ? 'bg-emerald-500 text-black font-semibold shadow-[0_0_8px_rgba(16,185,129,0.3)]'
-                      : 'text-white/40 hover:text-white'
-                  }`}
-                  title="USD International Pricing"
-                >
-                  $ USD
-                </button>
-              </div>
+              <span className="px-2.5 py-1 rounded-full bg-white/[0.05] border border-white/10 text-[10px] font-mono text-white/60">
+                {currency === 'USD' ? '$ USD International' : '₹ INR Domestic'}
+              </span>
             </div>
           </div>
 
