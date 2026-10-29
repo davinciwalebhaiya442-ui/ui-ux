@@ -46,14 +46,11 @@ export default function Footer() {
 
   useEffect(() => {
     let isMounted = true;
-    fetch('/api/footer')
+    fetch('/api/footer', { cache: 'no-store' })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.footer && isMounted) {
-          setSettings((prev) => ({
-            ...prev,
-            ...data.footer,
-          }));
+          setSettings(data.footer);
         }
       })
       .catch(() => {});

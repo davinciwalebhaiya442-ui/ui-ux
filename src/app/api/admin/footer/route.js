@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { DEFAULT_FOOTER_SETTINGS } from '@/lib/footer';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(request) {
   const unauthorized = await requireAdmin(request);
@@ -13,11 +14,33 @@ export async function GET(request) {
     const footer = await prisma.footerSetting.findUnique({
       where: { id: 'default' },
     });
-    return Response.json({ footer: footer || DEFAULT_FOOTER_SETTINGS });
+    return Response.json(
+      { footer: footer || DEFAULT_FOOTER_SETTINGS },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        },
+      }
+    );
   } catch (error) {
     console.error('Failed to load footer in admin:', error);
-    return Response.json({ footer: DEFAULT_FOOTER_SETTINGS });
+    return Response.json(
+      { footer: DEFAULT_FOOTER_SETTINGS },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        },
+      }
+    );
   }
+}
+
+export async function POST(request) {
+  return PATCH(request);
+}
+
+export async function PUT(request) {
+  return PATCH(request);
 }
 
 export async function PATCH(request) {

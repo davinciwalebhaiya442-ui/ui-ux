@@ -59,7 +59,7 @@ export default function FooterSettingsPage() {
   const [activeTab, setActiveTab] = useState('brand');
 
   useEffect(() => {
-    fetch('/api/admin/footer')
+    fetch('/api/admin/footer', { cache: 'no-store' })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.footer) {
@@ -108,7 +108,11 @@ export default function FooterSettingsPage() {
   };
 
   const handleSubmit = async (e) => {
-    e?.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
+    if (!form.brandName?.trim()) {
+      toast('Brand name cannot be empty', 'error');
+      return;
+    }
     setSaving(true);
     try {
       const res = await fetch('/api/admin/footer', {
@@ -120,6 +124,13 @@ export default function FooterSettingsPage() {
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Failed to save footer settings');
+      }
+
+      if (data?.footer) {
+        setForm((prev) => ({
+          ...prev,
+          ...data.footer,
+        }));
       }
 
       toast('Footer settings saved successfully!', 'success');
@@ -206,10 +217,9 @@ export default function FooterSettingsPage() {
                 <input
                   type="text"
                   className={inputStyle}
-                  value={form.brandName}
+                  value={form.brandName || ''}
                   onChange={(e) => handleFieldChange('brandName', e.target.value)}
                   placeholder="DavinciWaleBhaiya"
-                  required
                 />
               </div>
 
@@ -218,7 +228,7 @@ export default function FooterSettingsPage() {
                 <textarea
                   rows={3}
                   className={inputStyle}
-                  value={form.brandTagline}
+                  value={form.brandTagline || ''}
                   onChange={(e) => handleFieldChange('brandTagline', e.target.value)}
                   placeholder="Precision color science, optical DCTLs, and timeline utilities for professional colorists and video editors."
                 />
@@ -229,7 +239,7 @@ export default function FooterSettingsPage() {
                 <input
                   type="text"
                   className={inputStyle}
-                  value={form.copyrightText}
+                  value={form.copyrightText || ''}
                   onChange={(e) => handleFieldChange('copyrightText', e.target.value)}
                   placeholder="DavinciWaleBhaiya. All rights reserved."
                 />
@@ -251,7 +261,7 @@ export default function FooterSettingsPage() {
                 <input
                   type="text"
                   className={inputStyle}
-                  value={form.newsletterHeading}
+                  value={form.newsletterHeading || ''}
                   onChange={(e) => handleFieldChange('newsletterHeading', e.target.value)}
                   placeholder="Direct Release Dispatch"
                 />
@@ -262,7 +272,7 @@ export default function FooterSettingsPage() {
                 <input
                   type="text"
                   className={inputStyle}
-                  value={form.newsletterPlaceholder}
+                  value={form.newsletterPlaceholder || ''}
                   onChange={(e) => handleFieldChange('newsletterPlaceholder', e.target.value)}
                   placeholder="editor@studio.com"
                 />
@@ -273,7 +283,7 @@ export default function FooterSettingsPage() {
                 <input
                   type="text"
                   className={inputStyle}
-                  value={form.newsletterButtonText}
+                  value={form.newsletterButtonText || ''}
                   onChange={(e) => handleFieldChange('newsletterButtonText', e.target.value)}
                   placeholder="Join"
                 />
@@ -296,7 +306,7 @@ export default function FooterSettingsPage() {
                 <input
                   type="email"
                   className={inputStyle}
-                  value={form.supportEmail}
+                  value={form.supportEmail || ''}
                   onChange={(e) => handleFieldChange('supportEmail', e.target.value)}
                   placeholder="support@davinciwalebhaiya.com"
                 />
@@ -320,7 +330,7 @@ export default function FooterSettingsPage() {
                 <input
                   type="url"
                   className={inputStyle}
-                  value={form.youtubeUrl}
+                  value={form.youtubeUrl || ''}
                   onChange={(e) => handleFieldChange('youtubeUrl', e.target.value)}
                   placeholder="https://youtube.com/@davinciwalebhaiya"
                 />
@@ -334,7 +344,7 @@ export default function FooterSettingsPage() {
                 <input
                   type="url"
                   className={inputStyle}
-                  value={form.instagramUrl}
+                  value={form.instagramUrl || ''}
                   onChange={(e) => handleFieldChange('instagramUrl', e.target.value)}
                   placeholder="https://instagram.com/davinciwalebhaiya"
                 />
@@ -348,7 +358,7 @@ export default function FooterSettingsPage() {
                 <input
                   type="url"
                   className={inputStyle}
-                  value={form.twitterUrl}
+                  value={form.twitterUrl || ''}
                   onChange={(e) => handleFieldChange('twitterUrl', e.target.value)}
                   placeholder="https://x.com/davinciwale"
                 />
@@ -362,7 +372,7 @@ export default function FooterSettingsPage() {
                 <input
                   type="url"
                   className={inputStyle}
-                  value={form.discordUrl}
+                  value={form.discordUrl || ''}
                   onChange={(e) => handleFieldChange('discordUrl', e.target.value)}
                   placeholder="https://discord.gg/..."
                 />
@@ -633,7 +643,8 @@ export default function FooterSettingsPage() {
         {/* Global Save Button at Bottom */}
         <div className="flex justify-end pt-4">
           <button
-            type="submit"
+            type="button"
+            onClick={handleSubmit}
             disabled={saving}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-xs font-semibold text-white hover:bg-blue-500 transition-colors shadow-xl shadow-blue-500/25 disabled:opacity-50 cursor-pointer"
           >
