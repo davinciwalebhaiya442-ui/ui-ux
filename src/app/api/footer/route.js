@@ -2,7 +2,6 @@ import { prisma } from '@/lib/prisma';
 import { DEFAULT_FOOTER_SETTINGS } from '@/lib/footer';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 export async function GET() {
   try {
@@ -13,7 +12,7 @@ export async function GET() {
       { footer: setting || DEFAULT_FOOTER_SETTINGS },
       {
         headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=86400',
         },
       }
     );
@@ -23,7 +22,7 @@ export async function GET() {
       { footer: DEFAULT_FOOTER_SETTINGS },
       {
         headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=86400',
         },
       }
     );

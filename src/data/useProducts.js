@@ -58,8 +58,10 @@ export function useProducts(initialProducts = null) {
   }, []);
 
   useEffect(() => {
-    // 1. Initial background fetch to verify fresh data
-    fetchProducts();
+    // 1. Only fetch if SSR products were not already provided
+    if (!initialProducts || initialProducts.length === 0) {
+      fetchProducts();
+    }
 
     // 2. BroadcastChannel: Instant cross-tab sync when admin modifies products
     let bc = null;
@@ -82,16 +84,7 @@ export function useProducts(initialProducts = null) {
     };
     window.addEventListener('storage', handleStorage);
 
-    // 4. Focus & Visibility Change: Auto-sync when user returns to this tab
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        fetchProducts();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-    window.addEventListener('focus', handleVisibility);
-
-    // 5. Supabase Realtime channel for cross-device live updates
+    // 4. Supabase Realtime channel for cross-device live updates (0 Vercel CPU)
     let sub = null;
     try {
       const supabase = getSupabaseBrowserClient();
@@ -108,8 +101,6 @@ export function useProducts(initialProducts = null) {
     return () => {
       if (bc) bc.close();
       window.removeEventListener('storage', handleStorage);
-      document.removeEventListener('visibilitychange', handleVisibility);
-      window.removeEventListener('focus', handleVisibility);
       if (sub) {
         try {
           const supabase = getSupabaseBrowserClient();
@@ -117,7 +108,7 @@ export function useProducts(initialProducts = null) {
         } catch {}
       }
     };
-  }, [fetchProducts]);
+  }, [fetchProducts, initialProducts]);
 
   return products;
 }

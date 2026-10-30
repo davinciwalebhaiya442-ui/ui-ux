@@ -18,12 +18,22 @@ export function CurrencyProvider({ children }) {
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    // Clear any legacy manual overrides so edge geolocation directly dictates currency
+    // 1. Check if geo is already cached in this session to prevent repeated requests
     try {
       localStorage.removeItem('dwb_currency');
+      const cached = sessionStorage.getItem('dwb_geo');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed?.country && parsed?.currency) {
+          setCountry(parsed.country);
+          setCurrencyState(parsed.currency);
+          setInitialized(true);
+          return;
+        }
+      }
     } catch (e) {}
 
-    // Fetch server-detected country & default currency automatically based on visitor location
+    // 2. Fetch server-detected country & default currency once per session
     fetch('/api/geo')
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
@@ -32,6 +42,9 @@ export function CurrencyProvider({ children }) {
         setCountry(detectedCountry);
         const autoCur = data.currency || (detectedCountry === 'IN' ? 'INR' : 'USD');
         setCurrencyState(autoCur);
+        try {
+          sessionStorage.setItem('dwb_geo', JSON.stringify({ country: detectedCountry, currency: autoCur }));
+        } catch (e) {}
       })
       .catch(() => {})
       .finally(() => setInitialized(true));

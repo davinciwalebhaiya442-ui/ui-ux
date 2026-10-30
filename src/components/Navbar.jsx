@@ -6,7 +6,6 @@ import { ArrowUpRight, Menu, X } from 'lucide-react';
 export default function Navbar({ onOpenSearch }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [account, setAccount] = useState(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -14,13 +13,6 @@ export default function Navbar({ onOpenSearch }) {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  useEffect(() => {
-    fetch('/api/auth/me')
-      .then((response) => response.json())
-      .then((data) => setAccount(data.user || null))
-      .catch(() => {});
   }, []);
 
   const navLinks = [

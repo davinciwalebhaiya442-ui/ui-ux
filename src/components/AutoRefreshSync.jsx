@@ -36,7 +36,7 @@ export default function AutoRefreshSync() {
       }, 500);
     };
 
-    // 1. Instant cross-tab sync via BroadcastChannel
+    // 1. Instant cross-tab sync via BroadcastChannel (0 Vercel CPU)
     let bc = null;
     let syncBc = null;
     try {
@@ -49,7 +49,7 @@ export default function AutoRefreshSync() {
       }
     } catch {}
 
-    // 2. Cross-window / tab sync via storage event
+    // 2. Cross-window / tab sync via storage event (0 Vercel CPU)
     const onStorage = (e) => {
       if (
         e.key === 'dwb_products_updated' ||
@@ -62,42 +62,11 @@ export default function AutoRefreshSync() {
     };
     window.addEventListener('storage', onStorage);
 
-    // 3. Database version check (on focus / visibility change, cached at edge)
-    const checkVersion = async () => {
-      if (typeof document !== 'undefined' && document.hidden) return;
-      try {
-        const res = await fetch('/api/sync/status', { cache: 'default' });
-        if (!res.ok) return;
-        const data = await res.json();
-        const serverVersion = Number(data.version || 0);
-
-        if (initialVersionRef.current === null) {
-          initialVersionRef.current = serverVersion;
-        } else if (serverVersion > initialVersionRef.current) {
-          initialVersionRef.current = serverVersion;
-          triggerRefresh();
-        }
-      } catch {}
-    };
-
-    // Initial check after 3 seconds so page load is instant
-    const initTimer = setTimeout(checkVersion, 3000);
-
-    // 4. Tab visibility change & focus check (no 5s polling loop)
-    const onFocus = () => {
-      checkVersion();
-    };
-    window.addEventListener('focus', onFocus);
-    window.addEventListener('visibilitychange', onFocus);
-
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
-      if (initTimer) clearTimeout(initTimer);
       if (bc) bc.close();
       if (syncBc) syncBc.close();
       window.removeEventListener('storage', onStorage);
-      window.removeEventListener('focus', onFocus);
-      window.removeEventListener('visibilitychange', onFocus);
     };
   }, [router]);
 
