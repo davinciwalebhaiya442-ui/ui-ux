@@ -6,7 +6,16 @@ import { sendOrderDeliveryEmail } from './email';
  * Uses sequential operations instead of interactive transactions to ensure full compatibility with
  * Supabase PgBouncer connection pooler on serverless edge environments (avoiding P2028 timeout).
  */
-export async function fulfillOrder({ orderId, orderNumber, razorpayOrderId, razorpayPaymentId, razorpaySignature }) {
+export async function fulfillOrder({
+  orderId,
+  orderNumber,
+  razorpayOrderId,
+  razorpayPaymentId,
+  razorpaySignature,
+  paypalOrderId,
+  paypalCaptureId,
+  paymentGateway,
+}) {
   // 1. Locate order
   const order = await prisma.order.findFirst({
     where: {
@@ -15,6 +24,8 @@ export async function fulfillOrder({ orderId, orderNumber, razorpayOrderId, razo
         ...(orderNumber ? [{ orderNumber }] : []),
         ...(razorpayOrderId ? [{ razorpayOrderId }] : []),
         ...(razorpayPaymentId ? [{ razorpayPaymentId }] : []),
+        ...(paypalOrderId ? [{ paypalOrderId }] : []),
+        ...(paypalCaptureId ? [{ paypalCaptureId }] : []),
       ],
     },
     include: { items: true, user: true },
@@ -29,14 +40,17 @@ export async function fulfillOrder({ orderId, orderNumber, razorpayOrderId, razo
     return { success: true, order, alreadyPaid: true };
   }
 
-  // 2. Mark order as PAID directly (fast, no connection pool lock)
+  // 2. Mark order as PAID directly
   const updatedOrder = await prisma.order.update({
     where: { id: order.id },
     data: {
       status: 'PAID',
       paymentStatus: 'CAPTURED',
+      ...(paymentGateway ? { paymentGateway } : {}),
       ...(razorpayPaymentId ? { razorpayPaymentId } : {}),
-      razorpaySignature: razorpaySignature || 'VERIFIED_VIA_RAZORPAY_API',
+      ...(razorpaySignature ? { razorpaySignature } : {}),
+      ...(paypalOrderId ? { paypalOrderId } : {}),
+      ...(paypalCaptureId ? { paypalCaptureId } : {}),
     },
   });
 

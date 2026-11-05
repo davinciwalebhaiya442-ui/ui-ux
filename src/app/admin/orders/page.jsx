@@ -68,6 +68,8 @@ export default function OrdersPage() {
         o.user?.name?.toLowerCase().includes(q) ||
         o.userId?.toLowerCase().includes(q) ||
         o.razorpayPaymentId?.toLowerCase().includes(q) ||
+        o.paypalOrderId?.toLowerCase().includes(q) ||
+        o.paypalCaptureId?.toLowerCase().includes(q) ||
         (o.items || []).some((i) => i.productName?.toLowerCase().includes(q));
 
       return matchesStatus && matchesSearch;
@@ -252,12 +254,32 @@ export default function OrdersPage() {
                     </span>
                   </td>
 
-                  {/* Razorpay Ref */}
+                  {/* Payment Reference */}
                   <td className="px-4 py-3.5">
-                    {o.razorpayPaymentId ? (
-                      <span className="font-mono text-[10px] text-white/60 bg-white/[0.04] px-2 py-0.5 rounded border border-white/[0.08]">
-                        {o.razorpayPaymentId}
-                      </span>
+                    {o.paymentGateway === 'PAYPAL' || o.paypalCaptureId || o.paypalOrderId ? (
+                      <div className="flex flex-col gap-1 items-start">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-amber-400/10 text-amber-300 border border-amber-400/20">
+                          PayPal
+                        </span>
+                        <span
+                          className="font-mono text-[10px] text-white/60 bg-white/[0.04] px-2 py-0.5 rounded border border-white/[0.08] max-w-[160px] truncate"
+                          title={o.paypalCaptureId || o.paypalOrderId}
+                        >
+                          {o.paypalCaptureId || o.paypalOrderId}
+                        </span>
+                      </div>
+                    ) : o.razorpayPaymentId ? (
+                      <div className="flex flex-col gap-1 items-start">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-blue-500/10 text-blue-300 border border-blue-500/20">
+                          Razorpay
+                        </span>
+                        <span
+                          className="font-mono text-[10px] text-white/60 bg-white/[0.04] px-2 py-0.5 rounded border border-white/[0.08] max-w-[160px] truncate"
+                          title={o.razorpayPaymentId}
+                        >
+                          {o.razorpayPaymentId}
+                        </span>
+                      </div>
                     ) : (
                       <span className="text-[11px] text-white/30">—</span>
                     )}

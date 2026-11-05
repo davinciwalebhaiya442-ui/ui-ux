@@ -20,6 +20,9 @@ export async function GET(request) {
               { orderNumber: { contains: search, mode: 'insensitive' } },
               { user: { email: { contains: search, mode: 'insensitive' } } },
               { user: { name: { contains: search, mode: 'insensitive' } } },
+              { razorpayPaymentId: { contains: search, mode: 'insensitive' } },
+              { paypalOrderId: { contains: search, mode: 'insensitive' } },
+              { paypalCaptureId: { contains: search, mode: 'insensitive' } },
             ],
           }
         : {}),

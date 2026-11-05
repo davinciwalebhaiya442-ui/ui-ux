@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useCurrency } from '@/context/CurrencyContext';
+import PayPalButton from '@/components/PayPalButton';
 import {
   ShieldCheck,
   Lock,
@@ -16,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export default function CheckoutPage() {
-  const { currency, formatPrice, isDomestic } = useCurrency();
+  const { currency, setCurrency, formatPrice, isDomestic } = useCurrency();
   const [product, setProduct] = useState(null);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
@@ -433,16 +434,46 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Order Total */}
-              <div className="flex items-center justify-between border-y border-white/[0.08] py-4">
+              {/* Order Total & Currency Switcher */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-y border-white/[0.08] py-4 gap-3">
                 <div>
                   <span className="text-xs text-white/50 block font-mono">TOTAL DUE</span>
                   <span className="text-[10px] text-white/40 font-mono">
                     Official Release &bull; Lifetime Commercial License
                   </span>
                 </div>
-                <div className="text-2xl sm:text-3xl font-bold text-white font-mono">
-                  {formatPrice(product)}
+                <div className="flex items-center justify-between sm:justify-end gap-3.5">
+                  {/* Quick Currency Switcher */}
+                  <div className="flex items-center bg-white/[0.04] p-1 rounded-xl border border-white/[0.08] text-[11px] font-mono">
+                    <button
+                      type="button"
+                      onClick={() => setCurrency('INR')}
+                      className={`px-2.5 py-1 rounded-lg transition-all ${
+                        currency === 'INR'
+                          ? 'bg-blue-600 text-white font-bold shadow-[0_0_12px_rgba(37,99,235,0.4)]'
+                          : 'text-white/40 hover:text-white'
+                      }`}
+                      title="Switch to INR (UPI, Cards, Netbanking)"
+                    >
+                      ₹ INR
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCurrency('USD')}
+                      className={`px-2.5 py-1 rounded-lg transition-all ${
+                        currency === 'USD'
+                          ? 'bg-amber-400 text-black font-bold shadow-[0_0_12px_rgba(251,191,36,0.3)]'
+                          : 'text-white/40 hover:text-white'
+                      }`}
+                      title="Switch to USD (Direct PayPal & International Cards)"
+                    >
+                      $ USD
+                    </button>
+                  </div>
+
+                  <div className="text-2xl sm:text-3xl font-bold text-white font-mono">
+                    {formatPrice(product)}
+                  </div>
                 </div>
               </div>
 
@@ -498,25 +529,78 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              {/* Pay Button - Direct Razorpay Payment without Login */}
-              <button
-                type="button"
-                disabled={paying || verifying}
-                onClick={pay}
-                className="w-full rounded-2xl bg-blue-600 hover:bg-blue-500 active:scale-[0.99] py-4 text-sm font-bold text-white shadow-[0_0_30px_rgba(37,99,235,0.4)] transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-              >
-                {paying || verifying ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Processing Payment...</span>
-                  </>
-                ) : (
-                  <>
-                    <Lock className="w-4 h-4" />
-                    <span>Pay {formatPrice(product)} via Razorpay</span>
-                  </>
-                )}
-              </button>
+              {/* Payment Gateway Trigger: PayPal for USD (International) & Razorpay for INR (India) */}
+              {currency === 'USD' ? (
+                <div className="space-y-3 pt-1">
+                  <div className="flex items-center gap-2 text-[11px] font-mono text-white/50 justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Lock className="w-3 h-3 text-emerald-400" />
+                      <span>DIRECT PAYPAL CHECKOUT</span>
+                    </span>
+                    <span className="text-emerald-400 font-semibold">● 0% DECLINE &bull; INSTANT ACCESS</span>
+                  </div>
+
+                  <PayPalButton
+                    product={product}
+                    email={email}
+                    name={name}
+                    disabled={paying || verifying}
+                    onStart={() => {
+                      setMessage('');
+                      setPaying(true);
+                    }}
+                    onError={(err) => {
+                      setPaying(false);
+                      setVerifying(false);
+                      setMessage(err);
+                      setMessageType('error');
+                    }}
+                    onVerifying={(msg) => {
+                      setPaying(false);
+                      setVerifying(true);
+                      setMessage(msg);
+                      setMessageType('info');
+                    }}
+                    onSuccess={(orderNum) => {
+                      try {
+                        sessionStorage.removeItem('dwb_active_checkout');
+                      } catch (e) {}
+                      window.location.href = `/order/success?order=${encodeURIComponent(orderNum)}`;
+                    }}
+                  />
+
+                  {/* Optional Fallback for International Cards via Razorpay */}
+                  <div className="pt-2 text-center">
+                    <button
+                      type="button"
+                      onClick={pay}
+                      disabled={paying || verifying}
+                      className="text-[11px] font-mono text-white/40 hover:text-white/70 transition-colors underline cursor-pointer"
+                    >
+                      Or pay with International Credit/Debit Card via Razorpay
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={paying || verifying}
+                  onClick={pay}
+                  className="w-full rounded-2xl bg-blue-600 hover:bg-blue-500 active:scale-[0.99] py-4 text-sm font-bold text-white shadow-[0_0_30px_rgba(37,99,235,0.4)] transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                >
+                  {paying || verifying ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Processing Payment...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-4 h-4" />
+                      <span>Pay {formatPrice(product)} via UPI & Cards</span>
+                    </>
+                  )}
+                </button>
+              )}
 
               {/* Guarantee Footer & Compliance */}
               <div className="space-y-2 pt-2">

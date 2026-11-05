@@ -10,8 +10,9 @@ export async function GET(request) {
     const orderNumber = searchParams.get('orderNumber')?.trim();
     const razorpayOrderId = searchParams.get('razorpayOrderId')?.trim();
     const razorpayPaymentId = searchParams.get('razorpayPaymentId')?.trim();
+    const paypalOrderId = searchParams.get('paypalOrderId')?.trim();
 
-    if (!orderNumber && !razorpayOrderId && !razorpayPaymentId) {
+    if (!orderNumber && !razorpayOrderId && !razorpayPaymentId && !paypalOrderId) {
       return Response.json({ error: 'MISSING_PARAMS' }, { status: 400 });
     }
 
@@ -22,6 +23,7 @@ export async function GET(request) {
           ...(orderNumber ? [{ orderNumber }] : []),
           ...(razorpayOrderId ? [{ razorpayOrderId }] : []),
           ...(razorpayPaymentId ? [{ razorpayPaymentId }] : []),
+          ...(paypalOrderId ? [{ paypalOrderId }] : []),
         ],
       },
       include: { items: true, user: true },
