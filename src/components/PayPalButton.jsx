@@ -27,6 +27,8 @@ export default function PayPalButton({
   const onSuccessRef = useRef(onSuccess);
   const onVerifyingRef = useRef(onVerifying);
   const pendingOrderNumberRef = useRef('');
+  const rejectDueToEmailRef = useRef(false);
+  const lastBackendErrorRef = useRef('');
 
   useEffect(() => {
     emailRef.current = email;
@@ -109,9 +111,15 @@ export default function PayPalButton({
         onClick: (data, actions) => {
           const cleanEmail = (emailRef.current || '').trim().toLowerCase();
           if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
-            if (onErrorRef.current) onErrorRef.current('Please enter a valid email address first.');
+            rejectDueToEmailRef.current = true;
+            if (onErrorRef.current) {
+              onErrorRef.current('Please enter your valid email address above where your download file will be sent.');
+            }
             return actions.reject();
           }
+
+          rejectDueToEmailRef.current = false;
+          lastBackendErrorRef.current = '';
           if (onStartRef.current) onStartRef.current();
           return actions.resolve();
         },
@@ -121,23 +129,33 @@ export default function PayPalButton({
           const cleanEmail = (emailRef.current || '').trim().toLowerCase();
           const cleanName = (nameRef.current || '').trim();
 
-          const res = await fetch('/api/checkout/paypal/create', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              productIds: [product.id],
-              email: cleanEmail,
-              name: cleanName,
-            }),
-          });
+          try {
+            const res = await fetch('/api/checkout/paypal/create', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                productIds: [product.id],
+                email: cleanEmail,
+                name: cleanName,
+              }),
+            });
 
-          const data = await res.json();
-          if (!res.ok) {
-            throw new Error(data.error || 'Failed to initiate PayPal payment');
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok || !data.paypalOrderId) {
+              const errorMsg = data.error || 'Failed to initiate PayPal payment';
+              lastBackendErrorRef.current = errorMsg;
+              if (onErrorRef.current) onErrorRef.current(errorMsg);
+              throw new Error(errorMsg);
+            }
+
+            pendingOrderNumberRef.current = data.orderNumber;
+            return data.paypalOrderId;
+          } catch (createErr) {
+            console.error('PayPal createOrder error:', createErr);
+            lastBackendErrorRef.current = createErr.message || 'Unable to communicate with PayPal gateway.';
+            throw createErr;
           }
-
-          pendingOrderNumberRef.current = data.orderNumber;
-          return data.paypalOrderId;
         },
 
         // Capture authorized payment upon buyer approval
@@ -175,14 +193,28 @@ export default function PayPalButton({
         },
 
         onError: (err) => {
-          console.error('PayPal SDK error:', err);
+          console.error('PayPal SDK error details:', err);
+          // If the rejection was caused by empty email input, preserve that helpful validation message!
+          if (rejectDueToEmailRef.current) {
+            return;
+          }
+
           if (onErrorRef.current) {
-            onErrorRef.current('PayPal encountered an unexpected error. Please try again.');
+            const specificMsg =
+              lastBackendErrorRef.current ||
+              err?.message ||
+              '';
+
+            if (specificMsg && !specificMsg.includes('[object') && !specificMsg.includes('GenericError')) {
+              onErrorRef.current(specificMsg);
+            } else {
+              onErrorRef.current('PayPal payment could not be processed. If you are in India testing a live PayPal merchant account, PayPal forbids paying yourself or domestic Indian transfers.');
+            }
           }
         },
 
         onCancel: () => {
-          if (onErrorRef.current) onErrorRef.current('PayPal checkout was cancelled.');
+          if (onErrorRef.current) onErrorRef.current('PayPal checkout window was closed.');
         },
       });
 
