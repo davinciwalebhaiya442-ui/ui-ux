@@ -42,3 +42,4 @@ export const FESTIVAL_EFFECT_OPTIONS = [
     accentColor: '#10b981',
   },
 ];
+

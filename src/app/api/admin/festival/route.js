@@ -77,3 +77,4 @@ export async function PATCH(request) {
     return Response.json({ error: 'Unable to save festival settings.' }, { status: 500 });
   }
 }
+

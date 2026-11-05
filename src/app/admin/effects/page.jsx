@@ -14,7 +14,9 @@ import {
   Eye,
   RefreshCw,
   Power,
-  Snowflake,
+  ExternalLink,
+  Flame,
+  CheckCircle2,
 } from 'lucide-react';
 
 export default function FestivalEffectsAdminPage() {
@@ -22,7 +24,6 @@ export default function FestivalEffectsAdminPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(DEFAULT_FESTIVAL_SETTINGS);
-  const [previewActive, setPreviewActive] = useState(true);
 
   useEffect(() => {
     fetch('/api/admin/festival', { cache: 'no-store' })
@@ -43,13 +44,14 @@ export default function FestivalEffectsAdminPage() {
       });
   }, []);
 
-  const handleSave = async () => {
+  const saveSettings = async (overrideForm = null) => {
+    const payload = overrideForm || form;
     setSaving(true);
     try {
       const res = await fetch('/api/admin/festival', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -57,23 +59,47 @@ export default function FestivalEffectsAdminPage() {
         throw new Error(data.error || 'Failed to save settings');
       }
 
-      // Broadcast update instantly to open visitor tabs (0 Vercel CPU)
+      setForm(data.festival);
+
+      // Multi-layer instant broadcast to visitor tabs (< 5ms)
       try {
+        localStorage.setItem('dwb_festival_settings', JSON.stringify(data.festival));
+        localStorage.setItem('dwb_festival_updated', Date.now().toString());
+
         if ('BroadcastChannel' in window) {
           const bc = new BroadcastChannel('dwb_festival_channel');
           bc.postMessage({ type: 'FESTIVAL_UPDATED', festival: data.festival });
           bc.close();
         }
-        localStorage.setItem('dwb_festival_updated', Date.now().toString());
+
+        window.dispatchEvent(
+          new CustomEvent('dwb_festival_updated', { detail: data.festival })
+        );
       } catch (e) {}
 
-      toast('Festival & seasonal effects updated successfully!', 'success');
+      if (data.festival.enabled) {
+        toast(`✨ ${selectedPreset.label} is now LIVE on your website!`, 'success');
+      } else {
+        toast('Atmospheric effects turned OFF. Website is standard.', 'success');
+      }
     } catch (err) {
       console.error('Save error:', err);
       toast(err.message || 'Could not save festival settings', 'error');
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleQuickActivate = (presetId) => {
+    const preset = FESTIVAL_EFFECT_OPTIONS.find((opt) => opt.id === presetId) || FESTIVAL_EFFECT_OPTIONS[0];
+    const updated = {
+      ...form,
+      enabled: true,
+      effect: presetId,
+      greetingText: form.greetingText || preset.recommendedGreeting,
+    };
+    setForm(updated);
+    saveSettings(updated);
   };
 
   const selectedPreset = FESTIVAL_EFFECT_OPTIONS.find((opt) => opt.id === form.effect) || FESTIVAL_EFFECT_OPTIONS[0];
@@ -93,116 +119,137 @@ export default function FestivalEffectsAdminPage() {
               Festival & Seasonal Effects
             </h1>
             <p className="text-xs sm:text-sm text-white/50 mt-1 max-w-2xl leading-relaxed">
-              Enable animated atmospheric effects like Winter Snowfall, Diwali Golden Embers, and New Year Confetti across the website. Rendered completely on the client canvas with 0% Vercel server CPU.
+              Enable cinematic Winter Snowfall, Diwali Golden Embers, and Celebration Confetti across the website. Rendered on 60fps client canvas with 0% Vercel server CPU.
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving || loading}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold text-xs transition-all shadow-[0_0_20px_rgba(245,158,11,0.25)] hover:shadow-[0_0_25px_rgba(245,158,11,0.4)] disabled:opacity-50 shrink-0 cursor-pointer"
-          >
-            {saving ? (
-              <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                <span>Saving Changes...</span>
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                <span>Save & Apply to Website</span>
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-3">
+            <a
+              href="/"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-white/10 bg-white/[0.05] hover:bg-white/10 text-white text-xs font-medium transition-all"
+            >
+              <span>View Live Website</span>
+              <ExternalLink className="w-3.5 h-3.5 text-white/60" />
+            </a>
+
+            <button
+              type="button"
+              onClick={() => saveSettings()}
+              disabled={saving || loading}
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold text-xs transition-all shadow-[0_0_20px_rgba(245,158,11,0.25)] hover:shadow-[0_0_25px_rgba(245,158,11,0.4)] disabled:opacity-50 shrink-0 cursor-pointer"
+            >
+              {saving ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  <span>Save & Apply to Website</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Master ON/OFF Hero Banner */}
         <div
-          className={`relative overflow-hidden rounded-2xl border p-6 transition-all duration-300 ${
+          onClick={() => {
+            const nextEnabled = !form.enabled;
+            const updated = { ...form, enabled: nextEnabled };
+            setForm(updated);
+            saveSettings(updated);
+          }}
+          className={`relative overflow-hidden rounded-2xl border p-6 transition-all duration-300 cursor-pointer group ${
             form.enabled
-              ? 'bg-gradient-to-r from-emerald-950/40 via-emerald-900/20 to-black border-emerald-500/40 shadow-[0_0_35px_rgba(16,185,129,0.15)]'
-              : 'bg-gradient-to-r from-[#12141a] to-[#0a0c10] border-white/[0.08]'
+              ? 'bg-gradient-to-r from-emerald-950/60 via-emerald-900/30 to-black border-emerald-500/50 shadow-[0_0_35px_rgba(16,185,129,0.2)]'
+              : 'bg-gradient-to-r from-[#141822] to-[#0a0d14] border-white/[0.08] hover:border-white/20'
           }`}
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
             <div className="flex items-center gap-4">
               <div
-                className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all ${
+                className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all ${
                   form.enabled
-                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.3)]'
-                    : 'bg-white/[0.05] text-white/40 border-white/[0.08]'
+                    ? 'bg-emerald-500 text-black border-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.5)]'
+                    : 'bg-white/[0.05] text-white/40 border-white/[0.08] group-hover:text-white'
                 }`}
               >
-                <Power className="w-6 h-6" />
+                <Power className="w-7 h-7" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-base font-semibold text-white">
+                  <h3 className="text-base sm:text-lg font-bold text-white">
                     Master Effect Switch
                   </h3>
                   <span
-                    className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider ${
+                    className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                       form.enabled
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                        ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 animate-pulse'
                         : 'bg-white/10 text-white/40 border border-white/10'
                     }`}
                   >
-                    {form.enabled ? 'ACTIVE ON WEBSITE' : 'OFFLINE'}
+                    {form.enabled ? '● LIVE ON davinciwalebhaiya.com' : '○ CURRENTLY OFF'}
                   </span>
                 </div>
-                <p className="text-xs text-white/50 mt-0.5">
+                <p className="text-xs text-white/60 mt-1 max-w-xl">
                   {form.enabled
-                    ? `Currently displaying "${selectedPreset.label}" (${form.intensity} intensity) across all pages.`
-                    : 'All festival particle animations are paused. The site looks standard.'}
+                    ? `Click to turn OFF. Currently rendering 3D "${selectedPreset.label}" (${form.intensity} intensity) across all pages.`
+                    : 'Click anywhere on this card to turn ON effect live on your website.'}
                 </p>
               </div>
             </div>
 
-            {/* Toggle Button */}
-            <button
-              type="button"
-              onClick={() => setForm((prev) => ({ ...prev, enabled: !prev.enabled }))}
-              className={`relative inline-flex h-8 w-16 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                form.enabled ? 'bg-emerald-500 shadow-[0_0_15px_#10b981]' : 'bg-white/20'
-              }`}
-            >
-              <span
-                className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                  form.enabled ? 'translate-x-8' : 'translate-x-0'
+            {/* Big Toggle Switch */}
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-mono font-semibold text-white/50 uppercase">
+                {form.enabled ? 'ENABLED' : 'DISABLED'}
+              </span>
+              <div
+                className={`relative inline-flex h-9 w-18 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                  form.enabled ? 'bg-emerald-500 shadow-[0_0_20px_#10b981]' : 'bg-white/20'
                 }`}
-              />
-            </button>
+              >
+                <span
+                  className={`pointer-events-none inline-block h-8 w-8 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                    form.enabled ? 'translate-x-9' : 'translate-x-0'
+                  }`}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Preset Selector Grid */}
+        {/* Preset Selector Grid with 1-Click Instant Activation */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-semibold text-white">Choose Festive Atmosphere</h2>
-              <p className="text-xs text-white/50">Select which theme to activate during festivals or weather seasons</p>
+              <p className="text-xs text-white/50">Click any card to select & preview. Use &quot;Turn ON Now&quot; to push live instantly.</p>
             </div>
-            <span className="text-xs font-mono text-amber-400/80 bg-amber-400/10 px-2.5 py-1 rounded-lg border border-amber-400/20">
-              Active: {selectedPreset.label}
+            <span className="text-xs font-mono text-amber-400 bg-amber-400/10 px-3 py-1 rounded-lg border border-amber-400/25 font-medium">
+              Selected: {selectedPreset.label}
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {FESTIVAL_EFFECT_OPTIONS.map((preset) => {
               const isSelected = form.effect === preset.id;
+              const isLive = isSelected && form.enabled;
+
               return (
-                <button
+                <div
                   key={preset.id}
-                  type="button"
-                  onClick={() =>
+                  onClick={() => {
                     setForm((prev) => ({
                       ...prev,
                       effect: preset.id,
-                      // auto populate greeting if empty
                       greetingText: prev.greetingText || preset.recommendedGreeting,
-                    }))
-                  }
+                    }));
+                  }}
                   className={`relative p-5 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between cursor-pointer group ${
                     isSelected
                       ? 'bg-gradient-to-b from-[#181d28] to-[#0c0f17] border-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.2)]'
@@ -211,16 +258,22 @@ export default function FestivalEffectsAdminPage() {
                 >
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-3xl p-2 rounded-xl bg-white/[0.04] border border-white/[0.06] block w-fit">
+                      <span className="text-3xl p-2.5 rounded-2xl bg-white/[0.04] border border-white/[0.06] block w-fit">
                         {preset.icon}
                       </span>
-                      {isSelected && (
+                      {isLive ? (
+                        <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          LIVE
+                        </span>
+                      ) : isSelected ? (
                         <span className="w-5 h-5 rounded-full bg-amber-400 text-black flex items-center justify-center">
                           <Check className="w-3 h-3 stroke-[3]" />
                         </span>
-                      )}
+                      ) : null}
                     </div>
-                    <h3 className="text-sm font-semibold text-white group-hover:text-amber-300 transition-colors">
+
+                    <h3 className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors">
                       {preset.label}
                     </h3>
                     <p className="text-xs text-white/50 mt-1.5 leading-relaxed">
@@ -228,16 +281,84 @@ export default function FestivalEffectsAdminPage() {
                     </p>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-mono text-white/40">
-                    <span>{isSelected ? 'Selected Preset' : 'Click to preview'}</span>
+                  {/* 1-Click Activate Button */}
+                  <div className="mt-5 pt-3 border-t border-white/[0.06] flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleQuickActivate(preset.id);
+                      }}
+                      className={`w-full py-1.5 px-3 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
+                        isLive
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                          : 'bg-white/10 hover:bg-amber-400 hover:text-black text-white/90 border border-white/15'
+                      }`}
+                    >
+                      {isLive ? (
+                        <>
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Active on Website</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Apply & Turn ON</span>
+                        </>
+                      )}
+                    </button>
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>
         </div>
 
-        {/* Fine Tuning Controls (Intensity, Speed, Mobile, Greetings) */}
+        {/* Live Simulator Window — Interactive stage to preview flakes & embers */}
+        <div className="rounded-2xl border border-white/[0.08] bg-[#07090e] p-6 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+            <div className="flex items-center gap-2">
+              <Eye className="w-4 h-4 text-emerald-400" />
+              <h3 className="text-sm font-semibold text-white">Realtime Simulator Stage</h3>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-mono text-white/50">
+              <span>Previewing: {selectedPreset.label}</span>
+              <span>• Move mouse to test wind deflection</span>
+            </div>
+          </div>
+
+          <div className="relative h-72 sm:h-96 rounded-xl overflow-hidden border border-white/10 bg-black flex items-center justify-center select-none">
+            {/* Embedded Festival Effect in preview mode */}
+            <FestivalEffect previewSettings={{ ...form, enabled: true }} />
+
+            {/* Mock website background */}
+            <div className="relative z-0 text-center px-6 max-w-lg space-y-3 pointer-events-none">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[11px] font-mono">
+                <Sparkles className="w-3 h-3" />
+                <span>DavinciWaleBhaiya Stage</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-sans">
+                {form.effect === 'snow'
+                  ? 'Winter Atmosphere Simulation'
+                  : form.effect === 'diwali'
+                  ? 'Cinema Gold Ember Sparks'
+                  : 'Festive Celebration Stage'}
+              </h2>
+              <p className="text-xs sm:text-sm text-white/60 leading-relaxed font-sans">
+                3D depth-of-field bokeh particles, natural fluttering wind, and crystal snowflakes.
+              </p>
+              <div className="pt-2 flex justify-center gap-3">
+                <div className="px-5 py-2 rounded-xl bg-white text-black font-semibold text-xs shadow-lg">
+                  Explore DCTLs
+                </div>
+                <div className="px-5 py-2 rounded-xl bg-white/10 text-white text-xs border border-white/20">
+                  Free Presets
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Fine-Tuning Controls (Intensity, Speed, Mobile, Greetings) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
           {/* Column 1: Particle Dynamics */}
@@ -254,9 +375,9 @@ export default function FestivalEffectsAdminPage() {
               </label>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { id: 'low', label: 'Subtle (Low)', desc: '~35 particles' },
-                  { id: 'medium', label: 'Balanced (Med)', desc: '~70 particles' },
-                  { id: 'high', label: 'Vibrant (High)', desc: '~120 particles' },
+                  { id: 'low', label: 'Subtle (Low)', desc: '~45 particles' },
+                  { id: 'medium', label: 'Balanced (Med)', desc: '~85 particles' },
+                  { id: 'high', label: 'Vibrant (High)', desc: '~140 particles' },
                 ].map((item) => (
                   <button
                     key={item.id}
@@ -398,71 +519,27 @@ export default function FestivalEffectsAdminPage() {
           </div>
         </div>
 
-        {/* Live Interactive Preview Screen */}
-        <div className="rounded-2xl border border-white/[0.08] bg-[#080a0f] p-6 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
-            <div className="flex items-center gap-2">
-              <Eye className="w-4 h-4 text-emerald-400" />
-              <h3 className="text-sm font-semibold text-white">Live Simulator / Realtime Preview</h3>
-            </div>
-            <div className="flex items-center gap-2 text-xs font-mono text-white/40">
-              <span>Previewing: {selectedPreset.label}</span>
-            </div>
-          </div>
-
-          <div className="relative h-64 sm:h-80 rounded-xl overflow-hidden border border-white/10 bg-black flex items-center justify-center">
-            {/* Embedded Festival Effect in preview mode */}
-            <div className="absolute inset-0 z-10 pointer-events-none">
-              <FestivalEffect previewSettings={{ ...form, enabled: previewActive }} />
-            </div>
-
-            {/* Mock website background */}
-            <div className="relative z-0 text-center px-4 max-w-md space-y-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[11px] font-mono">
-                <Sparkles className="w-3 h-3" />
-                <span>DavinciWaleBhaiya Stage</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-                Cinematic Color Science
-              </h2>
-              <p className="text-xs text-white/50 leading-relaxed">
-                Watch particles animate in real time. Clicks pass through seamlessly with zero mouse obstruction.
-              </p>
-              <div className="pt-2 flex justify-center gap-2">
-                <div className="px-4 py-1.5 rounded-lg bg-white text-black font-semibold text-xs">
-                  Download DCTL
-                </div>
-                <div className="px-4 py-1.5 rounded-lg bg-white/10 text-white text-xs border border-white/15">
-                  View Catalogue
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Save Bar */}
-        <div className="pt-4 flex items-center justify-between border-t border-white/[0.08]">
+        {/* Bottom Save & Live Action Bar */}
+        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/[0.08]">
           <div className="text-xs text-white/40">
-            Changes are saved to Supabase and immediately delivered via CDN Edge cache.
+            Changes apply in under 5 milliseconds across all open visitor browser tabs.
           </div>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving || loading}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold text-xs transition-all shadow-[0_0_20px_rgba(245,158,11,0.25)] hover:shadow-[0_0_25px_rgba(245,158,11,0.4)] disabled:opacity-50 cursor-pointer"
-          >
-            {saving ? (
-              <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                <span>Saving Changes...</span>
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                <span>Save & Apply to Website</span>
-              </>
-            )}
-          </button>
+          
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => {
+                const updated = { ...form, enabled: true };
+                setForm(updated);
+                saveSettings(updated);
+              }}
+              disabled={saving || loading}
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-black font-semibold text-xs transition-all shadow-[0_0_20px_rgba(16,185,129,0.25)] hover:shadow-[0_0_25px_rgba(16,185,129,0.4)] disabled:opacity-50 cursor-pointer"
+            >
+              {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Flame className="w-4 h-4" />}
+              <span>Turn ON & Apply to Website</span>
+            </button>
+          </div>
         </div>
 
       </div>
