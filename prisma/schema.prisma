@@ -151,6 +151,9 @@ model Order {
   razorpaySignature String?
   paypalOrderId    String?       @unique
   paypalCaptureId  String?       @unique
+  couponId         String?
+  couponCode       String?
+  coupon           Coupon?       @relation(fields: [couponId], references: [id], onDelete: SetNull)
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
   user             Profile       @relation(fields: [userId], references: [userId], onDelete: Cascade)
@@ -343,4 +346,32 @@ model FestivalSetting {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+model Coupon {
+  id              String       @id @default(cuid())
+  code            String       @unique
+  description     String?
+  discountType    DiscountType @default(PERCENTAGE)
+  discountPercent Int?
+  discountInr     Int?
+  discountUsd     Int?
+  minOrderInr     Int?         @default(0)
+  minOrderUsd     Int?         @default(0)
+  maxUses         Int?
+  usedCount       Int          @default(0)
+  productId       String?
+  expiresAt       DateTime?
+  isActive        Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  orders          Order[]
+
+  @@index([code, isActive])
+}
+
 

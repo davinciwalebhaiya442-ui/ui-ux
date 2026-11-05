@@ -1,13 +1,14 @@
 import { prisma } from '@/lib/prisma';
 import { ensureCustomerProfile } from '@/lib/account';
 import { createPayPalOrder } from '@/lib/payments/paypal';
+import { validateAndCalculateCoupon } from '@/lib/coupons';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { productIds, email, name } = body || {};
+    const { productIds, email, name, couponCode } = body || {};
 
     const customerEmail = (email || '').trim().toLowerCase();
     const customerName = (name || '').trim();
@@ -50,30 +51,53 @@ export async function POST(request) {
       return sum + Math.max(1, Math.round(inr / 83));
     }, 0);
 
+    // 2. Validate and apply coupon discount if provided
+    let discountUSD = 0;
+    let finalPayableUSD = subtotalUSD;
+    let appliedCoupon = null;
+
+    if (couponCode && typeof couponCode === 'string' && couponCode.trim()) {
+      const couponRes = await validateAndCalculateCoupon({
+        code: couponCode,
+        productIds: products.map((p) => p.id),
+        currency: 'USD',
+        subtotal: subtotalUSD,
+      });
+
+      if (couponRes.valid) {
+        discountUSD = couponRes.discountAmount;
+        finalPayableUSD = couponRes.finalTotal;
+        appliedCoupon = couponRes.coupon;
+      }
+    }
+
     const orderNumber = `DWB-PP-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
     const description = products.map((p) => p.name).join(', ').slice(0, 120);
 
-    // 2. Create PayPal Order directly via official PayPal API in USD
+    // 3. Create PayPal Order directly via official PayPal API in USD
     const paypalOrder = await createPayPalOrder({
       orderNumber,
-      amount: subtotalUSD,
+      amount: finalPayableUSD,
       currency: 'USD',
       description,
       customerEmail,
     });
 
-    // 3. Save database order in USD (international order)
+    // 4. Save database order in USD (international order)
     await prisma.order.create({
       data: {
         orderNumber,
         userId: profile.userId,
         subtotal: subtotalUSD,
-        total: subtotalUSD,
+        discount: discountUSD,
+        total: finalPayableUSD,
         currency: 'USD',
         status: 'PENDING',
         paymentStatus: 'PENDING',
         paymentGateway: 'PAYPAL',
         paypalOrderId: paypalOrder.id,
+        couponId: appliedCoupon?.id || null,
+        couponCode: appliedCoupon?.code || null,
         items: {
           create: products.map((product) => {
             const itemPrice =
@@ -95,7 +119,10 @@ export async function POST(request) {
       paypalOrderId: paypalOrder.id,
       orderNumber,
       subtotal: subtotalUSD,
+      discount: discountUSD,
+      total: finalPayableUSD,
       currency: 'USD',
+      couponCode: appliedCoupon?.code || null,
     });
   } catch (error) {
     console.error('PayPal checkout create error:', error);

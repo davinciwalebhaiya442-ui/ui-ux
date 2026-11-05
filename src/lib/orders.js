@@ -54,6 +54,18 @@ export async function fulfillOrder({
     },
   });
 
+  // If order used a coupon, increment redemption count
+  if (order.couponId) {
+    try {
+      await prisma.coupon.update({
+        where: { id: order.couponId },
+        data: { usedCount: { increment: 1 } },
+      });
+    } catch (couponErr) {
+      console.warn(`[fulfillOrder] Coupon count increment warning:`, couponErr?.message || couponErr);
+    }
+  }
+
   // 3. Grant product access & downloads
   for (const item of order.items) {
     try {

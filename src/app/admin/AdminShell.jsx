@@ -10,6 +10,7 @@ import {
   FolderKanban,
   Download,
   ShoppingBag,
+  TicketPercent,
   Users,
   BarChart3,
   FileText,
@@ -194,6 +195,7 @@ const NAV_ITEMS = [
   ]},
   { group: 'BUSINESS', items: [
     { label: 'Orders', href: '/admin/orders', icon: ShoppingBag, badgeKey: 'orders' },
+    { label: 'Coupons & Promos', href: '/admin/coupons', icon: TicketPercent },
     { label: 'Users', href: '/admin/users', icon: Users },
     { label: 'Studio Requests', href: '/admin/studio', icon: BriefcaseBusiness, badgeKey: 'studio' },
     { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },

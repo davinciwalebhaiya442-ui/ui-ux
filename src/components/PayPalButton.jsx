@@ -7,6 +7,7 @@ export default function PayPalButton({
   product,
   email,
   name,
+  couponCode = '',
   onStart,
   onError,
   onSuccess,
@@ -22,6 +23,7 @@ export default function PayPalButton({
   // Keep live references to state/props so input typing doesn't re-render PayPal buttons
   const emailRef = useRef(email);
   const nameRef = useRef(name);
+  const couponCodeRef = useRef(couponCode);
   const onStartRef = useRef(onStart);
   const onErrorRef = useRef(onError);
   const onSuccessRef = useRef(onSuccess);
@@ -37,6 +39,10 @@ export default function PayPalButton({
   useEffect(() => {
     nameRef.current = name;
   }, [name]);
+
+  useEffect(() => {
+    couponCodeRef.current = couponCode;
+  }, [couponCode]);
 
   useEffect(() => {
     onStartRef.current = onStart;
@@ -152,6 +158,7 @@ export default function PayPalButton({
                 productIds: [product.id],
                 email: cleanEmail,
                 name: cleanName,
+                couponCode: (couponCodeRef.current || '').trim().toUpperCase(),
               }),
             });
 

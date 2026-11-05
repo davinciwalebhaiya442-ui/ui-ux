@@ -1,11 +1,12 @@
 import { prisma } from '@/lib/prisma';
 import { ensureCustomerProfile } from '@/lib/account';
 import { getRazorpay } from '@/lib/payments/razorpay';
+import { validateAndCalculateCoupon } from '@/lib/coupons';
 
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { productIds, email, name, currency: requestedCurrency } = body || {};
+    const { productIds, email, name, currency: requestedCurrency, couponCode } = body || {};
 
     const customerEmail = (email || '').trim().toLowerCase();
     const customerName = (name || '').trim();
@@ -77,12 +78,32 @@ export async function POST(request) {
       subtotal = products.reduce((sum, p) => sum + Number(p.price || 0), 0);
     }
 
+    // 2. Validate and apply coupon discount if provided
+    let discount = 0;
+    let finalPayable = subtotal;
+    let appliedCoupon = null;
+
+    if (couponCode && typeof couponCode === 'string' && couponCode.trim()) {
+      const couponRes = await validateAndCalculateCoupon({
+        code: couponCode,
+        productIds: products.map((p) => p.id),
+        currency: effectiveCurrency,
+        subtotal,
+      });
+
+      if (couponRes.valid) {
+        discount = couponRes.discountAmount;
+        finalPayable = couponRes.finalTotal;
+        appliedCoupon = couponRes.coupon;
+      }
+    }
+
     const orderNumber = `DWB-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
 
     // Attempt Razorpay order creation
     let razorpayOrder;
     let finalGatewayCurrency = effectiveCurrency;
-    let finalGatewayAmount = subtotal * 100;
+    let finalGatewayAmount = finalPayable * 100;
 
     try {
       razorpayOrder = await getRazorpay().orders.create({
@@ -96,6 +117,8 @@ export async function POST(request) {
           productCount: products.length.toString(),
           country: detectedCountry,
           pricingTier: effectiveCurrency,
+          couponCode: appliedCoupon?.code || 'NONE',
+          discount: discount.toString(),
         },
       });
     } catch (rzpErr) {
@@ -107,7 +130,7 @@ export async function POST(request) {
       // so the merchant ALWAYS gets full international revenue instead of domestic ₹99!
       if (effectiveCurrency === 'USD') {
         const forexRate = 86;
-        const inrEquivalent = Math.round(subtotal * forexRate);
+        const inrEquivalent = Math.round(finalPayable * forexRate);
         finalGatewayCurrency = 'INR';
         finalGatewayAmount = inrEquivalent * 100;
 
@@ -122,8 +145,10 @@ export async function POST(request) {
               customerName: customerName || 'Valued Customer',
               productCount: products.length.toString(),
               country: detectedCountry,
-              originalUSD: subtotal.toString(),
-              forexConverted: `Converted $${subtotal} USD -> ₹${inrEquivalent} INR`,
+              originalUSD: finalPayable.toString(),
+              forexConverted: `Converted $${finalPayable} USD -> ₹${inrEquivalent} INR`,
+              couponCode: appliedCoupon?.code || 'NONE',
+              discount: discount.toString(),
             },
           });
         } catch (fallbackErr) {
@@ -141,11 +166,14 @@ export async function POST(request) {
         orderNumber,
         userId: profile.userId,
         subtotal: subtotal,
-        total: subtotal,
+        discount: discount,
+        total: finalPayable,
         currency: effectiveCurrency,
         status: 'PENDING',
         paymentStatus: 'PENDING',
         razorpayOrderId: razorpayOrder.id,
+        couponId: appliedCoupon?.id || null,
+        couponCode: appliedCoupon?.code || null,
         items: {
           create: products.map((product) => {
             const itemPrice =
@@ -173,7 +201,10 @@ export async function POST(request) {
         currency: finalGatewayCurrency,
         razorpayOrderId: razorpayOrder.id,
         displayCurrency: effectiveCurrency,
-        displayAmount: subtotal,
+        displayAmount: finalPayable,
+        subtotal,
+        discount,
+        couponCode: appliedCoupon?.code || null,
       },
       keyId: process.env.RAZORPAY_KEY_ID,
       customerEmail,
