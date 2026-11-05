@@ -1,5 +1,6 @@
 import "./globals.css";
 import AutoRefreshSync from "@/components/AutoRefreshSync";
+import FestivalEffect from "@/components/FestivalEffect";
 import { CurrencyProvider } from "@/context/CurrencyContext";
 
 export const metadata = {
@@ -16,6 +17,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className="font-sans antialiased">
         <AutoRefreshSync />
+        <FestivalEffect />
         <CurrencyProvider>
           {children}
         </CurrencyProvider>

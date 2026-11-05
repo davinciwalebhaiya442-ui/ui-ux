@@ -328,3 +328,16 @@ model AdminOtp {
   @@index([userId, createdAt])
 }
 
+model FestivalSetting {
+  id              String   @id @default("default")
+  enabled         Boolean  @default(false)
+  effect          String   @default("snow")
+  intensity       String   @default("medium")
+  enableOnMobile  Boolean  @default(true)
+  greetingText    String?  @default("")
+  greetingEnabled Boolean  @default(false)
+  customSpeed     Int      @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+

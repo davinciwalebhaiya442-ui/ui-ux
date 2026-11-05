@@ -49,6 +49,7 @@ import {
   SlidersHorizontal,
   PanelsTopBottom,
   Star,
+  PartyPopper,
 } from 'lucide-react';
 
 // Context for Toasts & Confirmations
@@ -199,6 +200,7 @@ const NAV_ITEMS = [
   ]},
   { group: 'SITE', items: [
     { label: 'Hero Settings', href: '/admin/hero', icon: Sparkles },
+    { label: 'Festival & Effects', href: '/admin/effects', icon: PartyPopper },
     { label: 'Before/After Comparison', href: '/admin/comparison', icon: SlidersHorizontal },
     { label: 'Site Pages & Legal', href: '/admin/pages', icon: FileText },
     { label: 'FAQ', href: '/admin/faq', icon: CircleHelp },

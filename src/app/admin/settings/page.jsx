@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Sparkles, ArrowRight, PanelsTopBottom } from 'lucide-react';
+import { Sparkles, ArrowRight, PanelsTopBottom, PartyPopper } from 'lucide-react';
 import { AdminLayout } from '../AdminShell';
 import AdminSecuritySettings from './AdminSecuritySettings';
 
@@ -50,6 +50,24 @@ export default function SettingsPage() {
                   <div>
                     <h3 className="text-base font-semibold text-white group-hover:text-indigo-300 transition-colors">Footer Management</h3>
                     <p className="text-xs text-white/60 mt-0.5">Customize brand tagline, directory links, newsletter & social links</p>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-white/40 group-hover:text-white group-hover:translate-x-1 transition-all" />
+              </div>
+            </Link>
+
+            <Link
+              href="/admin/effects"
+              className="group rounded-2xl border border-amber-500/30 bg-gradient-to-br from-[#1a140b] to-[#0c0905] p-6 shadow-xl hover:border-amber-400/60 transition-all block md:col-span-2"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-amber-600/20 text-amber-400 border border-amber-500/30">
+                    <PartyPopper className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-white group-hover:text-amber-300 transition-colors">Festival & Seasonal Effects</h3>
+                    <p className="text-xs text-white/60 mt-0.5">Toggle live Winter Snow, Diwali Golden Embers, New Year Confetti, and seasonal greetings with 1-click</p>
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-white/40 group-hover:text-white group-hover:translate-x-1 transition-all" />
