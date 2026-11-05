@@ -50,9 +50,24 @@ export async function PATCH(request) {
   try {
     const body = await request.json();
 
+    const allowedEffects = [
+      'snow',
+      'diwali',
+      'newyear',
+      'christmas',
+      'holi',
+      'eid',
+      'durga_puja',
+      'dussehra',
+      'ganesh',
+      'independence',
+      'valentine',
+      'halloween',
+    ];
+
     const data = {
       enabled: Boolean(body.enabled),
-      effect: ['snow', 'diwali', 'confetti', 'fireflies'].includes(body.effect) ? body.effect : 'snow',
+      effect: allowedEffects.includes(body.effect) ? body.effect : 'snow',
       intensity: ['low', 'medium', 'high'].includes(body.intensity) ? body.intensity : 'medium',
       enableOnMobile: body.enableOnMobile !== undefined ? Boolean(body.enableOnMobile) : true,
       greetingText: String(body.greetingText || '').trim(),
