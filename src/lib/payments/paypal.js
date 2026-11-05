@@ -2,12 +2,15 @@ let cachedToken = null;
 let tokenExpiresAt = 0;
 
 function getPayPalConfig() {
-  const clientId = (process.env.PAYPAL_CLIENT_ID || '').trim();
+  const clientId = (process.env.PAYPAL_CLIENT_ID || process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '').trim();
   const clientSecret = (process.env.PAYPAL_CLIENT_SECRET || '').trim();
   const mode = (process.env.PAYPAL_MODE || 'live').toLowerCase().trim();
 
   if (!clientId || !clientSecret) {
-    throw new Error('PayPal is not configured. Missing PAYPAL_CLIENT_ID or PAYPAL_CLIENT_SECRET.');
+    const missing = [];
+    if (!clientId) missing.push('PAYPAL_CLIENT_ID');
+    if (!clientSecret) missing.push('PAYPAL_CLIENT_SECRET');
+    throw new Error(`PayPal is not configured. Missing in environment variables: ${missing.join(', ')}.`);
   }
 
   const baseUrl = mode === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
