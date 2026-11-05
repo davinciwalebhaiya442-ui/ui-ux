@@ -51,12 +51,14 @@ export async function PATCH(request) {
     const body = await request.json();
 
     const allowedEffects = [
+      'auto',
       'snow',
       'diwali',
       'newyear',
       'christmas',
       'holi',
       'eid',
+      'ramadan',
       'durga_puja',
       'dussehra',
       'ganesh',

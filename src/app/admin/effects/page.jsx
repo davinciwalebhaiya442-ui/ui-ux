@@ -337,14 +337,10 @@ export default function FestivalEffectsAdminPage() {
                 <span>DavinciWaleBhaiya Stage</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-sans">
-                {form.effect === 'snow'
-                  ? 'Winter Atmosphere Simulation'
-                  : form.effect === 'diwali'
-                  ? 'Cinema Gold Ember Sparks'
-                  : 'Festive Celebration Stage'}
+                {selectedPreset.label}
               </h2>
               <p className="text-xs sm:text-sm text-white/60 leading-relaxed font-sans">
-                3D depth-of-field bokeh particles, natural fluttering wind, and crystal snowflakes.
+                {selectedPreset.description}
               </p>
               <div className="pt-2 flex justify-center gap-3">
                 <div className="px-5 py-2 rounded-xl bg-white text-black font-semibold text-xs shadow-lg">
