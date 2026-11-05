@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import { Lottie } from 'lottie-react';
 import gsap from 'gsap';
-import { X, Sparkles } from 'lucide-react';
+import { X } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import {
   DEFAULT_FESTIVAL_SETTINGS,
@@ -97,7 +97,6 @@ export default function FestivalManager({ previewSettings = null }) {
 
     fetchLiveSettings();
 
-    // BroadcastChannel for sub-1ms cross-tab instant updates
     let bc = null;
     try {
       if ('BroadcastChannel' in window) {
@@ -169,7 +168,7 @@ export default function FestivalManager({ previewSettings = null }) {
     pathname.startsWith('/cart')
   ) : false;
 
-  // 5. Lazy-load Lottie JSON Asset on Demand
+  // 5. Preload & Cache Lottie JSON Asset
   const [lottieData, setLottieData] = useState(null);
 
   useEffect(() => {
@@ -211,17 +210,15 @@ export default function FestivalManager({ previewSettings = null }) {
 
   // 6. GSAP Cinematic Entrance & Parallax Sway Sequencing
   useEffect(() => {
-    if (!lottieData || !heroLottieContainerRef.current || reducedMotion) return;
+    if (!heroLottieContainerRef.current || reducedMotion) return;
 
     const el = heroLottieContainerRef.current;
     
-    // Kill existing timeline if any
     if (heroGsapTimelineRef.current) {
       heroGsapTimelineRef.current.kill();
     }
 
-    // Reset initial style
-    gsap.set(el, { opacity: 0, scale: 0.85, y: 25 });
+    gsap.set(el, { opacity: 0, scale: 0.8, y: 30 });
 
     const tl = gsap.timeline();
     tl.to(el, {
@@ -234,8 +231,8 @@ export default function FestivalManager({ previewSettings = null }) {
 
     // Gentle floating breathing sway
     tl.to(el, {
-      y: '+=8',
-      duration: 3.2,
+      y: '+=10',
+      duration: 3.4,
       yoyo: true,
       repeat: -1,
       ease: 'sine.inOut',
@@ -246,7 +243,7 @@ export default function FestivalManager({ previewSettings = null }) {
     return () => {
       tl.kill();
     };
-  }, [lottieData, reducedMotion]);
+  }, [activeEffectId, reducedMotion]);
 
   // 7. Track cursor for organic breeze and mouse parallax deflection
   useEffect(() => {
@@ -255,12 +252,12 @@ export default function FestivalManager({ previewSettings = null }) {
     const handleMouseMove = (e) => {
       mouseRef.current = { x: e.clientX, y: e.clientY, active: true };
 
-      // Subtle parallax deflection on hero Lottie element
       if (heroLottieContainerRef.current && !reducedMotion) {
-        const deltaX = (e.clientX - window.innerWidth / 2) * 0.015;
-        const deltaY = (e.clientY - window.innerHeight / 2) * 0.015;
+        const deltaX = (e.clientX - window.innerWidth / 2) * 0.018;
+        const deltaY = (e.clientY - window.innerHeight / 2) * 0.018;
         gsap.to(heroLottieContainerRef.current, {
           x: deltaX,
+          y: deltaY,
           duration: 0.8,
           ease: 'power1.out',
           overwrite: 'auto',
@@ -271,7 +268,7 @@ export default function FestivalManager({ previewSettings = null }) {
     const handleMouseLeave = () => {
       mouseRef.current = { x: -9999, y: -9999, active: false };
       if (heroLottieContainerRef.current) {
-        gsap.to(heroLottieContainerRef.current, { x: 0, duration: 1, ease: 'power2.out' });
+        gsap.to(heroLottieContainerRef.current, { x: 0, y: 0, duration: 1, ease: 'power2.out' });
       }
     };
 
@@ -294,18 +291,18 @@ export default function FestivalManager({ previewSettings = null }) {
       try {
         if (activeEffectId === 'independence') {
           confetti({
-            particleCount: 28,
+            particleCount: 35,
             angle: 60,
-            spread: 50,
+            spread: 55,
             origin: { x: 0, y: 0.85 },
             colors: ['#ff9933', '#ffffff', '#138808'],
             disableForReducedMotion: true,
             zIndex: 35,
           });
           confetti({
-            particleCount: 28,
+            particleCount: 35,
             angle: 120,
-            spread: 50,
+            spread: 55,
             origin: { x: 1, y: 0.85 },
             colors: ['#ff9933', '#ffffff', '#138808'],
             disableForReducedMotion: true,
@@ -313,8 +310,8 @@ export default function FestivalManager({ previewSettings = null }) {
           });
         } else if (activeEffectId === 'newyear') {
           confetti({
-            particleCount: 36,
-            spread: 65,
+            particleCount: 45,
+            spread: 70,
             origin: { y: 0.7 },
             colors: ['#ffd700', '#ffffff', '#ec4899', '#3b82f6', '#10b981'],
             disableForReducedMotion: true,
@@ -322,12 +319,12 @@ export default function FestivalManager({ previewSettings = null }) {
           });
         }
       } catch (e) {}
-    }, 15000);
+    }, 14000);
 
     return () => clearInterval(interval);
   }, [isEnabled, activeEffectId, previewSettings, isCartOrCheckout, reducedMotion]);
 
-  // 9. Ambient Canvas Particle Simulation Engine
+  // 9. HIGH-FIDELITY VECTOR PARTICLE ENGINE (Real Crystals, Petals, Ribbons, Embers)
   useEffect(() => {
     if (!isEnabled || isCartOrCheckout) {
       if (animFrameIdRef.current) {
@@ -351,57 +348,185 @@ export default function FestivalManager({ previewSettings = null }) {
       return;
     }
 
-    let count = intensity === 'high' ? 120 : intensity === 'low' ? 35 : 70;
-    if (isMobile) {
-      count = Math.round(count * 0.5);
-    }
-    if (reducedMotion) {
-      count = Math.round(count * 0.3);
-    }
+    let count = intensity === 'high' ? 95 : intensity === 'low' ? 30 : 60;
+    if (isMobile) count = Math.round(count * 0.5);
+    if (reducedMotion) count = Math.round(count * 0.25);
 
-    // Particle initializers
+    // =========================================================================
+    // VECTOR DRAWING ROUTINES (No boring round dots!)
+    // =========================================================================
+
+    // A. 6-Point Intricate Ice Crystal Snowflake
+    const drawIceCrystal = (c, x, y, radius, angle, alpha) => {
+      c.save();
+      c.translate(x, y);
+      c.rotate(angle);
+      c.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+      c.lineWidth = 1.2;
+      c.lineCap = 'round';
+      c.beginPath();
+
+      for (let i = 0; i < 3; i++) {
+        c.rotate(Math.PI / 3);
+        c.moveTo(-radius, 0);
+        c.lineTo(radius, 0);
+        const bOffset = radius * 0.55;
+        const bSize = radius * 0.35;
+        c.moveTo(bOffset, 0);
+        c.lineTo(bOffset + bSize * 0.7, bSize);
+        c.moveTo(bOffset, 0);
+        c.lineTo(bOffset + bSize * 0.7, -bSize);
+        c.moveTo(-bOffset, 0);
+        c.lineTo(-bOffset - bSize * 0.7, bSize);
+        c.moveTo(-bOffset, 0);
+        c.lineTo(-bOffset - bSize * 0.7, -bSize);
+      }
+      c.stroke();
+      c.restore();
+    };
+
+    // B. Real 3D Tumbling Flower Petal (Marigold & Hibiscus)
+    const drawPetal = (c, x, y, w, h, angle, tilt, color, alpha) => {
+      c.save();
+      c.translate(x, y);
+      c.rotate(angle);
+      c.scale(Math.cos(tilt), 1);
+      c.globalAlpha = alpha;
+      c.fillStyle = color;
+      c.beginPath();
+      c.moveTo(0, -h / 2);
+      c.bezierCurveTo(w / 2, -h / 4, w / 2, h / 4, 0, h / 2);
+      c.bezierCurveTo(-w / 2, h / 4, -w / 2, -h / 4, 0, -h / 2);
+      c.fill();
+      c.restore();
+    };
+
+    // C. Real Floating Vector Heart (Valentine)
+    const drawHeart = (c, x, y, size, angle, color, alpha) => {
+      c.save();
+      c.translate(x, y);
+      c.rotate(angle);
+      c.globalAlpha = alpha;
+      c.fillStyle = color;
+      c.shadowBlur = 10;
+      c.shadowColor = color;
+      c.beginPath();
+      const topCurve = size * 0.3;
+      c.moveTo(0, topCurve);
+      c.bezierCurveTo(0, 0, -size / 2, 0, -size / 2, topCurve);
+      c.bezierCurveTo(-size / 2, (size + topCurve) / 2, 0, (size + topCurve) / 1.3, 0, size);
+      c.bezierCurveTo(0, (size + topCurve) / 1.3, size / 2, (size + topCurve) / 2, size / 2, topCurve);
+      c.bezierCurveTo(size / 2, 0, 0, 0, 0, topCurve);
+      c.fill();
+      c.restore();
+    };
+
+    // D. 3D Metallic Tumbling Confetti Ribbon (New Year, Independence)
+    const draw3DRibbon = (c, x, y, w, h, rotX, rotY, rotZ, scheme, alpha) => {
+      c.save();
+      c.translate(x, y);
+      c.rotate(rotZ);
+      const scaleX = Math.cos(rotX);
+      const scaleY = Math.sin(rotY);
+      c.scale(scaleX, scaleY);
+      c.globalAlpha = alpha;
+      // Metallic shine: flip between bright front & deeper back
+      c.fillStyle = scaleX > 0 ? scheme.main : scheme.dark;
+      c.fillRect(-w / 2, -h / 2, w, h);
+      c.restore();
+    };
+
+    // E. 8-Point Islamic Celestial Star (Eid & Ramadan)
+    const drawIslamicStar = (c, x, y, size, alpha) => {
+      c.save();
+      c.translate(x, y);
+      c.globalAlpha = alpha;
+      c.fillStyle = '#fef08a';
+      c.shadowBlur = 8;
+      c.shadowColor = '#fbbf24';
+      c.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const r = i % 2 === 0 ? size : size * 0.42;
+        const a = (i * Math.PI) / 4;
+        const px = Math.cos(a) * r;
+        const py = Math.sin(a) * r;
+        if (i === 0) c.moveTo(px, py);
+        else c.lineTo(px, py);
+      }
+      c.closePath();
+      c.fill();
+      c.restore();
+    };
+
+    // F. Organic Gulal Powder Cloud (Holi)
+    const drawGulalCloud = (c, x, y, radius, color, alpha) => {
+      c.save();
+      c.globalAlpha = alpha;
+      const grad = c.createRadialGradient(x, y, 0, x, y, radius);
+      grad.addColorStop(0, color);
+      grad.addColorStop(0.5, color + 'aa');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      c.fillStyle = grad;
+      c.beginPath();
+      c.arc(x, y, radius, 0, Math.PI * 2);
+      c.fill();
+      c.restore();
+    };
+
+    // G. Trailing Molten Ember with Spark Tail (Diwali & Dussehra)
+    const drawEmberStreak = (c, x, y, radius, speedX, speedY, color, alpha) => {
+      c.save();
+      c.globalAlpha = alpha;
+      // Tail streak
+      c.strokeStyle = color.mid;
+      c.lineWidth = Math.max(1, radius * 0.8);
+      c.lineCap = 'round';
+      c.beginPath();
+      c.moveTo(x, y);
+      c.lineTo(x - speedX * 4, y - speedY * 4);
+      c.stroke();
+
+      // Glowing core
+      const grad = c.createRadialGradient(x, y, 0, x, y, radius * 2.2);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.3, color.core);
+      grad.addColorStop(0.7, color.edge);
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      c.fillStyle = grad;
+      c.beginPath();
+      c.arc(x, y, radius * 2.2, 0, Math.PI * 2);
+      c.fill();
+      c.restore();
+    };
+
+    // Particle initializer
     const initParticle = (initialY = null) => {
       const y = initialY !== null ? initialY : Math.random() * height;
       const x = Math.random() * width;
 
+      // 1. Snow & Christmas
       if (activeEffectId === 'snow' || activeEffectId === 'christmas') {
         const rand = Math.random();
-        let layer = 'mid';
-        let radius = Math.random() * 2.2 + 2.0;
-        let speedY = (Math.random() * 1.3 + 1.1) * speedMultiplier;
-        let opacity = Math.random() * 0.4 + 0.6;
-        let isCrystal = Math.random() > 0.45;
-
-        if (rand < 0.12) {
-          layer = 'bokeh';
-          radius = Math.random() * 7.0 + 8.5;
-          speedY = (Math.random() * 1.6 + 2.4) * speedMultiplier;
-          opacity = Math.random() * 0.22 + 0.12;
-          isCrystal = false;
-        } else if (rand > 0.72) {
-          layer = 'mist';
-          radius = Math.random() * 1.0 + 0.8;
-          speedY = (Math.random() * 0.6 + 0.55) * speedMultiplier;
-          opacity = Math.random() * 0.35 + 0.22;
-          isCrystal = false;
-        }
-
+        const isBokeh = rand < 0.15;
+        const isCrystal = rand > 0.45;
         return {
+          type: 'snow',
           x,
           y,
-          layer,
-          radius,
-          speedY,
-          opacity,
+          isBokeh,
           isCrystal,
+          radius: isBokeh ? Math.random() * 8 + 8 : Math.random() * 2.5 + 2.0,
+          speedY: (Math.random() * 1.3 + 1.1) * speedMultiplier,
+          opacity: isBokeh ? Math.random() * 0.25 + 0.12 : Math.random() * 0.45 + 0.55,
           angle: Math.random() * Math.PI * 2,
           rotationSpeed: (Math.random() * 0.03 - 0.015) * speedMultiplier,
           swayAngle: Math.random() * Math.PI * 2,
           swaySpeed: Math.random() * 0.024 + 0.014,
           swayWidth: Math.random() * 1.6 + 0.8,
         };
-      } else if (activeEffectId === 'diwali' || activeEffectId === 'dussehra') {
-        const isSparks = Math.random() > 0.75;
+      }
+      // 2. Diwali & Dussehra
+      else if (activeEffectId === 'diwali' || activeEffectId === 'dussehra') {
         const colors = [
           { core: '#ffffff', mid: '#fef08a', edge: '#f59e0b' },
           { core: '#fffbeb', mid: '#fbbf24', edge: '#ea580c' },
@@ -409,10 +534,11 @@ export default function FestivalManager({ previewSettings = null }) {
           { core: '#fed7aa', mid: '#f97316', edge: '#dc2626' },
         ];
         return {
+          type: 'ember',
           x,
-          y: initialY !== null ? initialY : height + Math.random() * 80,
-          radius: isSparks ? Math.random() * 1.6 + 0.8 : Math.random() * 3.2 + 1.8,
-          speedY: isSparks ? -(Math.random() * 3.2 + 2.0) * speedMultiplier : -(Math.random() * 1.8 + 1.0) * speedMultiplier,
+          y: initialY !== null ? initialY : height + Math.random() * 60,
+          radius: Math.random() * 2.8 + 1.5,
+          speedY: -(Math.random() * 2.4 + 1.2) * speedMultiplier,
           speedX: (Math.random() * 1.4 - 0.7) * speedMultiplier,
           color: colors[Math.floor(Math.random() * colors.length)],
           alpha: Math.random() * 0.6 + 0.4,
@@ -421,55 +547,66 @@ export default function FestivalManager({ previewSettings = null }) {
           life: 1.0,
           decay: Math.random() * 0.007 + 0.003,
         };
-      } else if (activeEffectId === 'holi') {
+      }
+      // 3. Holi Gulal
+      else if (activeEffectId === 'holi') {
         const gulalColors = ['#f43f5e', '#ec4899', '#eab308', '#06b6d4', '#8b5cf6', '#10b981', '#f97316'];
         return {
+          type: 'gulal',
           x,
           y: initialY !== null ? initialY : Math.random() * height,
-          radius: Math.random() * 5.0 + 2.5,
+          radius: Math.random() * 22 + 16,
           color: gulalColors[Math.floor(Math.random() * gulalColors.length)],
-          speedY: (Math.random() * 1.4 + 0.8) * speedMultiplier,
-          speedX: (Math.random() * 1.8 - 0.9) * speedMultiplier,
-          alpha: Math.random() * 0.45 + 0.35,
+          speedY: (Math.random() * 1.2 + 0.6) * speedMultiplier,
+          speedX: (Math.random() * 1.6 - 0.8) * speedMultiplier,
+          alpha: Math.random() * 0.35 + 0.25,
           swayAngle: Math.random() * Math.PI * 2,
           swaySpeed: Math.random() * 0.03 + 0.015,
         };
-      } else if (activeEffectId === 'eid' || activeEffectId === 'ramadan') {
-        const isCrescent = Math.random() > 0.92;
+      }
+      // 4. Eid & Ramadan
+      else if (activeEffectId === 'eid' || activeEffectId === 'ramadan') {
         return {
+          type: 'star',
           x,
           y: initialY !== null ? initialY : Math.random() * height,
-          radius: isCrescent ? 7.5 : Math.random() * 2.2 + 1.0,
-          isCrescent,
-          color: '#fbbf24',
-          speedY: -(Math.random() * 0.7 + 0.4) * speedMultiplier,
+          size: Math.random() * 7 + 4,
+          speedY: -(Math.random() * 0.6 + 0.3) * speedMultiplier,
           speedX: (Math.random() * 0.6 - 0.3) * speedMultiplier,
           alpha: Math.random() * 0.5 + 0.4,
           pulse: Math.random() * Math.PI * 2,
-          pulseSpeed: Math.random() * 0.03 + 0.015,
+          pulseSpeed: Math.random() * 0.04 + 0.02,
         };
-      } else if (activeEffectId === 'ganesh' || activeEffectId === 'durga_puja' || activeEffectId === 'navratri') {
-        const petalColors = ['#e11d48', '#f97316', '#fbbf24', '#f43f5e', '#ea580c'];
+      }
+      // 5. Flower Petals: Durga Puja, Navratri, Ganesh
+      else if (activeEffectId === 'ganesh' || activeEffectId === 'durga_puja' || activeEffectId === 'navratri') {
+        const petalColors = ['#f97316', '#fbbf24', '#e11d48', '#f43f5e', '#ea580c'];
         return {
+          type: 'petal',
           x,
           y: initialY !== null ? initialY : Math.random() * -height,
-          w: Math.random() * 7 + 7,
-          h: Math.random() * 13 + 11,
+          w: Math.random() * 8 + 8,
+          h: Math.random() * 16 + 14,
           color: petalColors[Math.floor(Math.random() * petalColors.length)],
           speedY: (Math.random() * 1.6 + 1.0) * speedMultiplier,
-          speedX: (Math.random() * 1.4 - 0.7) * speedMultiplier,
+          speedX: (Math.random() * 1.2 - 0.6) * speedMultiplier,
           angle: Math.random() * Math.PI * 2,
-          rotationSpeed: (Math.random() * 0.04 - 0.02) * speedMultiplier,
+          rotationSpeed: (Math.random() * 0.03 - 0.015) * speedMultiplier,
+          tilt: Math.random() * Math.PI * 2,
+          tiltSpeed: Math.random() * 0.04 + 0.02,
           swayAngle: Math.random() * Math.PI * 2,
           swaySpeed: Math.random() * 0.03 + 0.015,
-          alpha: Math.random() * 0.4 + 0.5,
+          alpha: Math.random() * 0.4 + 0.55,
         };
-      } else if (activeEffectId === 'valentine') {
+      }
+      // 6. Valentine
+      else if (activeEffectId === 'valentine') {
         const heartColors = ['#f43f5e', '#fb7185', '#fda4af', '#e11d48'];
         return {
+          type: 'heart',
           x,
           y: initialY !== null ? initialY : height + Math.random() * 50,
-          size: Math.random() * 12 + 10,
+          size: Math.random() * 14 + 12,
           color: heartColors[Math.floor(Math.random() * heartColors.length)],
           speedY: -(Math.random() * 1.2 + 0.8) * speedMultiplier,
           speedX: (Math.random() * 0.8 - 0.4) * speedMultiplier,
@@ -478,8 +615,9 @@ export default function FestivalManager({ previewSettings = null }) {
           swaySpeed: Math.random() * 0.025 + 0.015,
           alpha: Math.random() * 0.45 + 0.35,
         };
-      } else {
-        // Confetti / Tricolor for New Year, Independence, Halloween
+      }
+      // 7. 3D Metallic Ribbons: New Year, Independence Day, Halloween
+      else {
         let colors = [
           { main: '#ffd700', dark: '#b45309' },
           { main: '#ec4899', dark: '#9d174d' },
@@ -499,19 +637,22 @@ export default function FestivalManager({ previewSettings = null }) {
           ];
         }
         return {
+          type: 'ribbon',
           x,
           y: initialY !== null ? initialY : Math.random() * -height,
-          w: Math.random() * 7 + 6,
-          h: Math.random() * 12 + 8,
+          w: Math.random() * 8 + 7,
+          h: Math.random() * 16 + 10,
           scheme: colors[Math.floor(Math.random() * colors.length)],
           speedY: (Math.random() * 2.2 + 1.4) * speedMultiplier,
           speedX: (Math.random() * 1.2 - 0.6) * speedMultiplier,
-          rotationX: Math.random() * 360,
-          rotationY: Math.random() * 360,
-          speedRotX: (Math.random() * 3.5 + 1.5) * speedMultiplier,
-          speedRotY: (Math.random() * 4.0 + 2.0) * speedMultiplier,
+          rotX: Math.random() * Math.PI * 2,
+          rotY: Math.random() * Math.PI * 2,
+          rotZ: Math.random() * Math.PI * 2,
+          speedRotX: (Math.random() * 0.06 + 0.03) * speedMultiplier,
+          speedRotY: (Math.random() * 0.08 + 0.04) * speedMultiplier,
           swayAngle: Math.random() * Math.PI * 2,
           swaySpeed: Math.random() * 0.03 + 0.02,
+          alpha: Math.random() * 0.35 + 0.65,
         };
       }
     };
@@ -530,7 +671,9 @@ export default function FestivalManager({ previewSettings = null }) {
     };
     document.addEventListener('visibilitychange', handleVisibility);
 
-    // Animation Loop
+    // =========================================================================
+    // ANIMATION RENDER LOOP
+    // =========================================================================
     const render = () => {
       if (!isTabVisible) {
         animFrameIdRef.current = requestAnimationFrame(render);
@@ -545,91 +688,96 @@ export default function FestivalManager({ previewSettings = null }) {
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
 
-        // Cursor deflection physics
+        // Cursor deflection breeze
         if (mouse.active && !reducedMotion) {
           const dx = p.x - mouse.x;
           const dy = p.y - mouse.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 110 && dist > 0) {
-            const force = (110 - dist) / 110;
-            p.x += (dx / dist) * force * 3.2;
-            p.y += (dy / dist) * force * 2.2;
+          if (dist < 120 && dist > 0) {
+            const force = (120 - dist) / 120;
+            p.x += (dx / dist) * force * 3.5;
+            p.y += (dy / dist) * force * 2.5;
           }
         }
 
-        // Snow rendering
-        if (activeEffectId === 'snow' || activeEffectId === 'christmas') {
+        // Render based on particle type
+        if (p.type === 'snow') {
           p.swayAngle += p.swaySpeed;
           p.y += p.speedY;
           p.x += Math.sin(p.swayAngle) * p.swayWidth + 0.35;
           p.angle += p.rotationSpeed;
 
-          if (p.y > height + 20) {
-            Object.assign(p, initParticle(-20));
-          }
+          if (p.y > height + 25) Object.assign(p, initParticle(-25));
           if (p.x < -30) p.x = width + 20;
           if (p.x > width + 30) p.x = -20;
 
-          if (p.layer === 'bokeh') {
+          if (p.isBokeh) {
             const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
             grad.addColorStop(0, `rgba(255, 255, 255, ${p.opacity})`);
-            grad.addColorStop(0.5, `rgba(224, 242, 254, ${p.opacity * 0.45})`);
+            grad.addColorStop(0.5, `rgba(224, 242, 254, ${p.opacity * 0.4})`);
             grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
             ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
             ctx.fill();
+          } else if (p.isCrystal) {
+            drawIceCrystal(ctx, p.x, p.y, p.radius * 2.8, p.angle, p.opacity);
           } else {
             ctx.fillStyle = `rgba(255, 255, 255, ${p.opacity})`;
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
             ctx.fill();
           }
-        }
-        // Diwali Embers
-        else if (activeEffectId === 'diwali' || activeEffectId === 'dussehra') {
+        } else if (p.type === 'ember') {
           p.y += p.speedY;
           p.x += p.speedX;
           p.flickerAngle += p.flickerSpeed;
           p.life -= p.decay;
 
-          if (p.life <= 0 || p.y < -30) {
-            Object.assign(p, initParticle(height + 20));
-          }
+          if (p.life <= 0 || p.y < -30) Object.assign(p, initParticle(height + 25));
 
-          const currentAlpha = Math.max(0, p.alpha * p.life * (0.8 + 0.2 * Math.sin(p.flickerAngle)));
-          const rad = Math.max(0.1, p.radius * p.life);
+          const curAlpha = Math.max(0, p.alpha * p.life * (0.8 + 0.2 * Math.sin(p.flickerAngle)));
+          drawEmberStreak(ctx, p.x, p.y, p.radius, p.speedX, p.speedY, p.color, curAlpha);
+        } else if (p.type === 'gulal') {
+          p.y += p.speedY;
+          p.x += p.speedX + Math.sin(p.swayAngle) * 0.5;
+          p.swayAngle += p.swaySpeed;
 
-          const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rad * 2.2);
-          grad.addColorStop(0, p.color.core);
-          grad.addColorStop(0.4, p.color.mid);
-          grad.addColorStop(1, 'rgba(0,0,0,0)');
+          if (p.y > height + 35) Object.assign(p, initParticle(-35));
+          drawGulalCloud(ctx, p.x, p.y, p.radius, p.color, p.alpha);
+        } else if (p.type === 'star') {
+          p.y += p.speedY;
+          p.x += p.speedX;
+          p.pulse += p.pulseSpeed;
 
-          ctx.save();
-          ctx.globalAlpha = currentAlpha;
-          ctx.fillStyle = grad;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, rad * 2.2, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-        }
-        // General confetti / petals
-        else {
-          p.y += p.speedY || 1.5;
-          p.x += (p.speedX || 0) + Math.sin(p.swayAngle || 0) * 0.5;
-          if (p.swayAngle !== undefined) p.swayAngle += p.swaySpeed || 0.02;
+          if (p.y < -30) Object.assign(p, initParticle(height + 20));
+          const currentAlpha = Math.max(0.2, p.alpha * (0.7 + 0.3 * Math.sin(p.pulse)));
+          drawIslamicStar(ctx, p.x, p.y, p.size, currentAlpha);
+        } else if (p.type === 'petal') {
+          p.y += p.speedY;
+          p.x += p.speedX + Math.sin(p.swayAngle) * 0.6;
+          p.angle += p.rotationSpeed;
+          p.tilt += p.tiltSpeed;
+          p.swayAngle += p.swaySpeed;
 
-          if (p.y > height + 30) {
-            Object.assign(p, initParticle(-20));
-          }
+          if (p.y > height + 35) Object.assign(p, initParticle(-35));
+          drawPetal(ctx, p.x, p.y, p.w, p.h, p.angle, p.tilt, p.color, p.alpha);
+        } else if (p.type === 'heart') {
+          p.y += p.speedY;
+          p.x += p.speedX + Math.sin(p.swayAngle) * 0.5;
+          p.swayAngle += p.swaySpeed;
 
-          ctx.save();
-          ctx.globalAlpha = p.alpha || 0.6;
-          ctx.fillStyle = p.color || (p.scheme ? p.scheme.main : '#fbbf24');
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.radius || 3, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
+          if (p.y < -35) Object.assign(p, initParticle(height + 35));
+          drawHeart(ctx, p.x, p.y, p.size, p.angle, p.color, p.alpha);
+        } else if (p.type === 'ribbon') {
+          p.y += p.speedY;
+          p.x += p.speedX + Math.sin(p.swayAngle) * 0.6;
+          p.rotX += p.speedRotX;
+          p.rotY += p.speedRotY;
+          p.swayAngle += p.swaySpeed;
+
+          if (p.y > height + 35) Object.assign(p, initParticle(-35));
+          draw3DRibbon(ctx, p.x, p.y, p.w, p.h, p.rotX, p.rotY, p.rotZ, p.scheme, p.alpha);
         }
       }
 
@@ -648,7 +796,6 @@ export default function FestivalManager({ previewSettings = null }) {
     };
   }, [isEnabled, isCartOrCheckout, activeEffectId, intensity, enableOnMobile, speedMultiplier, previewSettings, reducedMotion]);
 
-  // Don't render anything if disabled or during cart/checkout
   if (!isEnabled || isCartOrCheckout) {
     return null;
   }
@@ -680,24 +827,25 @@ export default function FestivalManager({ previewSettings = null }) {
         }
       />
 
-      {/* Floating Hero Lottie Vector Animation (pointer-events-none, z-35) */}
-      {lottieData && (
+      {/* Floating Hero Lottie Vector Animation (PROMINENT LUXURY HERO, pointer-events-none, z-35) */}
+      {activePreset.lottieAsset && (
         <div
           ref={heroLottieContainerRef}
           aria-hidden="true"
           className={
             previewSettings
-              ? `absolute ${placementClass} z-20 pointer-events-none select-none max-w-[130px] max-h-[130px]`
-              : `fixed ${placementClass} z-35 pointer-events-none select-none w-28 h-28 sm:w-36 sm:h-36 lg:w-44 lg:h-44`
+              ? `absolute ${placementClass} z-20 pointer-events-none select-none w-36 h-36 sm:w-44 sm:h-44`
+              : `fixed ${placementClass} z-35 pointer-events-none select-none w-44 h-44 sm:w-56 sm:h-56 md:w-64 md:h-64 lg:w-72 lg:h-72`
           }
           style={{
-            filter: `drop-shadow(0 0 24px ${activePreset.accentColor}40)`,
+            filter: `drop-shadow(0 0 32px ${activePreset.accentColor}60)`,
           }}
         >
           <Lottie
-            animationData={lottieData}
+            src={lottieData || activePreset.lottieAsset}
             loop={!reducedMotion}
             autoplay={!reducedMotion}
+            className="w-full h-full"
             style={{ width: '100%', height: '100%' }}
           />
         </div>
