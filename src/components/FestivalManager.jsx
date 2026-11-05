@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import { Lottie } from 'lottie-react';
 import gsap from 'gsap';
-import { X } from 'lucide-react';
+import { X, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import {
   DEFAULT_FESTIVAL_SETTINGS,
@@ -67,6 +67,7 @@ export default function FestivalManager({ previewSettings = null }) {
   const particlesRef = useRef([]);
   const mouseRef = useRef({ x: -9999, y: -9999, active: false });
   const heroLottieContainerRef = useRef(null);
+  const secondaryLottieContainerRef = useRef(null);
   const heroGsapTimelineRef = useRef(null);
 
   // Sync settings when previewSettings prop changes (for Admin Simulator)
@@ -157,6 +158,32 @@ export default function FestivalManager({ previewSettings = null }) {
     );
   }, [activeEffectId]);
 
+  // Cinematic Ambient Lighting Vignette tailored for each festive atmosphere
+  const ambientVignetteGradient = useMemo(() => {
+    switch (activeEffectId) {
+      case 'diwali':
+      case 'dussehra':
+        return 'radial-gradient(circle at 92% 92%, rgba(245, 158, 11, 0.22) 0%, transparent 55%), radial-gradient(circle at 8% 8%, rgba(217, 119, 6, 0.16) 0%, transparent 50%), radial-gradient(circle at 50% 0%, rgba(251, 191, 36, 0.10) 0%, transparent 40%)';
+      case 'christmas':
+        return 'radial-gradient(circle at 50% 0%, rgba(96, 165, 250, 0.18) 0%, transparent 60%), radial-gradient(circle at 90% 90%, rgba(34, 197, 94, 0.12) 0%, transparent 45%)';
+      case 'snow':
+        return 'radial-gradient(circle at 50% 0%, rgba(96, 165, 250, 0.20) 0%, transparent 65%), radial-gradient(circle at 90% 90%, rgba(147, 197, 253, 0.10) 0%, transparent 50%)';
+      case 'eid':
+      case 'ramadan':
+        return 'radial-gradient(circle at 88% 12%, rgba(234, 179, 8, 0.22) 0%, transparent 55%), radial-gradient(circle at 12% 88%, rgba(16, 185, 129, 0.14) 0%, transparent 50%)';
+      case 'newyear':
+        return 'radial-gradient(circle at 85% 15%, rgba(236, 72, 153, 0.20) 0%, transparent 55%), radial-gradient(circle at 15% 85%, rgba(234, 179, 8, 0.18) 0%, transparent 55%)';
+      case 'independence':
+        return 'radial-gradient(circle at 50% 0%, rgba(255, 153, 51, 0.18) 0%, transparent 50%), radial-gradient(circle at 50% 100%, rgba(19, 136, 8, 0.18) 0%, transparent 50%)';
+      case 'holi':
+        return 'radial-gradient(circle at 85% 85%, rgba(244, 63, 94, 0.22) 0%, transparent 50%), radial-gradient(circle at 15% 15%, rgba(6, 182, 212, 0.20) 0%, transparent 50%)';
+      case 'valentine':
+        return 'radial-gradient(circle at 90% 90%, rgba(244, 63, 94, 0.22) 0%, transparent 55%), radial-gradient(circle at 10% 10%, rgba(251, 113, 133, 0.16) 0%, transparent 50%)';
+      default:
+        return 'radial-gradient(circle at 90% 90%, rgba(245, 158, 11, 0.18) 0%, transparent 50%)';
+    }
+  }, [activeEffectId]);
+
   const intensity = settings?.intensity || 'medium';
   const enableOnMobile = settings?.enableOnMobile !== false;
   const speedMultiplier = settings?.customSpeed === 2 ? 1.55 : settings?.customSpeed === 0 ? 0.65 : 1.0;
@@ -218,20 +245,20 @@ export default function FestivalManager({ previewSettings = null }) {
       heroGsapTimelineRef.current.kill();
     }
 
-    gsap.set(el, { opacity: 0, scale: 0.8, y: 30 });
+    gsap.set(el, { opacity: 0, scale: 0.85, y: 25 });
 
     const tl = gsap.timeline();
     tl.to(el, {
       opacity: 1,
       scale: 1,
       y: 0,
-      duration: 1.2,
+      duration: 1.4,
       ease: 'power3.out',
     });
 
     // Gentle floating breathing sway
     tl.to(el, {
-      y: '+=10',
+      y: '+=8',
       duration: 3.4,
       yoyo: true,
       repeat: -1,
@@ -253,8 +280,8 @@ export default function FestivalManager({ previewSettings = null }) {
       mouseRef.current = { x: e.clientX, y: e.clientY, active: true };
 
       if (heroLottieContainerRef.current && !reducedMotion) {
-        const deltaX = (e.clientX - window.innerWidth / 2) * 0.018;
-        const deltaY = (e.clientY - window.innerHeight / 2) * 0.018;
+        const deltaX = (e.clientX - window.innerWidth / 2) * 0.016;
+        const deltaY = (e.clientY - window.innerHeight / 2) * 0.016;
         gsap.to(heroLottieContainerRef.current, {
           x: deltaX,
           y: deltaY,
@@ -324,7 +351,7 @@ export default function FestivalManager({ previewSettings = null }) {
     return () => clearInterval(interval);
   }, [isEnabled, activeEffectId, previewSettings, isCartOrCheckout, reducedMotion]);
 
-  // 9. HIGH-FIDELITY VECTOR PARTICLE ENGINE (Real Crystals, Petals, Ribbons, Embers)
+  // 9. HIGH-FIDELITY LUXURY VECTOR PARTICLE ENGINE (Real Crystals, Petals, Ribbons, Embers)
   useEffect(() => {
     if (!isEnabled || isCartOrCheckout) {
       if (animFrameIdRef.current) {
@@ -348,15 +375,15 @@ export default function FestivalManager({ previewSettings = null }) {
       return;
     }
 
-    let count = intensity === 'high' ? 95 : intensity === 'low' ? 30 : 60;
+    let count = intensity === 'high' ? 90 : intensity === 'low' ? 28 : 55;
     if (isMobile) count = Math.round(count * 0.5);
     if (reducedMotion) count = Math.round(count * 0.25);
 
     // =========================================================================
-    // VECTOR DRAWING ROUTINES (No boring round dots!)
+    // LUXURY VECTOR DRAWING ROUTINES (True Craftsmanship, Zero Cheap Dots)
     // =========================================================================
 
-    // A. 6-Point Intricate Ice Crystal Snowflake
+    // A. 6-Point Intricate Hexagonal Ice Crystal Snowflake
     const drawIceCrystal = (c, x, y, radius, angle, alpha) => {
       c.save();
       c.translate(x, y);
@@ -408,7 +435,7 @@ export default function FestivalManager({ previewSettings = null }) {
       c.rotate(angle);
       c.globalAlpha = alpha;
       c.fillStyle = color;
-      c.shadowBlur = 10;
+      c.shadowBlur = 12;
       c.shadowColor = color;
       c.beginPath();
       const topCurve = size * 0.3;
@@ -430,7 +457,7 @@ export default function FestivalManager({ previewSettings = null }) {
       const scaleY = Math.sin(rotY);
       c.scale(scaleX, scaleY);
       c.globalAlpha = alpha;
-      // Metallic shine: flip between bright front & deeper back
+      // Metallic foil sheen: flip between bright highlight & rich foil shade
       c.fillStyle = scaleX > 0 ? scheme.main : scheme.dark;
       c.fillRect(-w / 2, -h / 2, w, h);
       c.restore();
@@ -442,7 +469,7 @@ export default function FestivalManager({ previewSettings = null }) {
       c.translate(x, y);
       c.globalAlpha = alpha;
       c.fillStyle = '#fef08a';
-      c.shadowBlur = 8;
+      c.shadowBlur = 10;
       c.shadowColor = '#fbbf24';
       c.beginPath();
       for (let i = 0; i < 8; i++) {
@@ -477,16 +504,16 @@ export default function FestivalManager({ previewSettings = null }) {
     const drawEmberStreak = (c, x, y, radius, speedX, speedY, color, alpha) => {
       c.save();
       c.globalAlpha = alpha;
-      // Tail streak
+      // Luminous spark tail
       c.strokeStyle = color.mid;
-      c.lineWidth = Math.max(1, radius * 0.8);
+      c.lineWidth = Math.max(1, radius * 0.85);
       c.lineCap = 'round';
       c.beginPath();
       c.moveTo(x, y);
-      c.lineTo(x - speedX * 4, y - speedY * 4);
+      c.lineTo(x - speedX * 4.5, y - speedY * 4.5);
       c.stroke();
 
-      // Glowing core
+      // Glowing fire cinder core
       const grad = c.createRadialGradient(x, y, 0, x, y, radius * 2.2);
       grad.addColorStop(0, '#ffffff');
       grad.addColorStop(0.3, color.core);
@@ -507,15 +534,15 @@ export default function FestivalManager({ previewSettings = null }) {
       // 1. Snow & Christmas
       if (activeEffectId === 'snow' || activeEffectId === 'christmas') {
         const rand = Math.random();
-        const isBokeh = rand < 0.15;
-        const isCrystal = rand > 0.45;
+        const isBokeh = rand < 0.16;
+        const isCrystal = rand > 0.42;
         return {
           type: 'snow',
           x,
           y,
           isBokeh,
           isCrystal,
-          radius: isBokeh ? Math.random() * 8 + 8 : Math.random() * 2.5 + 2.0,
+          radius: isBokeh ? Math.random() * 9 + 8 : Math.random() * 2.5 + 2.0,
           speedY: (Math.random() * 1.3 + 1.1) * speedMultiplier,
           opacity: isBokeh ? Math.random() * 0.25 + 0.12 : Math.random() * 0.45 + 0.55,
           angle: Math.random() * Math.PI * 2,
@@ -538,7 +565,7 @@ export default function FestivalManager({ previewSettings = null }) {
           x,
           y: initialY !== null ? initialY : height + Math.random() * 60,
           radius: Math.random() * 2.8 + 1.5,
-          speedY: -(Math.random() * 2.4 + 1.2) * speedMultiplier,
+          speedY: -(Math.random() * 2.5 + 1.3) * speedMultiplier,
           speedX: (Math.random() * 1.4 - 0.7) * speedMultiplier,
           color: colors[Math.floor(Math.random() * colors.length)],
           alpha: Math.random() * 0.6 + 0.4,
@@ -555,7 +582,7 @@ export default function FestivalManager({ previewSettings = null }) {
           type: 'gulal',
           x,
           y: initialY !== null ? initialY : Math.random() * height,
-          radius: Math.random() * 22 + 16,
+          radius: Math.random() * 26 + 18,
           color: gulalColors[Math.floor(Math.random() * gulalColors.length)],
           speedY: (Math.random() * 1.2 + 0.6) * speedMultiplier,
           speedX: (Math.random() * 1.6 - 0.8) * speedMultiplier,
@@ -816,7 +843,20 @@ export default function FestivalManager({ previewSettings = null }) {
 
   return (
     <>
-      {/* Ambient Particle Canvas Layer (pointer-events-none, z-30) */}
+      {/* 1. Cinematic Ambient Lighting & Vignette Layer (Awwwards / Apple-tier) */}
+      <div
+        aria-hidden="true"
+        className={
+          previewSettings
+            ? 'absolute inset-0 pointer-events-none z-0 rounded-xl transition-all duration-1000'
+            : 'fixed inset-0 pointer-events-none z-20 transition-all duration-1000 select-none'
+        }
+        style={{
+          background: ambientVignetteGradient,
+        }}
+      />
+
+      {/* 2. Ambient Particle Canvas Layer (pointer-events-none, z-30) */}
       <canvas
         ref={canvasRef}
         aria-hidden="true"
@@ -827,7 +867,7 @@ export default function FestivalManager({ previewSettings = null }) {
         }
       />
 
-      {/* Floating Hero Lottie Vector Animation (PROMINENT LUXURY HERO, pointer-events-none, z-35) */}
+      {/* 3. Luxury Floating Hero Festive Ornament (Lottie living vector with glassmorphism pedestal) */}
       {activePreset.lottieAsset && (
         <div
           ref={heroLottieContainerRef}
@@ -837,33 +877,63 @@ export default function FestivalManager({ previewSettings = null }) {
               ? `absolute ${placementClass} z-20 pointer-events-none select-none w-36 h-36 sm:w-44 sm:h-44`
               : `fixed ${placementClass} z-35 pointer-events-none select-none w-44 h-44 sm:w-56 sm:h-56 md:w-64 md:h-64 lg:w-72 lg:h-72`
           }
-          style={{
-            filter: `drop-shadow(0 0 32px ${activePreset.accentColor}60)`,
-          }}
         >
+          {/* Subtle warm backlight disc */}
+          <div
+            className="absolute inset-0 rounded-full blur-2xl opacity-60 pointer-events-none"
+            style={{
+              background: `radial-gradient(circle, ${activePreset.accentColor} 0%, transparent 70%)`,
+            }}
+          />
+
           <Lottie
+            key={activeEffectId}
             src={lottieData || activePreset.lottieAsset}
             loop={!reducedMotion}
             autoplay={!reducedMotion}
-            className="w-full h-full"
+            className="relative z-10 w-full h-full"
             style={{ width: '100%', height: '100%' }}
           />
         </div>
       )}
 
-      {/* Floating Festive Greeting Banner Pill */}
+      {/* 4. Secondary Festive Accent (For Diwali: Left Diya / For Ramadan: Secondary Lantern) */}
+      {!previewSettings && (activeEffectId === 'diwali' || activeEffectId === 'ramadan') && (
+        <div
+          ref={secondaryLottieContainerRef}
+          aria-hidden="true"
+          className="fixed bottom-6 left-6 z-35 pointer-events-none select-none w-32 h-32 sm:w-40 sm:h-40 hidden md:block opacity-85"
+        >
+          <div
+            className="absolute inset-0 rounded-full blur-2xl opacity-40 pointer-events-none"
+            style={{
+              background: `radial-gradient(circle, ${activePreset.accentColor} 0%, transparent 70%)`,
+            }}
+          />
+          <Lottie
+            key={`${activeEffectId}-secondary`}
+            src={lottieData || activePreset.lottieAsset}
+            loop={!reducedMotion}
+            autoplay={!reducedMotion}
+            className="relative z-10 w-full h-full"
+            style={{ width: '100%', height: '100%' }}
+          />
+        </div>
+      )}
+
+      {/* 5. Floating Luxury Frosted Glass Greeting Pill */}
       {showGreetingPill && !previewSettings && (
         <aside
           role="region"
           aria-label="Festive Greeting"
           className="fixed bottom-6 left-6 z-40 max-w-sm sm:max-w-md pointer-events-auto animate-in fade-in slide-in-from-bottom-4 duration-500"
         >
-          <div className="flex items-center gap-3 px-4 py-2.5 rounded-full bg-[#0a0d14]/90 backdrop-blur-xl border border-white/15 text-white shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+          <div className="flex items-center gap-3 px-4 py-2.5 rounded-full bg-[#0a0d14]/90 backdrop-blur-2xl border border-white/20 text-white shadow-[0_16px_40px_rgba(0,0,0,0.8),0_0_25px_rgba(245,158,11,0.25)]">
             <span
-              className="w-2.5 h-2.5 rounded-full shrink-0 animate-pulse"
-              style={{ backgroundColor: activePreset.accentColor }}
+              className="w-2.5 h-2.5 rounded-full shrink-0 animate-pulse shadow-[0_0_10px_currentColor]"
+              style={{ backgroundColor: activePreset.accentColor, color: activePreset.accentColor }}
             />
-            <p className="text-xs sm:text-[13px] font-medium text-white/90 leading-tight truncate">
+            <p className="text-xs sm:text-[13px] font-medium text-white/95 leading-tight truncate">
               {settings.greetingText}
             </p>
             <button

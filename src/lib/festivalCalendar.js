@@ -118,3 +118,4 @@ export function resolveFestivalEffect(configuredEffect = 'snow', testDate = null
 
   return 'snow';
 }
+
