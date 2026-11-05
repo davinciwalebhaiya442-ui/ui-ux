@@ -23,7 +23,21 @@ export default function FestivalEffect({ previewSettings = null }) {
     return DEFAULT_FESTIVAL_SETTINGS;
   });
 
-  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        return sessionStorage.getItem('dwb_greeting_dismissed') === 'true';
+      } catch (e) {}
+    }
+    return false;
+  });
+
+  const handleDismissBanner = () => {
+    setBannerDismissed(true);
+    try {
+      sessionStorage.setItem('dwb_greeting_dismissed', 'true');
+    } catch (e) {}
+  };
   const canvasRef = useRef(null);
   const animFrameIdRef = useRef(null);
   const particlesRef = useRef([]);
@@ -791,16 +805,20 @@ export default function FestivalEffect({ previewSettings = null }) {
       />
 
       {/* Optional Festive Greeting Pill at top (dismissable) */}
-      {settings.greetingEnabled && settings.greetingText && !bannerDismissed && !previewSettings && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[85] max-w-lg w-[92%] sm:w-auto px-4 py-2 rounded-full bg-black/80 backdrop-blur-xl border border-white/20 text-white shadow-[0_8px_32px_rgba(0,0,0,0.7)] flex items-center justify-between gap-3 text-xs font-sans animate-in fade-in slide-in-from-top-3 duration-300">
+      {settings.enabled &&
+        settings.greetingEnabled &&
+        Boolean((settings.greetingText || '').trim()) &&
+        !bannerDismissed &&
+        !previewSettings && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[85] max-w-lg w-[92%] sm:w-auto px-4 py-2 rounded-full bg-black/85 backdrop-blur-xl border border-white/20 text-white shadow-[0_8px_32px_rgba(0,0,0,0.7)] flex items-center justify-between gap-3 text-xs font-sans animate-in fade-in slide-in-from-top-3 duration-300 pointer-events-auto">
           <span className="truncate text-white/95 font-medium">
             {settings.greetingText}
           </span>
           <button
             type="button"
-            onClick={() => setBannerDismissed(true)}
+            onClick={handleDismissBanner}
             aria-label="Dismiss greeting"
-            className="p-1 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+            className="p-1 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-colors shrink-0 cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>

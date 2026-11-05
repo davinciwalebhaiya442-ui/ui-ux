@@ -96,7 +96,7 @@ export default function FestivalEffectsAdminPage() {
       ...form,
       enabled: true,
       effect: presetId,
-      greetingText: form.greetingText || preset.recommendedGreeting,
+      greetingText: form.greetingText !== undefined ? form.greetingText : preset.recommendedGreeting,
     };
     setForm(updated);
     saveSettings(updated);
@@ -247,7 +247,7 @@ export default function FestivalEffectsAdminPage() {
                     setForm((prev) => ({
                       ...prev,
                       effect: preset.id,
-                      greetingText: prev.greetingText || preset.recommendedGreeting,
+                      greetingText: prev.greetingText !== undefined ? prev.greetingText : preset.recommendedGreeting,
                     }));
                   }}
                   className={`relative p-5 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between cursor-pointer group ${
@@ -490,15 +490,26 @@ export default function FestivalEffectsAdminPage() {
                 onChange={(e) => setForm((prev) => ({ ...prev, greetingText: e.target.value }))}
                 className="w-full rounded-xl border border-white/10 bg-black/40 px-3.5 py-2.5 text-xs text-white placeholder-white/30 focus:border-amber-400/50 focus:outline-none"
               />
-              <div className="flex items-center gap-2 pt-1">
-                <span className="text-[11px] text-white/40">Quick preset:</span>
-                <button
-                  type="button"
-                  onClick={() => setForm((prev) => ({ ...prev, greetingText: selectedPreset.recommendedGreeting }))}
-                  className="text-[11px] text-amber-400/90 hover:text-amber-300 underline underline-offset-2"
-                >
-                  Use {selectedPreset.label} greeting
-                </button>
+              <div className="flex items-center justify-between gap-2 pt-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] text-white/40">Preset:</span>
+                  <button
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, greetingText: selectedPreset.recommendedGreeting }))}
+                    className="text-[11px] text-amber-400/90 hover:text-amber-300 underline underline-offset-2"
+                  >
+                    Insert default
+                  </button>
+                </div>
+                {form.greetingText && (
+                  <button
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, greetingText: '' }))}
+                    className="text-[11px] text-rose-400/80 hover:text-rose-300 underline underline-offset-2"
+                  >
+                    Clear message
+                  </button>
+                )}
               </div>
             </div>
 
@@ -507,14 +518,22 @@ export default function FestivalEffectsAdminPage() {
               <div className="text-[10px] font-mono uppercase tracking-wider text-white/30 mb-2">
                 Pill Appearance Preview:
               </div>
-              <div className="p-3 rounded-full bg-black/80 border border-white/15 text-white/90 text-xs flex items-center justify-between gap-3 shadow-lg">
-                <span className="truncate">
-                  {form.greetingText || selectedPreset.recommendedGreeting}
-                </span>
-                <span className="text-white/40 text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 border border-white/10 shrink-0">
-                  Dismiss ✕
-                </span>
-              </div>
+              {form.greetingEnabled && Boolean((form.greetingText || '').trim()) ? (
+                <div className="p-3 rounded-full bg-black/80 border border-white/15 text-white/90 text-xs flex items-center justify-between gap-3 shadow-lg">
+                  <span className="truncate">
+                    {form.greetingText}
+                  </span>
+                  <span className="text-white/40 text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 border border-white/10 shrink-0">
+                    Dismiss ✕
+                  </span>
+                </div>
+              ) : (
+                <div className="p-3 rounded-xl border border-dashed border-white/10 text-white/30 text-xs text-center font-mono">
+                  {!form.greetingEnabled
+                    ? 'Greeting Pill toggle is turned OFF (hidden from website)'
+                    : 'Greeting Message is empty (hidden from website)'}
+                </div>
+              )}
             </div>
           </div>
         </div>

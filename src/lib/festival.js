@@ -1,10 +1,10 @@
 export const DEFAULT_FESTIVAL_SETTINGS = {
-  enabled: true,
+  enabled: false,
   effect: 'snow',
   intensity: 'medium', // 'low' | 'medium' | 'high'
   enableOnMobile: true,
-  greetingText: '❄️ Season Greetings & Happy Winter from DavinciWaleBhaiya!',
-  greetingEnabled: true,
+  greetingText: '',
+  greetingEnabled: false,
   customSpeed: 1, // 0 = Gentle, 1 = Normal, 2 = Brisk
 };
 
