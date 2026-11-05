@@ -18,9 +18,38 @@ export function CurrencyProvider({ children }) {
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
+    // 0. Allow explicit testing override via URL parameters (e.g. ?currency=USD or ?geo=US)
+    if (typeof window !== 'undefined') {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const qCur = params.get('currency')?.toUpperCase();
+        const qGeo = (params.get('geo') || params.get('country'))?.toUpperCase();
+
+        if (qCur === 'USD' || (qGeo && qGeo !== 'IN')) {
+          const testCountry = qGeo || 'US';
+          setCountry(testCountry);
+          setCurrencyState('USD');
+          setInitialized(true);
+          try {
+            sessionStorage.setItem('dwb_geo', JSON.stringify({ country: testCountry, currency: 'USD' }));
+          } catch (e) {}
+          return;
+        }
+
+        if (qCur === 'INR' || qGeo === 'IN') {
+          setCountry('IN');
+          setCurrencyState('INR');
+          setInitialized(true);
+          try {
+            sessionStorage.setItem('dwb_geo', JSON.stringify({ country: 'IN', currency: 'INR' }));
+          } catch (e) {}
+          return;
+        }
+      } catch (e) {}
+    }
+
     // 1. Check if geo is already cached in this session to prevent repeated requests
     try {
-      localStorage.removeItem('dwb_currency');
       const cached = sessionStorage.getItem('dwb_geo');
       if (cached) {
         const parsed = JSON.parse(cached);
@@ -54,11 +83,14 @@ export function CurrencyProvider({ children }) {
     if (newCurrency !== 'INR' && newCurrency !== 'USD') return;
     setCurrencyState(newCurrency);
     try {
-      localStorage.setItem('dwb_currency', newCurrency);
+      sessionStorage.setItem(
+        'dwb_geo',
+        JSON.stringify({ country: newCurrency === 'USD' ? 'US' : 'IN', currency: newCurrency })
+      );
     } catch (e) {}
   };
 
-  const isDomestic = country === 'IN';
+  const isDomestic = country === 'IN' && currency === 'INR';
   const symbol = currency === 'USD' ? '$' : '₹';
 
   const formatPrice = useMemo(() => {

@@ -17,11 +17,10 @@ import {
 } from 'lucide-react';
 
 export default function CheckoutPage() {
-  const { currency, setCurrency, formatPrice, isDomestic } = useCurrency();
+  const { currency, formatPrice, isDomestic } = useCurrency();
   const [product, setProduct] = useState(null);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
-  const [gatewayTab, setGatewayTab] = useState('razorpay');
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -31,12 +30,6 @@ export default function CheckoutPage() {
 
   const pollIntervalRef = useRef(null);
   const activeOrderRef = useRef(null);
-
-  useEffect(() => {
-    if (!isDomestic) {
-      setGatewayTab('paypal');
-    }
-  }, [isDomestic]);
 
   const slug =
     typeof window !== 'undefined'
@@ -441,7 +434,7 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Order Total - Pure INR Baseline */}
+              {/* Order Total - Pure Geo Adaptation (₹ INR in India, $ USD International) */}
               <div className="flex items-center justify-between border-y border-white/[0.08] py-4">
                 <div>
                   <span className="text-xs text-white/50 block font-mono">TOTAL DUE</span>
@@ -449,61 +442,8 @@ export default function CheckoutPage() {
                     Official Release &bull; Lifetime Commercial License
                   </span>
                 </div>
-                <div className="text-right">
-                  <div className="text-2xl sm:text-3xl font-bold text-white font-mono">
-                    ₹{Number(product?.price || 0).toLocaleString('en-IN')}
-                  </div>
-                  {gatewayTab === 'paypal' && (
-                    <span className="text-[11px] font-mono text-amber-400/90 block mt-0.5">
-                      ≈ ${(Number(product?.priceUSD || 0) > 0 ? Number(product.priceUSD) : Math.max(1, Math.round((Number(product?.price || 0) / 83) * 100) / 100)).toFixed(2)} USD via PayPal
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Payment Method Selector Tabs */}
-              <div className="space-y-2 pt-1">
-                <label className="text-[11px] font-mono uppercase tracking-wider text-white/50 block">
-                  Select Payment Method
-                </label>
-                <div className="grid grid-cols-2 gap-2 p-1 bg-white/[0.03] border border-white/[0.08] rounded-2xl">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMessage('');
-                      setGatewayTab('razorpay');
-                    }}
-                    className={`py-3 px-2 sm:px-3 rounded-xl text-xs font-semibold transition-all flex flex-col items-center justify-center gap-1 ${
-                      gatewayTab === 'razorpay'
-                        ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.4)]'
-                        : 'text-white/50 hover:text-white hover:bg-white/[0.02]'
-                    }`}
-                  >
-                    <span className="flex items-center gap-1.5 font-bold">
-                      <span>🇮🇳</span>
-                      <span>India Payment</span>
-                    </span>
-                    <span className="text-[10px] opacity-75 font-mono">UPI &bull; GPay &bull; Cards</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMessage('');
-                      setGatewayTab('paypal');
-                    }}
-                    className={`py-3 px-2 sm:px-3 rounded-xl text-xs font-semibold transition-all flex flex-col items-center justify-center gap-1 ${
-                      gatewayTab === 'paypal'
-                        ? 'bg-amber-400 text-black shadow-[0_0_20px_rgba(251,191,36,0.3)]'
-                        : 'text-white/50 hover:text-white hover:bg-white/[0.02]'
-                    }`}
-                  >
-                    <span className="flex items-center gap-1.5 font-bold">
-                      <span>🌍</span>
-                      <span>International</span>
-                    </span>
-                    <span className="text-[10px] opacity-75 font-mono">PayPal &bull; All Cards</span>
-                  </button>
+                <div className="text-2xl sm:text-3xl font-bold text-white font-mono">
+                  {formatPrice(product)}
                 </div>
               </div>
 
@@ -559,8 +499,8 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              {/* Payment Gateway Trigger: PayPal for International & Razorpay for India */}
-              {gatewayTab === 'paypal' ? (
+              {/* Payment Gateway: 100% PayPal for International (USD) & 100% Razorpay for India (INR) */}
+              {currency === 'USD' ? (
                 <div className="space-y-3 pt-1">
                   <div className="flex items-center gap-2 text-[11px] font-mono text-white/50 justify-between">
                     <span className="flex items-center gap-1.5">
@@ -599,37 +539,37 @@ export default function CheckoutPage() {
                     }}
                   />
 
-                  {/* Optional Fallback for International Cards via Razorpay */}
-                  <div className="pt-2 text-center">
-                    <button
-                      type="button"
-                      onClick={() => setGatewayTab('razorpay')}
-                      disabled={paying || verifying}
-                      className="text-[11px] font-mono text-white/40 hover:text-white/70 transition-colors underline cursor-pointer"
-                    >
-                      Or switch to Indian UPI & Cards Gateway (Razorpay)
-                    </button>
+                  <div className="flex items-center justify-center gap-2 text-[10px] font-mono text-white/40 pt-1">
+                    <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Pay with PayPal balance or any Debit / Credit Card (USD)</span>
                   </div>
                 </div>
               ) : (
-                <button
-                  type="button"
-                  disabled={paying || verifying}
-                  onClick={pay}
-                  className="w-full rounded-2xl bg-blue-600 hover:bg-blue-500 active:scale-[0.99] py-4 text-sm font-bold text-white shadow-[0_0_30px_rgba(37,99,235,0.4)] transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-                >
-                  {paying || verifying ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Processing Payment...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="w-4 h-4" />
-                      <span>Pay ₹{Number(product?.price || 0).toLocaleString('en-IN')} via UPI & Cards</span>
-                    </>
-                  )}
-                </button>
+                <div className="space-y-2 pt-1">
+                  <button
+                    type="button"
+                    disabled={paying || verifying}
+                    onClick={pay}
+                    className="w-full rounded-2xl bg-blue-600 hover:bg-blue-500 active:scale-[0.99] py-4 text-sm font-bold text-white shadow-[0_0_30px_rgba(37,99,235,0.4)] transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                  >
+                    {paying || verifying ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Processing Payment...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-4 h-4" />
+                        <span>Pay {formatPrice(product)} via UPI & Cards</span>
+                      </>
+                    )}
+                  </button>
+
+                  <div className="flex items-center justify-center gap-2 text-[10px] font-mono text-white/40 pt-1">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Instant UPI (GPay, PhonePe, Paytm), RuPay Cards & Netbanking</span>
+                  </div>
+                </div>
               )}
 
               {/* Guarantee Footer & Compliance */}

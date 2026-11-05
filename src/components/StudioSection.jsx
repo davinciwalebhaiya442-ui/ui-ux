@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { ArrowRight, Check } from 'lucide-react';
+import { useCurrency } from '@/context/CurrencyContext';
 
 export default function StudioSection() {
+  const { currency } = useCurrency();
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -11,7 +13,7 @@ export default function StudioSection() {
     name: '',
     email: '',
     requestType: 'Feature / Commercial Color Grading',
-    budget: 'Under ₹500',
+    budget: currency === 'USD' ? 'Under $50' : 'Under ₹500',
     details: '',
     portfolio: '',
   });
@@ -155,10 +157,21 @@ export default function StudioSection() {
                     onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
                     className="w-full bg-[#070b15] border border-white/[0.12] rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 transition-all shadow-inner"
                   >
-                    <option value="Under ₹500">Under ₹500</option>
-                    <option value="Under ₹1,000">Under ₹1,000</option>
-                    <option value="Under ₹2,000">Under ₹2,000</option>
-                    <option value="₹5,000+">₹5,000+</option>
+                    {currency === 'USD' ? (
+                      <>
+                        <option value="Under $50">Under $50</option>
+                        <option value="Under $100">Under $100</option>
+                        <option value="Under $250">Under $250</option>
+                        <option value="$500+">$500+</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="Under ₹500">Under ₹500</option>
+                        <option value="Under ₹1,000">Under ₹1,000</option>
+                        <option value="Under ₹2,000">Under ₹2,000</option>
+                        <option value="₹5,000+">₹5,000+</option>
+                      </>
+                    )}
                   </select>
                 </div>
               </div>
