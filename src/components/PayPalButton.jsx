@@ -63,10 +63,23 @@ export default function PayPalButton({
     const scriptId = 'paypal-js-sdk';
     let script = document.getElementById(scriptId);
 
+    // If existing script was loaded with enable-funding=card, remove it so clean SDK loads
+    if (script && (!script.src.includes('disable-funding=card') || script.src.includes('enable-funding=card'))) {
+      if (typeof window !== 'undefined' && window.paypal) {
+        try {
+          delete window.paypal;
+        } catch (e) {
+          window.paypal = undefined;
+        }
+      }
+      script.remove();
+      script = null;
+    }
+
     if (!script) {
       script = document.createElement('script');
       script.id = scriptId;
-      script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=USD&intent=capture&components=buttons&enable-funding=card`;
+      script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=USD&intent=capture&components=buttons&disable-funding=card,paylater,venmo`;
       script.async = true;
 
       script.onload = () => {
@@ -91,13 +104,15 @@ export default function PayPalButton({
 
   // 2. Render PayPal Buttons when SDK and container are ready
   useEffect(() => {
-    if (!sdkReady || !containerRef.current || !window.paypal?.Buttons || !product?.id) return;
+    const container = containerRef.current;
+    if (!sdkReady || !container || !window.paypal?.Buttons || !product?.id) return;
 
     // Clear previous renders if any
-    containerRef.current.innerHTML = '';
+    container.innerHTML = '';
 
     try {
       buttonsInstanceRef.current = window.paypal.Buttons({
+        fundingSource: window.paypal.FUNDING ? window.paypal.FUNDING.PAYPAL : undefined,
         style: {
           layout: 'vertical',
           color: 'gold',
@@ -218,14 +233,14 @@ export default function PayPalButton({
         },
       });
 
-      buttonsInstanceRef.current.render(containerRef.current);
+      buttonsInstanceRef.current.render(container);
     } catch (renderErr) {
       console.error('PayPal render error:', renderErr);
     }
 
     return () => {
-      if (containerRef.current) {
-        containerRef.current.innerHTML = '';
+      if (container) {
+        container.innerHTML = '';
       }
     };
   }, [sdkReady, product?.id]);

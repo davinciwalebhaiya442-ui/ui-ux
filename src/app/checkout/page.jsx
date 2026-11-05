@@ -541,7 +541,7 @@ export default function CheckoutPage() {
 
                   <div className="flex items-center justify-center gap-2 text-[10px] font-mono text-white/40 pt-1">
                     <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
-                    <span>Pay with PayPal balance or any Debit / Credit Card (USD)</span>
+                    <span>Pay with PayPal account or Debit / Credit Card (USD)</span>
                   </div>
                 </div>
               ) : (
