@@ -42,52 +42,49 @@ export async function POST(request) {
       return Response.json({ error: 'One or more products are unavailable.' }, { status: 400 });
     }
 
-    // Calculate USD subtotal
-    const subtotal = products.reduce((sum, p) => {
-      const usdPrice =
-        Number(p.priceUSD || 0) > 0
-          ? Number(p.priceUSD)
-          : Math.max(1, Math.round(Number(p.price || 0) / 83));
-      return sum + usdPrice;
+    // 1. Calculate base INR total for the system/order database
+    const subtotalINR = products.reduce((sum, p) => sum + Number(p.price || 0), 0);
+
+    // 2. Calculate equivalent USD amount for PayPal API processing
+    // NOTE: PayPal REST API does NOT support INR (returns CURRENCY_NOT_SUPPORTED 422 error),
+    // so international charges via PayPal must be processed in USD.
+    const paypalUSD = products.reduce((sum, p) => {
+      const explicitUSD = Number(p.priceUSD || 0);
+      if (explicitUSD > 0) return sum + explicitUSD;
+      const inr = Number(p.price || 0);
+      return sum + Math.max(1, Math.round((inr / 83) * 100) / 100);
     }, 0);
 
     const orderNumber = `DWB-PP-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
     const description = products.map((p) => p.name).join(', ').slice(0, 120);
 
-    // Create PayPal Order directly via official PayPal API
+    // 3. Create PayPal Order directly via official PayPal API in USD
     const paypalOrder = await createPayPalOrder({
       orderNumber,
-      amount: subtotal,
+      amount: paypalUSD,
       currency: 'USD',
-      description,
+      description: `${description} (₹${subtotalINR} INR)`,
       customerEmail,
     });
 
-    // Create database order in USD
+    // 4. Save database order with total in INR
     await prisma.order.create({
       data: {
         orderNumber,
         userId: profile.userId,
-        subtotal,
-        total: subtotal,
-        currency: 'USD',
+        subtotal: subtotalINR,
+        total: subtotalINR,
+        currency: 'INR',
         status: 'PENDING',
         paymentStatus: 'PENDING',
         paymentGateway: 'PAYPAL',
         paypalOrderId: paypalOrder.id,
         items: {
-          create: products.map((product) => {
-            const itemPrice =
-              Number(product.priceUSD || 0) > 0
-                ? Number(product.priceUSD)
-                : Math.max(1, Math.round(Number(product.price || 0) / 83));
-
-            return {
-              productId: product.id,
-              productName: product.name,
-              price: itemPrice,
-            };
-          }),
+          create: products.map((product) => ({
+            productId: product.id,
+            productName: product.name,
+            price: Number(product.price || 0),
+          })),
         },
       },
     });
@@ -95,8 +92,9 @@ export async function POST(request) {
     return Response.json({
       paypalOrderId: paypalOrder.id,
       orderNumber,
-      subtotal,
-      currency: 'USD',
+      totalINR: subtotalINR,
+      amountUSD: paypalUSD,
+      currency: 'INR',
     });
   } catch (error) {
     console.error('PayPal checkout create error:', error);
@@ -106,3 +104,4 @@ export async function POST(request) {
     );
   }
 }
+
