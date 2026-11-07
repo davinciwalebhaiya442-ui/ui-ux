@@ -129,7 +129,6 @@ export default function HomeClient({
       }
     };
     window.addEventListener('storage', handleStorage);
-    window.addEventListener('focus', fetchHeroSettings);
 
     const fallbackTimer = setTimeout(() => {
       setIsLoaded(true);
@@ -139,7 +138,6 @@ export default function HomeClient({
       clearTimeout(fallbackTimer);
       if (bc) bc.close();
       window.removeEventListener('storage', handleStorage);
-      window.removeEventListener('focus', fetchHeroSettings);
     };
   }, [fetchHeroSettings]);
 

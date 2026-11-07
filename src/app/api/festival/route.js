@@ -1,8 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { DEFAULT_FESTIVAL_SETTINGS } from '@/lib/festival';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 300; // Cache on Vercel Edge CDN for 5 minutes (drastically saves CPU)
 
 export async function GET() {
   try {
@@ -13,9 +12,7 @@ export async function GET() {
       { festival: setting || DEFAULT_FESTIVAL_SETTINGS },
       {
         headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0, proxy-revalidate',
-          'CDN-Cache-Control': 'no-store',
-          'Surrogate-Control': 'no-store',
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=86400',
         },
       }
     );
@@ -25,7 +22,7 @@ export async function GET() {
       { festival: DEFAULT_FESTIVAL_SETTINGS },
       {
         headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
         },
       }
     );

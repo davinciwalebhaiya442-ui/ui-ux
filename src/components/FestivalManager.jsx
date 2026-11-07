@@ -84,7 +84,7 @@ export default function FestivalManager({ previewSettings = null }) {
     let isMounted = true;
     const fetchLiveSettings = async () => {
       try {
-        const res = await fetch('/api/festival?_t=' + Date.now(), { cache: 'no-store' });
+        const res = await fetch('/api/festival');
         if (!res.ok) return;
         const data = await res.json();
         if (data?.festival && isMounted) {
