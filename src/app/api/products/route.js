@@ -4,7 +4,7 @@ import { parseBody, toFrontendProduct } from '@/lib/product';
 
 import { revalidatePath } from 'next/cache';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60; // Cache on Vercel CDN for 60 seconds
 
 export async function GET(request) {
   try {

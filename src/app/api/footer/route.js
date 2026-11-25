@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { DEFAULT_FOOTER_SETTINGS } from '@/lib/footer';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300; // Cache on Vercel CDN for 5 minutes
 
 export async function GET() {
   try {

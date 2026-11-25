@@ -1,6 +1,7 @@
 import { getAssetObject } from '@/lib/storage/r2';
 
-export const dynamic = 'force-dynamic';
+// Cache at Vercel Global Edge CDN for 1 year (immutable asset cache drastically drops CPU & invocations)
+export const revalidate = 31536000;
 
 function getMimeType(key, defaultType) {
   const ext = key.split('.').pop()?.toLowerCase();
@@ -60,7 +61,7 @@ export async function GET(request) {
       headers: {
         'Content-Type': contentType,
         'Content-Length': String(buffer.length),
-        'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
+        'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, stale-while-revalidate=86400, immutable',
         'Access-Control-Allow-Origin': '*',
       },
     });

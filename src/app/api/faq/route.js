@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 
+export const revalidate = 300; // Cache on Vercel CDN for 5 minutes
+
 export async function GET() {
   const faqs = await prisma.faq.findMany({
     where: { published: true },

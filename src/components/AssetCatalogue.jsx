@@ -239,8 +239,8 @@ export default function AssetCatalogue({
                 </p>
               </div>
 
-              <div className="pt-4 mt-6 border-t border-white/[0.08] flex items-center justify-between text-xs font-mono">
-                <div className="flex items-center gap-2 flex-wrap">
+              <div className="pt-4 mt-6 border-t border-white/[0.08] flex items-start justify-between text-xs font-mono">
+                <div className="pt-0.5">
                   <span className={`px-2.5 py-1 rounded font-mono font-bold tracking-wide text-xs inline-block ${
                     asset.type === 'free'
                       ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400'
@@ -248,51 +248,56 @@ export default function AssetCatalogue({
                   }`}>
                     {formatPrice(asset)}
                   </span>
-                  <span
-                    className="inline-flex items-center gap-1 text-[11px] font-mono text-white/55 bg-white/[0.04] px-2 py-1 rounded border border-white/[0.08]"
-                    title={`${asset.downloadCount || 0} real verified downloads`}
-                  >
-                    <Download className="w-3 h-3 text-sky-400 shrink-0" />
-                    <span>{Number(asset.downloadCount || 0).toLocaleString()} {Number(asset.downloadCount || 0) === 1 ? 'download' : 'downloads'}</span>
-                  </span>
                 </div>
 
-                {/* Quick actions: Share & Buy Now */}
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const slugOrId = asset.slug || asset.id;
-                      const shareUrl = `${window.location.origin}/product/${slugOrId}`;
-                      if (navigator.share && /mobile|android|iphone|ipad/i.test(navigator.userAgent || '')) {
-                        navigator.share({ title: asset.name, text: asset.tagline, url: shareUrl }).catch(() => {});
-                      } else {
-                        try {
-                          navigator.clipboard.writeText(shareUrl).then(() => {
-                            setCopiedId(asset.id);
-                            setTimeout(() => setCopiedId(null), 2000);
-                          });
-                        } catch {
-                          window.prompt('Copy product link:', shareUrl);
+                {/* Quick actions: Share & Buy Now with subtle micro download count directly below button */}
+                <div className="flex flex-col items-end gap-1">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const slugOrId = asset.slug || asset.id;
+                        const shareUrl = `${window.location.origin}/product/${slugOrId}`;
+                        if (navigator.share && /mobile|android|iphone|ipad/i.test(navigator.userAgent || '')) {
+                          navigator.share({ title: asset.name, text: asset.tagline, url: shareUrl }).catch(() => {});
+                        } else {
+                          try {
+                            navigator.clipboard.writeText(shareUrl).then(() => {
+                              setCopiedId(asset.id);
+                              setTimeout(() => setCopiedId(null), 2000);
+                            });
+                          } catch {
+                            window.prompt('Copy product link:', shareUrl);
+                          }
                         }
-                      }
-                    }}
-                    className={`p-1.5 rounded-lg border transition-all ${
-                      copiedId === asset.id
-                        ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-400'
-                        : 'border-white/[0.08] bg-white/[0.04] text-white/50 hover:text-white hover:border-white/25 hover:bg-white/[0.08]'
-                    }`}
-                    title={copiedId === asset.id ? "Link copied!" : "Share link"}
+                      }}
+                      className={`p-1.5 rounded-lg border transition-all ${
+                        copiedId === asset.id
+                          ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-400'
+                          : 'border-white/[0.08] bg-white/[0.04] text-white/50 hover:text-white hover:border-white/25 hover:bg-white/[0.08]'
+                      }`}
+                      title={copiedId === asset.id ? "Link copied!" : "Share link"}
+                    >
+                      {copiedId === asset.id ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      ) : (
+                        <Share2 className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                    <div className="px-3 py-1.5 rounded-lg bg-white/[0.06] group-hover:bg-blue-600/90 border border-white/[0.1] group-hover:border-blue-400/50 text-white/80 group-hover:text-white flex items-center space-x-1.5 transition-all duration-200 shadow-sm">
+                      <span className="text-[11px] font-semibold tracking-wide">
+                        {asset.type === 'free' ? 'Download Free ↗' : 'Buy Now ↗'}
+                      </span>
+                    </div>
+                  </div>
+                  {/* Micro subtle real download counter directly under button */}
+                  <div 
+                    className="flex items-center gap-1 text-[9.5px] font-mono text-white/40 tracking-tight pr-0.5"
+                    title={`${asset.downloadCount || 0} real verified downloads`}
                   >
-                    {copiedId === asset.id ? (
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    ) : (
-                      <Share2 className="w-3.5 h-3.5" />
-                    )}
-                  </button>
-                  <div className="px-3 py-1.5 rounded-lg bg-white/[0.06] group-hover:bg-blue-600/90 border border-white/[0.1] group-hover:border-blue-400/50 text-white/80 group-hover:text-white flex items-center space-x-1.5 transition-all duration-200 shadow-sm">
-                    <span className="text-[11px] font-semibold tracking-wide">Buy Now ↗</span>
+                    <Download className="w-2.5 h-2.5 text-white/35 shrink-0" />
+                    <span>{Number(asset.downloadCount || 0).toLocaleString()} {Number(asset.downloadCount || 0) === 1 ? 'download' : 'downloads'}</span>
                   </div>
                 </div>
               </div>

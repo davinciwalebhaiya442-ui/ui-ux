@@ -81,6 +81,14 @@ export default function FestivalManager({ previewSettings = null }) {
   useEffect(() => {
     if (previewSettings) return;
 
+    // Skip refetching if already fetched in this session within last 15 minutes
+    try {
+      const last = sessionStorage.getItem('dwb_festival_fetched');
+      if (last && Date.now() - Number(last) < 15 * 60 * 1000) {
+        return;
+      }
+    } catch (e) {}
+
     let isMounted = true;
     const fetchLiveSettings = async () => {
       try {
@@ -91,6 +99,7 @@ export default function FestivalManager({ previewSettings = null }) {
           setSettings(data.festival);
           try {
             localStorage.setItem('dwb_festival_settings', JSON.stringify(data.festival));
+            sessionStorage.setItem('dwb_festival_fetched', String(Date.now()));
           } catch (e) {}
         }
       } catch (e) {}

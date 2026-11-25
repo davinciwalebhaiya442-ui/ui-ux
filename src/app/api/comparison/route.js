@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300; // Cache on Vercel CDN for 5 minutes
 
 import { DEFAULT_COMPARISON_SETTINGS } from '@/lib/comparison';
 

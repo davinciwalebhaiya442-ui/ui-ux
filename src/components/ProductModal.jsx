@@ -262,10 +262,6 @@ export default function ProductModal({ asset, onClose }) {
                   {formatPrice(asset)}
                 </div>
                 <div className="text-xs font-mono text-white/40">{asset.type === 'free' ? 'Instant Access' : 'Perpetual license'}</div>
-                <div className="flex items-center gap-1.5 sm:justify-end text-[11px] font-mono text-sky-300 mt-1">
-                  <Download className="w-3 h-3 shrink-0 text-sky-400" />
-                  <span>{Number(asset.downloadCount || 0).toLocaleString()} {Number(asset.downloadCount || 0) === 1 ? 'download' : 'downloads'}</span>
-                </div>
               </div>
             </div>
 
@@ -458,9 +454,9 @@ export default function ProductModal({ asset, onClose }) {
                       </>
                     )}
                   </button>
-                  <p className="text-[11px] text-emerald-400/80 flex items-center gap-1.5">
+                  <p className="text-[11px] text-emerald-400/80 flex items-center gap-1.5 font-mono">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    <span>Free Community Edition: Direct browser zip download.</span>
+                    <span>Free Community Edition &bull; {Number(asset.downloadCount || 0).toLocaleString()} verified {Number(asset.downloadCount || 0) === 1 ? 'download' : 'downloads'}</span>
                   </p>
                 </div>
               ) : (
@@ -472,9 +468,9 @@ export default function ProductModal({ asset, onClose }) {
                     <ShoppingBag className="w-4 h-4" />
                     <span>Purchase License &bull; {formatPrice(asset)}</span>
                   </button>
-                  <p className="text-[11px] text-white/50 flex items-center gap-1.5">
+                  <p className="text-[11px] text-white/50 flex items-center gap-1.5 font-mono">
                     <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                    <span>Licensed Edition: Full digital zip package will be emailed to your inbox upon payment.</span>
+                    <span>Instant Digital Access &bull; {Number(asset.downloadCount || 0).toLocaleString()} verified {Number(asset.downloadCount || 0) === 1 ? 'download' : 'downloads'}</span>
                   </p>
                 </div>
               )}
