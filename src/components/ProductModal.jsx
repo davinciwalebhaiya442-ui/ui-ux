@@ -257,11 +257,15 @@ export default function ProductModal({ asset, onClose }) {
               </div>
 
               {/* Price Tag */}
-              <div className="text-left sm:text-right">
+              <div className="text-left sm:text-right shrink-0">
                 <div className={`text-2xl font-bold font-mono ${asset.type === 'free' ? 'text-emerald-400' : 'text-white'}`}>
                   {formatPrice(asset)}
                 </div>
                 <div className="text-xs font-mono text-white/40">{asset.type === 'free' ? 'Instant Access' : 'Perpetual license'}</div>
+                <div className="flex items-center gap-1.5 sm:justify-end text-[11px] font-mono text-sky-300 mt-1">
+                  <Download className="w-3 h-3 shrink-0 text-sky-400" />
+                  <span>{Number(asset.downloadCount || 0).toLocaleString()} {Number(asset.downloadCount || 0) === 1 ? 'download' : 'downloads'}</span>
+                </div>
               </div>
             </div>
 

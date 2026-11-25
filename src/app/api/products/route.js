@@ -24,7 +24,10 @@ export async function GET(request) {
 
     const products = await prisma.product.findMany({
       where,
-      include: { category: { select: { id: true, name: true, slug: true } } },
+      include: {
+        category: { select: { id: true, name: true, slug: true } },
+        _count: { select: { downloads: true } },
+      },
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * limit,
       take: limit,

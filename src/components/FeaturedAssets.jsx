@@ -252,8 +252,14 @@ export default function FeaturedAssets({ onSelectAsset, initialProducts = [] }) 
                 {/* Price & Action */}
                 <div className="pt-8 mt-6 border-t border-white/[0.08] flex items-center justify-between">
                   <div>
-                    <div className="text-[10px] font-mono uppercase text-white/40 tracking-wider">
-                      {card1.type === 'free' ? 'Instant Download' : 'Perpetual License'}
+                    <div className="flex items-center gap-2">
+                      <div className="text-[10px] font-mono uppercase text-white/40 tracking-wider">
+                        {card1.type === 'free' ? 'Instant Download' : 'Perpetual License'}
+                      </div>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-mono text-sky-300 bg-sky-950/40 px-2 py-0.5 rounded border border-sky-500/25">
+                        <Download className="w-2.5 h-2.5 text-sky-400" />
+                        <span>{Number(card1.downloadCount || 0).toLocaleString()} {Number(card1.downloadCount || 0) === 1 ? 'download' : 'downloads'}</span>
+                      </span>
                     </div>
                     <div className={`text-xl font-bold font-mono ${card1.type === 'free' ? 'text-emerald-400' : 'text-white'}`}>
                       {formatPrice(card1)}
@@ -337,7 +343,13 @@ export default function FeaturedAssets({ onSelectAsset, initialProducts = [] }) 
             </div>
 
             <div className="pt-6 mt-6 border-t border-white/[0.08] flex items-center justify-between text-xs font-mono">
-              <span className="text-white/50">{card2.fileSize || 'Instant Digital Delivery'}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-white/50">{card2.fileSize || 'Digital Asset'}</span>
+                <span className="inline-flex items-center gap-1 text-[10.5px] font-mono text-sky-300 bg-sky-950/40 px-2 py-0.5 rounded border border-sky-500/25">
+                  <Download className="w-2.5 h-2.5 text-sky-400" />
+                  <span>{Number(card2.downloadCount || 0).toLocaleString()}</span>
+                </span>
+              </div>
               <span className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg bg-sky-500/15 border border-sky-500/30 text-sky-300 group-hover:bg-sky-500 group-hover:text-black font-semibold transition-all">
                 <span>{card2.type === 'free' ? 'Download Free ↗' : 'Buy Now ↗'}</span>
               </span>
@@ -384,9 +396,15 @@ export default function FeaturedAssets({ onSelectAsset, initialProducts = [] }) 
               </div>
 
               <div className="flex justify-between items-center mb-2">
-                <span className="text-[11px] font-mono uppercase tracking-widest text-emerald-400 font-semibold px-2.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
-                  {card3.category || 'Standalone Tool'}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-mono uppercase tracking-widest text-emerald-400 font-semibold px-2.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                    {card3.category || 'Standalone Tool'}
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-[10.5px] font-mono text-emerald-300 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/25">
+                    <Download className="w-2.5 h-2.5 text-emerald-400" />
+                    <span>{Number(card3.downloadCount || 0).toLocaleString()}</span>
+                  </span>
+                </div>
                 <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded ${card3.type === 'free' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/10 text-white'}`}>
                   {formatPrice(card3)}
                 </span>
@@ -435,9 +453,15 @@ export default function FeaturedAssets({ onSelectAsset, initialProducts = [] }) 
               )}
 
               <div className="flex justify-between items-center text-[10px] font-mono text-white/60 mb-2">
-                <span className="text-slate-300 uppercase tracking-widest font-semibold px-2 py-0.5 rounded bg-white/[0.06] border border-white/[0.08]">
-                  {card4.category || 'FUSION COMPOSITION'}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-300 uppercase tracking-widest font-semibold px-2 py-0.5 rounded bg-white/[0.06] border border-white/[0.08]">
+                    {card4.category || 'FUSION COMPOSITION'}
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-mono text-white/60 bg-white/[0.05] px-1.5 py-0.5 rounded border border-white/10">
+                    <Download className="w-2.5 h-2.5 text-slate-300" />
+                    <span>{Number(card4.downloadCount || 0).toLocaleString()}</span>
+                  </span>
+                </div>
                 <span className={`font-bold px-2 py-0.5 rounded ${card4.type === 'free' ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20' : 'text-white bg-white/10 border border-white/20'}`}>
                   {formatPrice(card4)}
                 </span>
@@ -481,9 +505,15 @@ export default function FeaturedAssets({ onSelectAsset, initialProducts = [] }) 
               )}
 
               <div className="flex justify-between items-center text-[10px] font-mono text-white/60 mb-2">
-                <span className="text-blue-400 uppercase tracking-widest font-semibold px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">
-                  {card5.category || 'TIMELINE TRANSITION'}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-400 uppercase tracking-widest font-semibold px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">
+                    {card5.category || 'TIMELINE TRANSITION'}
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-mono text-blue-300 bg-blue-950/40 px-1.5 py-0.5 rounded border border-blue-500/25">
+                    <Download className="w-2.5 h-2.5 text-blue-400" />
+                    <span>{Number(card5.downloadCount || 0).toLocaleString()}</span>
+                  </span>
+                </div>
                 <span className={`font-bold px-2 py-0.5 rounded ${card5.type === 'free' ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20' : 'text-white bg-white/10 border border-white/20'}`}>
                   {formatPrice(card5)}
                 </span>

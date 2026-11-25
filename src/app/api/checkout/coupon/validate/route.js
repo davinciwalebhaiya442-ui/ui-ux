@@ -68,3 +68,4 @@ export async function POST(request) {
     return Response.json({ valid: false, error: 'Unable to validate coupon code.' }, { status: 500 });
   }
 }
+

@@ -146,3 +146,4 @@ export async function POST(request) {
     return Response.json({ error: error.message || 'Failed to create coupon.' }, { status: 500 });
   }
 }
+

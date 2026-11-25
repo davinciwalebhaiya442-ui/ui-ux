@@ -92,7 +92,10 @@ export default async function ProductPage({ params }) {
         { id: slug },
       ],
     },
-    include: { category: true },
+    include: {
+      category: true,
+      _count: { select: { downloads: true } },
+    },
   });
 
   if (!product) {
@@ -107,7 +110,10 @@ export default async function ProductPage({ params }) {
         categoryId: product.categoryId,
         NOT: { id: product.id },
       },
-      include: { category: true },
+      include: {
+        category: true,
+        _count: { select: { downloads: true } },
+      },
       take: 3,
     });
     relatedProducts = rawRelated.map(toFrontendProduct);

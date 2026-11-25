@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { CATEGORIES, SOFTWARE_OPTIONS } from '@/data/assets';
 import { useProducts } from '@/data/useProducts';
 import { useCurrency } from '@/context/CurrencyContext';
-import { Search, ArrowUpRight, Monitor, Share2, Check, Sparkles } from 'lucide-react';
+import { Search, ArrowUpRight, Monitor, Share2, Check, Sparkles, Download } from 'lucide-react';
 import ProductCardVisual from './ProductCardVisual';
 import BeforeAfterSlider from './BeforeAfterSlider';
 import { DEFAULT_COMPARISON_SETTINGS } from '@/lib/comparison';
@@ -240,13 +240,20 @@ export default function AssetCatalogue({
               </div>
 
               <div className="pt-4 mt-6 border-t border-white/[0.08] flex items-center justify-between text-xs font-mono">
-                <div>
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className={`px-2.5 py-1 rounded font-mono font-bold tracking-wide text-xs inline-block ${
                     asset.type === 'free'
                       ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400'
                       : 'bg-white/10 border border-white/20 text-white'
                   }`}>
                     {formatPrice(asset)}
+                  </span>
+                  <span
+                    className="inline-flex items-center gap-1 text-[11px] font-mono text-white/55 bg-white/[0.04] px-2 py-1 rounded border border-white/[0.08]"
+                    title={`${asset.downloadCount || 0} real verified downloads`}
+                  >
+                    <Download className="w-3 h-3 text-sky-400 shrink-0" />
+                    <span>{Number(asset.downloadCount || 0).toLocaleString()} {Number(asset.downloadCount || 0) === 1 ? 'download' : 'downloads'}</span>
                   </span>
                 </div>
 

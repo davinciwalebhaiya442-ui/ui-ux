@@ -62,23 +62,42 @@ export async function POST(request, { params }) {
     const isDrive = isUrl && rawKey.includes('drive.google.com');
     const fileName = product.downloadFileName || (isDrive ? 'Google Drive Cloud Archive' : `${product.slug || 'package'}.zip`);
 
-    if (isUrl) {
-      if (authUser) {
-        try {
-          await ensureProfile(authUser);
-          const accessType = product.type === 'PAID' ? 'PURCHASE' : 'FREE_DOWNLOAD';
-          const access = await prisma.productAccess.upsert({
-            where: { userId_productId: { userId: authUser.id, productId: product.id } },
+    const recordDownloadEvent = async () => {
+      try {
+        let targetUserId = authUser?.id;
+        if (!targetUserId) {
+          const guestUser = await prisma.profile.upsert({
+            where: { userId: 'guest_downloads' },
             update: {},
-            create: { userId: authUser.id, productId: product.id, accessType },
+            create: {
+              userId: 'guest_downloads',
+              email: 'community@davinciwalebhaiya.com',
+              name: 'Community Download',
+              role: 'customer',
+            },
           });
-          await prisma.download.create({
-            data: { userId: authUser.id, productId: product.id, accessId: access.id },
-          });
-        } catch (e) {
-          console.warn('Analytics tracking non-fatal error:', e);
+          targetUserId = guestUser.userId;
+        } else {
+          await ensureProfile(authUser);
         }
+
+        const accessType = product.type === 'PAID' ? 'PURCHASE' : 'FREE_DOWNLOAD';
+        const access = await prisma.productAccess.upsert({
+          where: { userId_productId: { userId: targetUserId, productId: product.id } },
+          update: {},
+          create: { userId: targetUserId, productId: product.id, accessType },
+        });
+
+        await prisma.download.create({
+          data: { userId: targetUserId, productId: product.id, accessId: access.id },
+        });
+      } catch (trackErr) {
+        console.warn('Download tracking notice:', trackErr?.message || trackErr);
       }
+    };
+
+    if (isUrl) {
+      await recordDownloadEvent();
 
       return Response.json({
         url: rawKey,
@@ -95,23 +114,16 @@ export async function POST(request, { params }) {
         fileName
       );
 
-      // Track download analytics if user is logged in
-      if (authUser) {
-        try {
-          await ensureProfile(authUser);
-          const accessType = product.type === 'PAID' ? 'PURCHASE' : 'FREE_DOWNLOAD';
-          const access = await prisma.productAccess.upsert({
-            where: { userId_productId: { userId: authUser.id, productId: product.id } },
-            update: {},
-            create: { userId: authUser.id, productId: product.id, accessType },
-          });
-          await prisma.download.create({
-            data: { userId: authUser.id, productId: product.id, accessId: access.id },
-          });
-        } catch (e) {
-          console.warn('Analytics tracking non-fatal error:', e);
-        }
-      }
+      // Track download analytics
+      await recordDownloadEvent();
+
+      return Response.json({
+        url,
+        fileName,
+        expiresIn: 3600,
+        isExternal: false,
+        isDrive: false,
+      });
 
       return Response.json({
         url,

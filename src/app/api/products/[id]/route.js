@@ -13,7 +13,10 @@ export async function GET(_request, { params }) {
         { slug: params.id },
       ],
     },
-    include: { category: true },
+    include: {
+      category: true,
+      _count: { select: { downloads: true } },
+    },
   });
 
   if (!product) {
@@ -53,7 +56,10 @@ export async function PATCH(request, { params }) {
     const product = await prisma.product.update({
       where: { id: existing.id },
       data,
-      include: { category: true },
+      include: {
+      category: true,
+      _count: { select: { downloads: true } },
+    },
     });
 
     try {

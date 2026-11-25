@@ -10,7 +10,10 @@ export const revalidate = 60;
 async function getInitialProducts() {
   try {
     const products = await prisma.product.findMany({
-      include: { category: { select: { id: true, name: true, slug: true } } },
+      include: {
+        category: { select: { id: true, name: true, slug: true } },
+        _count: { select: { downloads: true } },
+      },
       orderBy: { createdAt: 'desc' },
       take: 100,
     });

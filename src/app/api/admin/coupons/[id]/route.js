@@ -92,3 +92,4 @@ export async function DELETE(request, { params }) {
     return Response.json({ error: error.message || 'Failed to delete coupon.' }, { status: 500 });
   }
 }
+

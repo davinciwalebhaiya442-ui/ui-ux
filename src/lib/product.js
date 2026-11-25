@@ -35,9 +35,14 @@ export const productSchema = z.object({
 });
 
 export function toFrontendProduct(product) {
+  const downloadCount = Number(
+    product._count?.downloads ?? product.downloadCount ?? product.downloadsCount ?? 0
+  );
+
   return {
     ...product,
     dbId: product.id,
+    downloadCount,
     featuredOrder: Number(product.featuredOrder || 0),
     downloadFileKey: product.downloadFileKey || null,
     downloadFileName: product.downloadFileName || null,

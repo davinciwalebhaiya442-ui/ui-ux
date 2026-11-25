@@ -413,6 +413,15 @@ export default function ProductViewClient({ asset, relatedAssets = [] }) {
                     </div>
                   </div>
                 )}
+
+                {/* Real Verified Community Downloads Counter */}
+                <div className="flex items-center gap-2 pt-2">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-mono text-sky-300 bg-sky-950/40 border border-sky-500/30 px-3 py-1 rounded-full">
+                    <Download className="w-3.5 h-3.5 text-sky-400" />
+                    <span>{Number(asset.downloadCount || 0).toLocaleString()} {Number(asset.downloadCount || 0) === 1 ? 'download' : 'downloads'}</span>
+                  </span>
+                  <span className="text-xs text-white/40 font-mono">&bull; Real verified community access</span>
+                </div>
               </div>
 
               {/* Action Button */}
@@ -609,9 +618,13 @@ export default function ProductViewClient({ asset, relatedAssets = [] }) {
                   </div>
 
                   <div className="pt-4 mt-6 border-t border-white/[0.08] flex items-center justify-between text-xs font-mono">
-                    <div>
+                    <div className="flex items-center gap-2">
                       <span className={rel.type === 'free' ? 'text-emerald-400 font-bold' : 'text-white font-bold'}>
                         {formatPrice(rel)}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-[10.5px] font-mono text-white/50 bg-white/[0.04] px-1.5 py-0.5 rounded border border-white/[0.08]">
+                        <Download className="w-2.5 h-2.5 text-sky-400" />
+                        <span>{Number(rel.downloadCount || 0).toLocaleString()}</span>
                       </span>
                     </div>
                     <span className="text-blue-400 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
